@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
@@ -280,4 +280,15 @@ app.get('/api/download/file', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Vortex backend server running on port ${PORT}`);
+
+  // Auto-update yt-dlp on startup asynchronously to bypass anti-bot updates
+  console.log('Checking/updating yt-dlp dependency...');
+  const pipCmd = process.platform === 'win32' ? 'pip install -U yt-dlp' : 'pip3 install -U yt-dlp --break-system-packages';
+  exec(pipCmd, (err, stdout, stderr) => {
+    if (err) {
+      console.error('Failed to auto-update yt-dlp on startup:', err);
+    } else {
+      console.log('yt-dlp auto-update completed:\n', stdout.trim());
+    }
+  });
 });
