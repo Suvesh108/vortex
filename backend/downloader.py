@@ -54,19 +54,20 @@ def format_speed(speed_bytes):
         return "0.0 B/s"
 
 # Common bot-bypass options shared between extract and download
+# Uses mweb/ios player clients which bypass YouTube bot detection on server IPs
+# without needing curl_cffi impersonation or PO tokens.
 def get_bot_bypass_opts():
     return {
-        # Impersonate a real browser for TLS fingerprint bypass (requires curl_cffi)
-        'impersonate': 'chrome',
-        # Try multiple player clients; mweb and web tend to work without PO tokens
+        # mweb (mobile web) client bypasses PO token/bot checks on datacenter IPs.
+        # ios is a reliable fallback. web_creator is another good option.
         'extractor_args': {
             'youtube': {
-                'player_client': ['mweb', 'web', 'android'],
+                'player_client': ['mweb', 'ios', 'web_creator'],
             }
         },
-        # Mimic human browsing speed
-        'sleep_interval': 1,
-        'max_sleep_interval': 3,
+        # Mimic human browsing speed to avoid rate-limit / 429 bans
+        'sleep_interval_requests': 1,
+        'sleep_interval': 0,
         # Don't fragment requests aggressively
         'concurrent_fragment_downloads': 1,
     }
