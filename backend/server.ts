@@ -15,15 +15,15 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const PYTHON_CMD = process.env.PYTHON_CMD || (process.platform === 'win32' ? 'python' : 'python3');
 
-// Allow all origins – required so the Vercel frontend can reach this Render backend
-app.use(cors({
-  origin: true,           // reflect the request Origin header (works with any domain)
+// CORS config — applied globally to every request including OPTIONS preflight
+const corsOptions = {
+  origin: true,          // reflect request Origin (allows any domain)
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-  optionsSuccessStatus: 200  // some browsers send 204 for OPTIONS; 200 is safest
-}));
-// Handle preflight requests for every route
-app.options('*', cors());
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));          // apply to all routes
+app.options('*', cors(corsOptions)); // explicitly handle preflight for every route
 app.use(express.json());
 
 // Temp directory for downloads
@@ -87,6 +87,11 @@ setInterval(() => {
     });
   });
 }, 10 * 60 * 1000); // every 10 mins
+
+// Health check — confirms the server is alive and CORS is working
+app.get('/', (_req, res) => {
+  res.json({ status: 'ok', message: 'Vortex backend is running.' });
+});
 
 // 1. GET /api/info - Fetch video metadata
 app.get('/api/info', (req, res) => {
@@ -270,15 +275,9 @@ app.get('/api/download/file', (req, res) => {
   });
 });
 
-// Serve frontend assets in production mode
-const distPath = path.join(__dirname, 'dist');
-if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-}
+// Remove legacy frontend static serving block — frontend is now hosted on Vercel
+// (keeping this note so no one re-adds it accidentally)
 
 app.listen(PORT, () => {
-  console.log(`Vortex backend server running on http://localhost:${PORT}`);
+  console.log(`Vortex backend server running on port ${PORT}`);
 });
