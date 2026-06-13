@@ -9,18 +9,27 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy package files and install Node dependencies
+# Copy the root workspace package manager files
 COPY package*.json ./
+
+# Copy frontend and backend
+COPY frontend/ ./frontend/
+COPY backend/ ./backend/
+
+# Install dependencies for both frontend and backend
 RUN npm install
 
-# Copy application source code
-COPY . .
-
-# Build the React/Vite frontend into the 'dist' folder
+# Build the React/Vite frontend
 RUN npm run build
+
+# Move the frontend dist folder to backend so express can serve it natively
+RUN mv frontend/dist backend/dist
 
 # Install Python dependencies (yt-dlp and static-ffmpeg)
 RUN pip3 install yt-dlp static-ffmpeg --break-system-packages
+
+# Set working directory to backend
+WORKDIR /app/backend
 
 # Create temp directory for downloads
 RUN mkdir -p temp_downloads
@@ -28,5 +37,5 @@ RUN mkdir -p temp_downloads
 # Expose the Express backend port
 EXPOSE 5000
 
-# Start the Express server (which will also serve the frontend 'dist' folder)
-CMD ["npm", "run", "server"]
+# Start the Express server
+CMD ["npm", "run", "start"]
