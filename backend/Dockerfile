@@ -1,23 +1,28 @@
 FROM node:20-bookworm-slim
 
-# Install Python 3, pip, and ffmpeg (required for yt-dlp)
+# Install Python 3, pip, ffmpeg, curl, and unzip (unzip is required to install Deno)
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
     ffmpeg \
+    curl \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Deno (official JS runtime recommended for yt-dlp JS signature/n-challenge solving)
+RUN curl -fsSL https://deno.land/install.sh | sh
+ENV DENO_INSTALL="/root/.deno"
+ENV PATH="${DENO_INSTALL}/bin:${PATH}"
+
 # Install yt-dlp (latest stable) and static-ffmpeg
-# NOTE: do NOT install curl-cffi extra — it requires native build tools not present here.
-# We bypass YouTube bot detection via the mweb/ios player_client extractor arg instead.
 RUN pip3 install yt-dlp static-ffmpeg --break-system-packages
 
-# Force upgrade yt-dlp to absolute latest version (YouTube fixes ship frequently)
+# Force upgrade yt-dlp to absolute latest version (YouTube updates ship frequently)
 RUN pip3 install --upgrade yt-dlp --break-system-packages
 
 WORKDIR /app
 
-# Copy all backend files (assuming build context is backend/)
+# Copy all backend files (including cookies.txt)
 COPY . .
 
 # Install backend Node dependencies

@@ -88,10 +88,12 @@ STRATEGIES = [
 ]
 
 def get_ydl_opts_for_strategy(strategy, extra_opts=None):
+    cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cookies.txt')
     opts = {
         'quiet': True,
         'no_warnings': True,
         'noplaylist': True,
+        'cookiefile': cookie_path if os.path.exists(cookie_path) else 'cookies.txt',
         'extractor_args': {
             'youtube': {
                 'player_client': strategy['player_client'],
@@ -279,6 +281,13 @@ def download_media(url, format_id, output_path):
     print(f"[ERROR] Download failed after trying all strategies: {str(last_error)}", flush=True)
 
 if __name__ == "__main__":
+    # Startup check for cookies.txt
+    cookie_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cookies.txt')
+    if os.path.exists(cookie_path):
+        print(f"[STARTUP] cookies.txt exists at: {cookie_path}", file=sys.stderr, flush=True)
+    else:
+        print(f"[STARTUP] cookies.txt DOES NOT exist at: {cookie_path}", file=sys.stderr, flush=True)
+
     if len(sys.argv) < 3:
         print("Usage: python downloader.py [info|download] [args...]")
         sys.exit(1)
