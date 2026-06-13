@@ -38,8 +38,8 @@
 ### 1. Clone & Install
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/vortexdownloader.git
-cd vortexdownloader
+git clone https://github.com/Suvesh108/vortex.git
+cd vortex
 
 # Install Node dependencies (includes frontend & backend packages)
 npm install
