@@ -13,6 +13,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const PYTHON_CMD = process.env.PYTHON_CMD || (process.platform === 'win32' ? 'python' : 'python3');
 
 app.use(cors());
 app.use(express.json());
@@ -88,7 +89,7 @@ app.get('/api/info', (req, res) => {
 
   console.log(`Fetching info for URL: ${videoUrl}`);
 
-  const pythonProcess = spawn('python', ['downloader.py', 'info', videoUrl]);
+  const pythonProcess = spawn(PYTHON_CMD, ['downloader.py', 'info', videoUrl]);
 
   let stdoutData = '';
   let stderrData = '';
@@ -156,7 +157,7 @@ app.post('/api/download', (req, res) => {
   console.log(`Starting download job: ${jobId} for URL: ${url}`);
 
   // Spawn python script in download mode
-  const pythonProcess = spawn('python', ['downloader.py', 'download', url, formatId, filePath]);
+  const pythonProcess = spawn(PYTHON_CMD, ['downloader.py', 'download', url, formatId, filePath]);
 
   pythonProcess.stdout.on('data', (data) => {
     const lines = data.toString().split('\n');

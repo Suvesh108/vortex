@@ -12,8 +12,8 @@ RUN pip3 install yt-dlp static-ffmpeg --break-system-packages
 
 WORKDIR /app
 
-# Copy backend files directly to the working directory
-COPY backend/ ./
+# Copy all backend files (assuming build context is backend/)
+COPY . .
 
 # Install backend Node dependencies
 RUN npm install
