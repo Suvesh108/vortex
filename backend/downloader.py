@@ -53,6 +53,24 @@ def format_speed(speed_bytes):
     except Exception:
         return "0.0 B/s"
 
+# Common bot-bypass options shared between extract and download
+def get_bot_bypass_opts():
+    return {
+        # Impersonate a real browser for TLS fingerprint bypass (requires curl_cffi)
+        'impersonate': 'chrome',
+        # Try multiple player clients; mweb and web tend to work without PO tokens
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['mweb', 'web', 'android'],
+            }
+        },
+        # Mimic human browsing speed
+        'sleep_interval': 1,
+        'max_sleep_interval': 3,
+        # Don't fragment requests aggressively
+        'concurrent_fragment_downloads': 1,
+    }
+
 def extract_info(url):
     ydl_opts = {
         'quiet': True,
@@ -60,6 +78,7 @@ def extract_info(url):
         'skip_download': True,
         'extract_flat': False,
         'noplaylist': True,
+        **get_bot_bypass_opts(),
     }
     
     try:
@@ -209,6 +228,7 @@ def download_media(url, format_id, output_path):
         'quiet': True,
         'no_warnings': True,
         'noplaylist': True,
+        **get_bot_bypass_opts(),
     }
     
     if is_audio:
