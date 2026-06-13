@@ -1,6 +1,0 @@
-{
-  "name": "VortexDownloader",
-  "description": "Professional content extraction and high-bitrate media downloader utility.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
