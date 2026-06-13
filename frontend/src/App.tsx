@@ -27,7 +27,7 @@ import FeatureGrid from './components/FeatureGrid';
 import { SAMPLE_PRESETS, extractUrlMetadata, EXTRACTION_STEPS_LOGS } from './data';
 import { DownloadStatus, MediaMetadata, MediaQuality, DownloadLog, DownloadHistoryItem, UserSettings } from './types';
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || '';
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://vortex-601m.onrender.com';
 
 export default function App() {
   const [inputUrl, setInputUrl] = useState('');
