@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;700;800&family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-hanken: "Hanken Grotesk", var(--font-sans);
+  --font-sans: "Inter", var(--font-sans);
+  --font-mono: "Geist Mono", var(--font-mono);
+
+  --color-primary: #FF0000;
+  --color-secondary-grey: #282828;
+  --color-tertiary-blue: #3EA6FF;
+  --color-neutral-dark: #0F0F0F;
+
+  --color-action-red: #FF0000;
+  --color-action-hover: #D00000;
+  --color-surface-card: #1C1B1B;
+  --color-border-card: #333333;
+}
+
+@layer base {
+  body {
+    background-color: #0F0F0F;
+    color: #e5e2e1;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Custom visual glow animations and scrollbars */
+.subtle-glow {
+  box-shadow: 0 0 20px 0 rgba(255, 0, 0, 0.15);
+}
+
+.subtle-glow-active {
+  box-shadow: 0 0 25px 5px rgba(255, 0, 0, 0.3);
+}
+
+.blue-glow-active {
+  box-shadow: 0 0 25px 5px rgba(62, 166, 255, 0.3);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0F0F0F;
+}
+::-webkit-scrollbar-thumb {
+  background: #282828;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3EA6FF;
+}
+
