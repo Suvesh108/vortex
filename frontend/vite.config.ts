@@ -13,9 +13,12 @@ export default defineConfig(() => {
     },
     server: {
       proxy: {
+        // This proxy is ONLY active during local `npm run dev`.
+        // Vercel production builds bypass it entirely and use API_BASE_URL from App.tsx.
         '/api': {
-          target: 'http://localhost:5000',
+          target: process.env.VITE_BACKEND_URL || 'http://localhost:5000',
           changeOrigin: true,
+          secure: false,
         },
       },
       // HMR is disabled in AI Studio via DISABLE_HMR env var.

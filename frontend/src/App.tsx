@@ -27,7 +27,11 @@ import FeatureGrid from './components/FeatureGrid';
 import { SAMPLE_PRESETS, extractUrlMetadata, EXTRACTION_STEPS_LOGS } from './data';
 import { DownloadStatus, MediaMetadata, MediaQuality, DownloadLog, DownloadHistoryItem, UserSettings } from './types';
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'https://vortex-601m.onrender.com';
+// In local dev, the Vite proxy forwards /api → localhost:5000 (no base URL needed).
+// In production (Vercel build), VITE_BACKEND_URL must be set to the Render backend URL.
+// Hardcoding the Render URL as a final safety net so the app always works.
+const RENDER_BACKEND = 'https://vortex-601m.onrender.com';
+const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || RENDER_BACKEND).replace(/\/$/, '');
 
 export default function App() {
   const [inputUrl, setInputUrl] = useState('');

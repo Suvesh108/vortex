@@ -15,11 +15,15 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const PYTHON_CMD = process.env.PYTHON_CMD || (process.platform === 'win32' ? 'python' : 'python3');
 
+// Allow all origins – required so the Vercel frontend can reach this Render backend
 app.use(cors({
-  origin: '*',
+  origin: true,           // reflect the request Origin header (works with any domain)
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  optionsSuccessStatus: 200  // some browsers send 204 for OPTIONS; 200 is safest
 }));
+// Handle preflight requests for every route
+app.options('*', cors());
 app.use(express.json());
 
 // Temp directory for downloads
