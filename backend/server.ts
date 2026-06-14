@@ -112,7 +112,10 @@ app.get('/api/info', (req, res) => {
   });
 
   pythonProcess.stderr.on('data', (data) => {
-    stderrData += data.toString();
+    const line = data.toString().trim();
+    stderrData += line + '\n';
+    // Always log stderr so [STARTUP] cookie checks and [STATUS] retries appear in Render logs
+    if (line) console.log(`[downloader.py] ${line}`);
   });
 
   pythonProcess.on('close', (code) => {
