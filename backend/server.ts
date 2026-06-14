@@ -1,6 +1,5 @@
 import express from 'express';
-import cors from 'cors';
-import { spawn, exec } from 'child_process';
+import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
@@ -13,17 +12,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const PYTHON_CMD = process.env.PYTHON_CMD || (process.platform === 'win32' ? 'python' : 'python3');
 
-// CORS config — applied globally to every request including OPTIONS preflight
-const corsOptions = {
-  origin: true,          // reflect request Origin (allows any domain)
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));          // apply to all routes
-app.options('*', cors(corsOptions)); // explicitly handle preflight for every route
 app.use(express.json());
 
 // Temp directory for downloads
@@ -88,11 +77,6 @@ setInterval(() => {
   });
 }, 10 * 60 * 1000); // every 10 mins
 
-// Health check — confirms the server is alive and CORS is working
-app.get('/', (_req, res) => {
-  res.json({ status: 'ok', message: 'Vortex backend is running.' });
-});
-
 // 1. GET /api/info - Fetch video metadata
 app.get('/api/info', (req, res) => {
   const videoUrl = req.query.url as string;
@@ -102,7 +86,7 @@ app.get('/api/info', (req, res) => {
 
   console.log(`Fetching info for URL: ${videoUrl}`);
 
-  const pythonProcess = spawn(PYTHON_CMD, ['downloader.py', 'info', videoUrl]);
+  const pythonProcess = spawn('python', ['downloader.py', 'info', videoUrl]);
 
   let stdoutData = '';
   let stderrData = '';
@@ -112,10 +96,7 @@ app.get('/api/info', (req, res) => {
   });
 
   pythonProcess.stderr.on('data', (data) => {
-    const line = data.toString().trim();
-    stderrData += line + '\n';
-    // Always log stderr so [STARTUP] cookie checks and [STATUS] retries appear in Render logs
-    if (line) console.log(`[downloader.py] ${line}`);
+    stderrData += data.toString();
   });
 
   pythonProcess.on('close', (code) => {
@@ -173,7 +154,7 @@ app.post('/api/download', (req, res) => {
   console.log(`Starting download job: ${jobId} for URL: ${url}`);
 
   // Spawn python script in download mode
-  const pythonProcess = spawn(PYTHON_CMD, ['downloader.py', 'download', url, formatId, filePath]);
+  const pythonProcess = spawn('python', ['downloader.py', 'download', url, formatId, filePath]);
 
   pythonProcess.stdout.on('data', (data) => {
     const lines = data.toString().split('\n');
@@ -278,20 +259,15 @@ app.get('/api/download/file', (req, res) => {
   });
 });
 
-// Remove legacy frontend static serving block — frontend is now hosted on Vercel
-// (keeping this note so no one re-adds it accidentally)
+// Serve frontend assets in production mode
+const distPath = path.join(__dirname, 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+}
 
 app.listen(PORT, () => {
-  console.log(`Vortex backend server running on port ${PORT}`);
-
-  // Auto-update yt-dlp on startup asynchronously to bypass anti-bot updates
-  console.log('Checking/updating yt-dlp dependency...');
-  const pipCmd = process.platform === 'win32' ? 'pip install -U yt-dlp' : 'pip3 install -U yt-dlp --break-system-packages';
-  exec(pipCmd, (err, stdout, stderr) => {
-    if (err) {
-      console.error('Failed to auto-update yt-dlp on startup:', err);
-    } else {
-      console.log('yt-dlp auto-update completed:\n', stdout.trim());
-    }
-  });
+  console.log(`Vortex backend server running on http://localhost:${PORT}`);
 });

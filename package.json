@@ -1,15 +1,40 @@
 {
-  "name": "vortex-root",
+  "name": "react-example",
   "private": true,
-  "workspaces": [
-    "frontend",
-    "backend"
-  ],
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace=frontend\" \"npm run dev --workspace=backend\"",
-    "build": "npm run build --workspace=frontend"
+    "dev": "concurrently \"npm.cmd run dev:vite\" \"npm.cmd run dev:server\"",
+    "dev:vite": "cd frontend && npx vite --port=3000 --host=0.0.0.0",
+    "dev:server": "cd backend && tsx server.ts",
+    "server": "cd backend && tsx server.ts",
+    "build": "cd frontend && npx vite build",
+    "preview": "cd frontend && npx vite preview",
+    "clean": "rm -rf frontend/dist backend/server.js",
+    "lint": "cd frontend && tsc --noEmit"
+  },
+  "dependencies": {
+    "@google/genai": "^2.4.0",
+    "@tailwindcss/vite": "^4.1.14",
+    "@vitejs/plugin-react": "^5.0.4",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "lucide-react": "^0.546.0",
+    "motion": "^12.23.24",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "vite": "^6.2.3"
   },
   "devDependencies": {
-    "concurrently": "^10.0.3"
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.14.0",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^10.0.3",
+    "esbuild": "^0.25.0",
+    "sharp": "^0.35.1",
+    "tailwindcss": "^4.1.14",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.3"
   }
 }

@@ -27,12 +27,6 @@ import FeatureGrid from './components/FeatureGrid';
 import { SAMPLE_PRESETS, extractUrlMetadata, EXTRACTION_STEPS_LOGS } from './data';
 import { DownloadStatus, MediaMetadata, MediaQuality, DownloadLog, DownloadHistoryItem, UserSettings } from './types';
 
-// In local dev, the Vite proxy forwards /api → localhost:5000 (no base URL needed).
-// In production (Vercel build), VITE_BACKEND_URL must be set to the Render backend URL.
-// Hardcoding the Render URL as a final safety net so the app always works.
-const RENDER_BACKEND = 'http://localhost:5000';
-const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || RENDER_BACKEND).replace(/\/$/, '');
-
 export default function App() {
   const [inputUrl, setInputUrl] = useState('');
   const [status, setStatus] = useState<DownloadStatus>('ready'); // Start as 'ready' to show standby empty state
@@ -126,7 +120,7 @@ export default function App() {
     setLogs([]);
     addLog('info', `Parsing connection gateway: ${urlToExtract}`);
 
-    fetch(`${API_BASE_URL}/api/info?url=${encodeURIComponent(urlToExtract)}`)
+    fetch(`/api/info?url=${encodeURIComponent(urlToExtract)}`)
       .then(res => {
         if (!res.ok) {
           return res.json().then(err => { throw new Error(err.error || 'Extraction failed') });
@@ -165,7 +159,7 @@ export default function App() {
 
     addLog('info', `Requesting stream encapsulation matching target: [${selectedFormat.format} - ${selectedFormat.resolution}]`);
 
-    fetch(`${API_BASE_URL}/api/download`, {
+    fetch('/api/download', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -185,7 +179,7 @@ export default function App() {
     })
     .then(({ jobId }) => {
       const pollInterval = setInterval(() => {
-        fetch(`${API_BASE_URL}/api/download/progress?jobId=${jobId}`)
+        fetch(`/api/download/progress?jobId=${jobId}`)
           .then(res => res.json())
           .then(data => {
             if (data.error) {
@@ -232,12 +226,7 @@ export default function App() {
               }
 
               if (settings.autoDownload) {
-                const link = document.createElement('a');
-                link.href = `${API_BASE_URL}/api/download/file?jobId=${jobId}`;
-                link.setAttribute('download', '');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                window.location.href = `/api/download/file?jobId=${jobId}`;
               }
             } else if (data.status === 'error') {
               clearInterval(pollInterval);

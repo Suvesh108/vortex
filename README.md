@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="frontend/public/assets/logo-og.png" alt="VortexDownloader Logo" width="100%" />
+  <img src="public/assets/logo-og.png" alt="VortexDownloader Logo" width="100%" />
   
   <br />
   <br />
@@ -70,28 +70,6 @@ VortexDownloader uses a unique split-tier architecture:
 1. **The React Client** provides an aesthetic UI for pasting links and tracking progress visually. It proxies requests via `/api` to the backend.
 2. **The Express Server** acts as the command dispatcher, securely handling inbound URLs.
 3. **The Python Core (`downloader.py`)** runs as an isolated subprocess. It queries metadata, selects formats, downloads parts concurrently, and instructs `FFmpeg` to stitch the final outputs into the `temp_downloads` cache before delivering them back to the user's browser.
-
-## 🌐 Cloud Deployment
-
-Vortex is fully optimized for a distributed cloud architecture: **Frontend on Vercel** and **Backend on Railway**.
-
-### 1. Backend Deployment (Railway)
-1. Log in to [Railway](https://railway.app/) and create a new project.
-2. Link your GitHub repository (`Suvesh108/vortex`).
-3. Railway will automatically detect the root `Dockerfile` and build the Node/Python container.
-   * *Alternatively:* You can configure the service Root Directory to `/backend` in Railway settings.
-4. Add any required environment variables (such as `GEMINI_API_KEY` for AI features).
-5. Once deployed, Railway will generate a **Public URL** (e.g., `https://backend-production-xxxx.up.railway.app`). **Copy this URL**.
-
-### 2. Frontend Deployment (Vercel)
-1. Log in to [Vercel](https://vercel.com/) and import your project.
-2. In the import settings, set the **Root Directory** to `frontend`.
-3. In **Environment Variables**, add:
-   * **Key:** `VITE_BACKEND_URL`
-   * **Value:** The Railway Public URL you copied (e.g., `https://backend-production-xxxx.up.railway.app` without a trailing slash).
-4. Click **Deploy**. Vercel will build and host the React interface.
-
----
 
 ## 📝 License
 © 2026 VortexDownloader. Open-source utility. All rights reserved.
