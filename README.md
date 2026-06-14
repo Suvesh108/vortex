@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="public/assets/logo-og.png" alt="VortexDownloader Logo" width="100%" />
+  <img src="frontend/public/assets/logo-og.png" alt="VortexDownloader Logo" width="100%" />
   
   <br />
   <br />
