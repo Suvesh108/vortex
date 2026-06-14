@@ -8,3 +8,4 @@ coverage/
 !.env.example
 backend/temp_downloads/*
 !backend/temp_downloads/.gitkeep
+backend/cookies.txt

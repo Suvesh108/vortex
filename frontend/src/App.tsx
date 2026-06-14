@@ -30,7 +30,7 @@ import { DownloadStatus, MediaMetadata, MediaQuality, DownloadLog, DownloadHisto
 // In local dev, the Vite proxy forwards /api → localhost:5000 (no base URL needed).
 // In production (Vercel build), VITE_BACKEND_URL must be set to the Render backend URL.
 // Hardcoding the Render URL as a final safety net so the app always works.
-const RENDER_BACKEND = 'https://vortex-601m.onrender.com';
+const RENDER_BACKEND = 'http://localhost:5000';
 const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || RENDER_BACKEND).replace(/\/$/, '');
 
 export default function App() {
