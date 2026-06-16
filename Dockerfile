@@ -55,11 +55,11 @@ COPY backend ./backend
 COPY --from=builder /app/frontend/dist ./backend/dist
 
 # Expose backend port
-EXPOSE 5000
+EXPOSE 5001
 
 # Environment variables
 ENV NODE_ENV=production
-ENV PORT=5000
+ENV PORT=5001
 
 # Run the backend server using npx tsx
 CMD ["npx", "tsx", "backend/server.ts"]
