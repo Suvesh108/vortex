@@ -15,6 +15,8 @@ const PORT = process.env.PORT || 5001;
 
 app.use(express.json());
 
+const pythonScript = path.join(__dirname, 'downloader.py');
+
 // Temp directory for downloads
 const TEMP_DIR = path.join(__dirname, 'temp_downloads');
 if (!fs.existsSync(TEMP_DIR)) {
@@ -86,7 +88,7 @@ app.get('/api/info', (req, res) => {
 
   console.log(`Fetching info for URL: ${videoUrl}`);
 
-  const pythonProcess = spawn('python', ['downloader.py', 'info', videoUrl]);
+  const pythonProcess = spawn('python', [pythonScript, 'info', videoUrl]);
 
   let stdoutData = '';
   let stderrData = '';
@@ -154,7 +156,7 @@ app.post('/api/download', (req, res) => {
   console.log(`Starting download job: ${jobId} for URL: ${url}`);
 
   // Spawn python script in download mode
-  const pythonProcess = spawn('python', ['downloader.py', 'download', url, formatId, filePath]);
+  const pythonProcess = spawn('python', [pythonScript, 'download', url, formatId, filePath]);
 
   pythonProcess.stdout.on('data', (data) => {
     const lines = data.toString().split('\n');
