@@ -27,6 +27,8 @@ import FeatureGrid from './components/FeatureGrid';
 import { SAMPLE_PRESETS, extractUrlMetadata, EXTRACTION_STEPS_LOGS } from './data';
 import { DownloadStatus, MediaMetadata, MediaQuality, DownloadLog, DownloadHistoryItem, UserSettings } from './types';
 
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export default function App() {
   const [inputUrl, setInputUrl] = useState('');
   const [status, setStatus] = useState<DownloadStatus>('ready'); // Start as 'ready' to show standby empty state
@@ -120,7 +122,7 @@ export default function App() {
     setLogs([]);
     addLog('info', `Parsing connection gateway: ${urlToExtract}`);
 
-    fetch(`/api/info?url=${encodeURIComponent(urlToExtract)}`)
+    fetch(`${API_BASE}/api/info?url=${encodeURIComponent(urlToExtract)}`)
       .then(res => {
         if (!res.ok) {
           return res.json().then(err => { throw new Error(err.error || 'Extraction failed') });
@@ -159,7 +161,7 @@ export default function App() {
 
     addLog('info', `Requesting stream encapsulation matching target: [${selectedFormat.format} - ${selectedFormat.resolution}]`);
 
-    fetch('/api/download', {
+    fetch(`${API_BASE}/api/download`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -179,7 +181,7 @@ export default function App() {
     })
     .then(({ jobId }) => {
       const pollInterval = setInterval(() => {
-        fetch(`/api/download/progress?jobId=${jobId}`)
+        fetch(`${API_BASE}/api/download/progress?jobId=${jobId}`)
           .then(res => res.json())
           .then(data => {
             if (data.error) {
@@ -226,7 +228,7 @@ export default function App() {
               }
 
               if (settings.autoDownload) {
-                window.location.href = `/api/download/file?jobId=${jobId}`;
+                window.location.href = `${API_BASE}/api/download/file?jobId=${jobId}`;
               }
             } else if (data.status === 'error') {
               clearInterval(pollInterval);
@@ -247,7 +249,7 @@ export default function App() {
   // Deliver downloaded file from Express server
   const triggerFileSave = (title: string, format: string, size: string, resolution: string) => {
     if (completedJobId) {
-      window.location.href = `/api/download/file?jobId=${completedJobId}`;
+      window.location.href = `${API_BASE}/api/download/file?jobId=${completedJobId}`;
       addLog('success', `Triggered browser file download delivery.`);
     } else {
       addLog('error', `Active download session ID not found. Save to disk aborted.`);

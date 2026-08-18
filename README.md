@@ -58,6 +58,23 @@ npm run dev
 ```
 The application will be accessible at `http://localhost:3000`.
 
+## 🌐 Cloud Deployment
+
+### Option 1: Render (Full-Stack All-in-One — Recommended)
+Render runs the Docker container with the Node backend, Python 3, and FFmpeg:
+1. Connect your GitHub repository to [Render](https://render.com/).
+2. Create a new **Web Service** and choose **Docker** runtime (or apply Blueprint via `render.yaml`).
+3. Set the Health Check Path to `/api/health`.
+4. Deploy! Your app will be live with full video extraction and stitching capabilities.
+
+### Option 2: Split Deployment (Vercel Frontend + Render Backend)
+- **Frontend (Vercel)**:
+  1. Import the repository into [Vercel](https://vercel.com/).
+  2. Set the Environment Variable: `VITE_API_URL=https://your-backend-service.onrender.com`
+  3. Deploy!
+- **Backend (Render)**:
+  1. Deploy as a Docker Web Service on Render using the included `Dockerfile`.
+
 ## 🏗️ Tech Stack
 
 - **Frontend**: React 19, Vite, Tailwind CSS v4, Framer Motion, Lucide Icons.
