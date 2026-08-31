@@ -21,14 +21,15 @@
 
 <hr />
 
-## 📱 Android App (v0.3)
+## 📱 Android App (v0.3.1)
 
-VortexDownloader is available as a standalone Android application with built-in extraction, local storage path browsing, link vault management, native download notifications, and automatic update checks!
+VortexDownloader is available as a standalone Android application with built-in binary extraction, direct stream downloading (full 100MB+ media files), local storage path browsing, link vault management, native download notifications, and automatic update checks!
 
-- **Download APK (v0.3)**: [**VortexDownloader-v0.3.apk**](release/VortexDownloader-v0.3.apk)
-- **Version**: `0.3` (Release v0.3)
+- **Download APK (v0.3.1)**: [**VortexDownloader-v0.3.1.apk**](release/VortexDownloader-v0.3.1.apk)
+- **Version**: `0.3.1` (Release v0.3.1)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.3**:
+- **What's New in v0.3.1**:
+  - 🚀 **Full Binary Media Stream Engine**: Fixed issue where files were saved with truncated sizes. Media streams now download their entire real binary size (50MB–500MB+) chunk-by-chunk directly to device storage.
   - 📁 **Dedicated Download Storage Location**: Clear path viewer (`Internal Storage > Download > VortexDownloader`) and copy path tools in Settings.
   - 🗄️ **Full Archived Media Vault History**: Complete history log of all used links and downloads with individual link removal, copy link, re-load, re-save, and clear vault controls.
   - 🔄 **In-App Update Checker**: Directly check GitHub for new versions and download updates within settings.
