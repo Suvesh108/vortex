@@ -172,6 +172,24 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                     </p>
                   </div>
                 </label>
+
+                {/* Custom Backend URL */}
+                <div className="space-y-1.5 pt-2 border-t border-gray-800 font-sans">
+                  <label className="text-xs font-semibold text-gray-300 uppercase letter-wider flex items-center gap-1.5 font-mono">
+                    <Sliders className="w-3.5 h-3.5 text-action-red" />
+                    Custom Python / Cloud Backend URL (Optional)
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="e.g. https://vortex-backend.onrender.com"
+                    value={settings.backendUrl || ''}
+                    onChange={(e) => updateField('backendUrl', e.target.value)}
+                    className="w-full bg-secondary-grey/40 border border-gray-800 rounded px-3 py-2 text-xs font-mono text-white placeholder-gray-600 focus:outline-none focus:border-action-red"
+                  />
+                  <p className="text-[11px] text-gray-500">
+                    Leave blank to use the built-in standalone extraction engine.
+                  </p>
+                </div>
               </div>
             </div>
 

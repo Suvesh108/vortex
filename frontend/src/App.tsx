@@ -24,8 +24,9 @@ import PrivacyModal from './components/PrivacyModal';
 import TerminalLogs from './components/TerminalLogs';
 import HistoryList from './components/HistoryList';
 import FeatureGrid from './components/FeatureGrid';
-import { SAMPLE_PRESETS, extractUrlMetadata, EXTRACTION_STEPS_LOGS } from './data';
+import { SAMPLE_PRESETS } from './data';
 import { DownloadStatus, MediaMetadata, MediaQuality, DownloadLog, DownloadHistoryItem, UserSettings } from './types';
+import { extractMediaInfo, downloadMediaDirect } from './extractor';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -111,7 +112,7 @@ export default function App() {
   };
 
   // extraction cycle
-  const triggerExtraction = (urlToExtract: string) => {
+  const triggerExtraction = async (urlToExtract: string) => {
     if (!urlToExtract.trim()) {
       addLog('error', 'Inbound URL paste is empty. Supply valid target endpoint.');
       return;
@@ -122,24 +123,19 @@ export default function App() {
     setLogs([]);
     addLog('info', `Parsing connection gateway: ${urlToExtract}`);
 
-    fetch(`${API_BASE}/api/info?url=${encodeURIComponent(urlToExtract)}`)
-      .then(res => {
-        if (!res.ok) {
-          return res.json().then(err => { throw new Error(err.error || 'Extraction failed') });
-        }
-        return res.json();
-      })
-      .then(data => {
-        setMetadata(data);
+    try {
+      const data = await extractMediaInfo(urlToExtract, settings.backendUrl, addLog);
+      setMetadata(data);
+      if (data.formats && data.formats.length > 0) {
         setSelectedFormat(data.formats[0]);
-        setStatus('ready');
-        addLog('success', `Vortex extraction sequence complete! Content state is READY.`);
-        addLog('success', `Found ${data.formats.length} adaptive layout quality targets.`);
-      })
-      .catch(err => {
-        setStatus('ready');
-        addLog('error', `Extraction sequence aborted: ${err.message}`);
-      });
+      }
+      setStatus('ready');
+      addLog('success', `Vortex extraction sequence complete! Content state is READY.`);
+      addLog('success', `Found ${data.formats.length} adaptive layout quality targets.`);
+    } catch (err: any) {
+      setStatus('ready');
+      addLog('error', `Extraction sequence aborted: ${err.message || err}`);
+    }
   };
 
   // Preset quick click
@@ -149,7 +145,7 @@ export default function App() {
   };
 
   // Real Download trigger
-  const triggerDownloadSimulation = () => {
+  const triggerDownloadSimulation = async () => {
     if (!metadata || !selectedFormat) return;
 
     setStatus('downloading');
@@ -161,89 +157,51 @@ export default function App() {
 
     addLog('info', `Requesting stream encapsulation matching target: [${selectedFormat.format} - ${selectedFormat.resolution}]`);
 
-    fetch(`${API_BASE}/api/download`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        url: metadata.originalUrl,
-        formatId: selectedFormat.id,
-        title: metadata.title,
-        format: selectedFormat.format
-      })
-    })
-    .then(res => {
-      if (!res.ok) {
-        return res.json().then(err => { throw new Error(err.error || 'Failed to start download') });
-      }
-      return res.json();
-    })
-    .then(({ jobId }) => {
-      const pollInterval = setInterval(() => {
-        fetch(`${API_BASE}/api/download/progress?jobId=${jobId}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.error) {
-              clearInterval(pollInterval);
-              setStatus('ready');
-              addLog('error', `Download aborted: ${data.error}`);
-              return;
-            }
+    try {
+      const result = await downloadMediaDirect(
+        metadata,
+        selectedFormat,
+        settings.backendUrl,
+        (progress, speed, eta) => {
+          setDownloadProgress(progress);
+          setSimulatedSpeed(speed);
+          setSimulatedEta(eta);
+        },
+        addLog
+      );
 
-            if (data.logs) {
-              setLogs(data.logs);
-            }
+      if (result.success) {
+        setStatus('completed');
+        const jobId = Math.random().toString(36).substring(2, 9);
+        setCompletedJobId(jobId);
 
-            setDownloadProgress(data.progress);
-            setSimulatedSpeed(data.speed);
-            setSimulatedEta(data.eta);
-
-            if (data.status === 'completed') {
-              clearInterval(pollInterval);
-              setStatus('completed');
-              setCompletedJobId(jobId);
-              
-              if (settings.saveHistory) {
-                const nowStr = new Date().toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                });
-
-                const newHistoryItem: DownloadHistoryItem = {
-                  id: jobId,
-                  title: metadata.title,
-                  originalUrl: metadata.originalUrl,
-                  thumbnail: metadata.thumbnail,
-                  size: selectedFormat.size,
-                  resolution: selectedFormat.resolution,
-                  format: selectedFormat.format,
-                  timestamp: nowStr
-                };
-
-                setHistory(prev => [newHistoryItem, ...prev.filter(h => h.originalUrl !== metadata.originalUrl)]);
-              }
-
-              if (settings.autoDownload) {
-                window.location.href = `${API_BASE}/api/download/file?jobId=${jobId}`;
-              }
-            } else if (data.status === 'error') {
-              clearInterval(pollInterval);
-              setStatus('ready');
-            }
-          })
-          .catch(err => {
-            console.error('Error polling progress:', err);
+        if (settings.saveHistory) {
+          const nowStr = new Date().toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
           });
-      }, 1000);
-    })
-    .catch(err => {
+
+          const newHistoryItem: DownloadHistoryItem = {
+            id: jobId,
+            title: metadata.title,
+            originalUrl: metadata.originalUrl,
+            thumbnail: metadata.thumbnail,
+            size: selectedFormat.size,
+            resolution: selectedFormat.resolution,
+            format: selectedFormat.format,
+            timestamp: nowStr
+          };
+
+          setHistory(prev => [newHistoryItem, ...prev.filter(h => h.originalUrl !== metadata.originalUrl)]);
+        }
+      }
+    } catch (err: any) {
       setStatus('ready');
-      addLog('error', `Could not initialize download task: ${err.message}`);
-    });
+      addLog('error', `Could not initialize download task: ${err.message || err}`);
+    }
   };
 
   // Deliver downloaded file from Express server

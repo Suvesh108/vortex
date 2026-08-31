@@ -6,6 +6,7 @@ export interface MediaQuality {
   resolution: string;
   size: string;
   bitrate: string;
+  directUrl?: string;
 }
 
 export interface MediaMetadata {
@@ -15,6 +16,7 @@ export interface MediaMetadata {
   thumbnail: string;
   originalUrl: string;
   formats: MediaQuality[];
+  downloadUrl?: string;
 }
 
 export interface DownloadLog {
@@ -41,4 +43,5 @@ export interface UserSettings {
   sampleRatekHz: number;
   autoDownload: boolean;
   saveHistory: boolean;
+  backendUrl?: string;
 }
