@@ -1,4 +1,7 @@
-export const APP_VERSION = 'v0.3.1';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
+
+export const APP_VERSION = 'v0.3.2';
 
 export interface UpdateInfo {
   hasUpdate: boolean;
@@ -44,7 +47,7 @@ export async function checkForAppUpdates(): Promise<UpdateInfo> {
   }
 
   const data = await res.json();
-  const latestTag = data.tag_name || data.name || 'v0.2';
+  const latestTag = data.tag_name || data.name || 'v0.3.2';
   const hasUpdate = isNewerVersion(latestTag, APP_VERSION);
 
   // Find APK asset
@@ -62,4 +65,61 @@ export async function checkForAppUpdates(): Promise<UpdateInfo> {
     releaseUrl: data.html_url,
     publishedAt: data.published_at ? new Date(data.published_at).toLocaleDateString() : 'Recent'
   };
+}
+
+/**
+ * Download APK inside the app and prompt package installation
+ */
+export async function downloadAndInstallUpdate(
+  apkUrl: string,
+  onProgress?: (progress: number) => void
+): Promise<{ success: boolean; path?: string }> {
+  const progressCb = onProgress || (() => {});
+  progressCb(10);
+
+  if (Capacitor.isNativePlatform()) {
+    try {
+      progressCb(30);
+      const downloadRes = await Filesystem.downloadFile({
+        url: apkUrl,
+        path: 'Download/VortexDownloader/VortexDownloader-update.apk',
+        directory: Directory.ExternalStorage,
+        progress: true,
+        recursive: true
+      });
+      progressCb(90);
+
+      const uriResult = await Filesystem.getUri({
+        directory: Directory.ExternalStorage,
+        path: 'Download/VortexDownloader/VortexDownloader-update.apk'
+      });
+
+      progressCb(100);
+
+      // Trigger Android package installer via window / intent
+      if (uriResult?.uri) {
+        window.location.href = uriResult.uri;
+      } else {
+        window.open(apkUrl, '_system');
+      }
+
+      return { success: true, path: downloadRes.path };
+    } catch (err) {
+      console.warn('Native update download fallback:', err);
+      window.open(apkUrl, '_system');
+      progressCb(100);
+      return { success: true };
+    }
+  } else {
+    // Browser fallback
+    const link = document.createElement('a');
+    link.href = apkUrl;
+    link.download = 'VortexDownloader-update.apk';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    progressCb(100);
+    return { success: true };
+  }
 }

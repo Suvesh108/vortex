@@ -20,7 +20,7 @@ import {
   Check
 } from 'lucide-react';
 import { UserSettings } from '../types';
-import { checkForAppUpdates, UpdateInfo, APP_VERSION } from '../updater';
+import { checkForAppUpdates, downloadAndInstallUpdate, UpdateInfo, APP_VERSION } from '../updater';
 import { requestAppPermissions, AppPermissionStatus } from '../permissions';
 import { getDownloadStoragePath } from '../extractor';
 
@@ -35,6 +35,9 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
+  const [installingUpdate, setInstallingUpdate] = useState(false);
+  const [updateDownloadProgress, setUpdateDownloadProgress] = useState(0);
+  const [updateInstalledMsg, setUpdateInstalledMsg] = useState<string | null>(null);
 
   const [permissionStatus, setPermissionStatus] = useState<AppPermissionStatus>({
     storage: 'prompt',
@@ -42,6 +45,24 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
   });
   const [requestingPerms, setRequestingPerms] = useState(false);
   const [copiedPath, setCopiedPath] = useState(false);
+
+  const handleDownloadAndInstall = async () => {
+    if (!updateInfo?.apkDownloadUrl) return;
+    setInstallingUpdate(true);
+    setUpdateDownloadProgress(15);
+    setUpdateError(null);
+    setUpdateInstalledMsg(null);
+    try {
+      await downloadAndInstallUpdate(updateInfo.apkDownloadUrl, (p) => {
+        setUpdateDownloadProgress(p);
+      });
+      setUpdateInstalledMsg("APK downloaded! Launching Android package installer...");
+    } catch (e: any) {
+      setUpdateError(`Install failed: ${e.message || e}`);
+    } finally {
+      setInstallingUpdate(false);
+    }
+  };
 
   const handleCopyPath = () => {
     const p = getDownloadStoragePath();
@@ -178,16 +199,16 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                         <p className="text-xs text-gray-300 line-clamp-2">
                           {updateInfo.releaseNotes}
                         </p>
-                        <div className="pt-1 flex gap-2">
-                          <a
-                            href={updateInfo.apkDownloadUrl || updateInfo.releaseUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-3 py-1.5 bg-action-red hover:bg-action-hover text-white rounded font-bold text-xs flex items-center gap-1.5 shadow transition-all"
+                        <div className="pt-1 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={handleDownloadAndInstall}
+                            disabled={installingUpdate}
+                            className="px-3.5 py-1.5 bg-action-red hover:bg-action-hover text-white rounded font-bold text-xs flex items-center gap-1.5 shadow transition-all cursor-pointer disabled:opacity-60"
                           >
-                            <Download className="w-3.5 h-3.5" />
-                            Download APK ({updateInfo.latestVersion})
-                          </a>
+                            <Download className={`w-3.5 h-3.5 ${installingUpdate ? 'animate-bounce' : ''}`} />
+                            {installingUpdate ? `Downloading APK (${updateDownloadProgress}%)...` : `Install Update (${updateInfo.latestVersion})`}
+                          </button>
                           <a
                             href={updateInfo.releaseUrl}
                             target="_blank"
@@ -197,6 +218,22 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                             Release Notes <ExternalLink className="w-3 h-3" />
                           </a>
                         </div>
+
+                        {installingUpdate && (
+                          <div className="w-full bg-gray-800 rounded-full h-1.5 overflow-hidden mt-2">
+                            <div 
+                              className="bg-action-red h-full transition-all duration-300"
+                              style={{ width: `${updateDownloadProgress}%` }}
+                            />
+                          </div>
+                        )}
+
+                        {updateInstalledMsg && (
+                          <p className="text-[11px] text-emerald-400 font-mono mt-1 flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5 inline" />
+                            {updateInstalledMsg}
+                          </p>
+                        )}
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">

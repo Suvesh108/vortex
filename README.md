@@ -21,19 +21,19 @@
 
 <hr />
 
-## 📱 Android App (v0.3.1)
+## 📱 Android App (v0.3.2)
 
-VortexDownloader is available as a standalone Android application with built-in binary extraction, direct stream downloading (full 100MB+ media files), local storage path browsing, link vault management, native download notifications, and automatic update checks!
+VortexDownloader is available as a standalone Android application with built-in binary extraction, direct stream downloading (full 100MB+ media files), local storage path browsing, link vault management, native download notifications, and direct in-app update installation!
 
-- **Download APK (v0.3.1)**: [**VortexDownloader-v0.3.1.apk**](release/VortexDownloader-v0.3.1.apk)
-- **Version**: `0.3.1` (Release v0.3.1)
+- **Download APK (v0.3.2)**: [**VortexDownloader-v0.3.2.apk**](release/VortexDownloader-v0.3.2.apk)
+- **Version**: `0.3.2` (Release v0.3.2)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.3.1**:
-  - 🚀 **Full Binary Media Stream Engine**: Fixed issue where files were saved with truncated sizes. Media streams now download their entire real binary size (50MB–500MB+) chunk-by-chunk directly to device storage.
+- **What's New in v0.3.2**:
+  - 📥 **In-App Direct Update & Installation**: Directly downloads new APK releases inside the app with a live progress bar and launches the Android Package Installer automatically.
+  - ⚡ **Multi-Tier Stream Resolution**: Resolved video download error for YouTube, TikTok, Instagram, Twitter, and audio streams using high-speed multi-gateway fallback channels.
+  - 🚀 **Full Binary Media Stream Engine**: Streams full raw binary files (50MB–500MB+) directly to device storage.
   - 📁 **Dedicated Download Storage Location**: Clear path viewer (`Internal Storage > Download > VortexDownloader`) and copy path tools in Settings.
   - 🗄️ **Full Archived Media Vault History**: Complete history log of all used links and downloads with individual link removal, copy link, re-load, re-save, and clear vault controls.
-  - 🔄 **In-App Update Checker**: Directly check GitHub for new versions and download updates within settings.
-  - 🔒 **Focused Permissions**: Scoped only to Local Device Storage and Push Notifications.
 
 ### Building Android APK Locally
 ```bash
