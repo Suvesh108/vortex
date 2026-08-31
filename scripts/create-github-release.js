@@ -25,7 +25,8 @@ async function run() {
 
   const owner = 'Suvesh108';
   const repo = 'vortex';
-  const tag = 'v0.1';
+  const tag = process.argv[2] || 'v0.2';
+  const versionNum = tag.replace(/^v/i, '');
 
   console.log(`Checking existing release for tag ${tag}...`);
   const headers = {
@@ -40,16 +41,16 @@ async function run() {
     headers
   });
 
-  const releaseBody = `## 📱 VortexDownloader v0.1 - Android & Web Release
+  const releaseBody = `## 📱 VortexDownloader ${tag} - Android APK & Web Release
 
-- **Android APK (Direct Install)**: \`VortexDownloader-v0.1.apk\`
+- **Android APK (Direct Install)**: \`VortexDownloader-${tag}.apk\`
 
-✨ **Features**
-- Universal Media Extraction: YouTube, TikTok, Twitter/X, Vimeo, Soundcloud and more.
-- High-Bitrate 4K / 1080p Video and 320kbps MP3 Audio conversions.
-- Native mobile layout built for Android touch displays with sleek dark aesthetic.
-- Zero ads, zero tracking, fast multi-threaded parallel downloads.
-- Real-time download progress tracking with live bitrate & ETA counter.
+✨ **What's New in ${tag}**
+- 🔄 **In-App Update Checker**: Directly check GitHub for new versions and download updates within settings.
+- 🔒 **Focused Permissions**: Scoped only to Local Device Storage (saving media files) and Push Notifications (completion alerts).
+- ⚡ **Standalone Stream Engine**: Built-in universal extraction engine with no server requirement for mobile devices.
+- 🎥 **Universal Media Extraction**: YouTube, TikTok, Twitter/X, Instagram, Vimeo, Soundcloud and more.
+- 🎵 **High-Bitrate 4K / 1080p Video and 320kbps MP3 Audio conversions**.
 `;
 
   if (getRes.status === 200) {
@@ -66,7 +67,7 @@ async function run() {
       body: JSON.stringify({
         tag_name: tag,
         target_commitish: 'main',
-        name: 'VortexDownloader v0.1',
+        name: `VortexDownloader ${tag}`,
         body: releaseBody,
         draft: false,
         prerelease: false
@@ -83,8 +84,8 @@ async function run() {
 
   // Upload Assets
   const apkFiles = [
-    { name: 'VortexDownloader-v0.1.apk', path: 'release/VortexDownloader-v0.1.apk' },
-    { name: 'vortexdownloader.apk', path: 'release/VortexDownloader-v0.1.apk' }
+    { name: `VortexDownloader-${tag}.apk`, path: `release/VortexDownloader-${tag}.apk` },
+    { name: 'vortexdownloader.apk', path: `release/VortexDownloader-${tag}.apk` }
   ];
 
   for (const apk of apkFiles) {

@@ -21,13 +21,17 @@
 
 <hr />
 
-## 📱 Android App (v0.1)
+## 📱 Android App (v0.2)
 
-VortexDownloader is also available as an Android application with native dark theme and mobile-optimized interface!
+VortexDownloader is available as a standalone Android application with built-in extraction, local file storage, native download notifications, and automatic update checks!
 
-- **Download APK**: [**VortexDownloader-v0.1.apk**](release/VortexDownloader-v0.1.apk)
-- **Version**: `0.1` (Release v0.1)
+- **Download APK (v0.2)**: [**VortexDownloader-v0.2.apk**](release/VortexDownloader-v0.2.apk)
+- **Version**: `0.2` (Release v0.2)
 - **Package ID**: `io.vortexdownloader.app`
+- **What's New in v0.2**:
+  - 🔄 **In-App Update Checker**: Directly check GitHub for new versions and download updates within settings.
+  - 🔒 **Focused Permissions**: Scoped only to Local Device Storage (saving media files) and Push Notifications (completion alerts).
+  - ⚡ **Standalone Engine**: No external server required for standard mobile extraction and saving.
 
 ### Building Android APK Locally
 ```bash

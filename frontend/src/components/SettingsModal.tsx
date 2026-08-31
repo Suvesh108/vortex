@@ -1,6 +1,24 @@
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Cpu, Sliders, Volume2, Database, Zap } from 'lucide-react';
+import { 
+  X, 
+  Cpu, 
+  Sliders, 
+  Volume2, 
+  Database, 
+  Zap, 
+  RefreshCw, 
+  Download, 
+  ShieldCheck, 
+  Bell, 
+  FolderCheck,
+  CheckCircle2, 
+  AlertCircle,
+  ExternalLink
+} from 'lucide-react';
 import { UserSettings } from '../types';
+import { checkForAppUpdates, UpdateInfo, APP_VERSION } from '../updater';
+import { requestAppPermissions, AppPermissionStatus } from '../permissions';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -10,6 +28,46 @@ interface SettingsModalProps {
 }
 
 export default function SettingsModal({ isOpen, onClose, settings, onUpdateSettings }: SettingsModalProps) {
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+
+  const [permissionStatus, setPermissionStatus] = useState<AppPermissionStatus>({
+    storage: 'prompt',
+    notifications: 'prompt'
+  });
+  const [requestingPerms, setRequestingPerms] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Check permissions status when opened
+      requestAppPermissions().then(setPermissionStatus).catch(() => {});
+    }
+  }, [isOpen]);
+
+  const handleCheckUpdate = async () => {
+    setCheckingUpdate(true);
+    setUpdateError(null);
+    try {
+      const info = await checkForAppUpdates();
+      setUpdateInfo(info);
+    } catch (e: any) {
+      setUpdateError(e.message || 'Failed to check for updates.');
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
+
+  const handleRequestPermissions = async () => {
+    setRequestingPerms(true);
+    try {
+      const status = await requestAppPermissions();
+      setPermissionStatus(status);
+    } finally {
+      setRequestingPerms(false);
+    }
+  };
+
   const updateField = <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
     onUpdateSettings({
       ...settings,
@@ -36,7 +94,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 15 }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-            className="bg-neutral-dark border border-gray-800 w-full max-w-md rounded-lg overflow-hidden subtle-glow z-10 relative flex flex-col max-h-[90vh]"
+            className="bg-neutral-dark border border-gray-800 w-full max-w-lg rounded-lg overflow-hidden subtle-glow z-10 relative flex flex-col max-h-[90vh]"
           >
             {/* Header */}
             <div className="flex items-center justify-between p-5 border-b border-gray-800 bg-surface-card">
@@ -45,8 +103,8 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                   <Sliders className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-hanken font-bold text-lg text-white">Engine Preferences</h3>
-                  <p className="text-xs text-gray-400">Tweak Vortex download & extraction rules</p>
+                  <h3 className="font-hanken font-bold text-lg text-white">App Preferences & Updates</h3>
+                  <p className="text-xs text-gray-400">Manage Vortex engine, permissions & version</p>
                 </div>
               </div>
               <button 
@@ -58,8 +116,152 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
             </div>
 
             {/* Settings Body */}
-            <div className="p-6 overflow-y-auto space-y-6">
-              {/* Speed Preset Limit */}
+            <div className="p-6 overflow-y-auto space-y-6 text-sm">
+              
+              {/* 1. App Updates Section */}
+              <div className="bg-secondary-grey/20 border border-gray-800 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 text-action-red" />
+                    <span className="text-xs font-semibold text-white font-mono uppercase tracking-wider">
+                      Vortex Downloader Version
+                    </span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-action-red/20 text-action-red border border-action-red/30">
+                    {APP_VERSION}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <p className="text-xs text-gray-400">
+                    Check for official releases & APK updates on GitHub.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleCheckUpdate}
+                    disabled={checkingUpdate}
+                    className="px-3 py-1.5 bg-secondary-grey/50 hover:bg-secondary-grey border border-gray-700 text-white rounded text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer shrink-0 disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${checkingUpdate ? 'animate-spin text-action-red' : ''}`} />
+                    {checkingUpdate ? 'Checking...' : 'Check for Updates'}
+                  </button>
+                </div>
+
+                {/* Update Result Alert */}
+                {updateInfo && (
+                  <div className={`mt-2 p-3 rounded text-xs border ${
+                    updateInfo.hasUpdate 
+                      ? 'bg-action-red/10 border-action-red/30 text-gray-200' 
+                      : 'bg-emerald-950/20 border-emerald-800/40 text-emerald-300'
+                  }`}>
+                    {updateInfo.hasUpdate ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 font-bold text-white">
+                            <AlertCircle className="w-4 h-4 text-action-red" />
+                            New Update Available: {updateInfo.latestVersion}
+                          </div>
+                          <span className="text-[10px] text-gray-400">{updateInfo.publishedAt}</span>
+                        </div>
+                        <p className="text-xs text-gray-300 line-clamp-2">
+                          {updateInfo.releaseNotes}
+                        </p>
+                        <div className="pt-1 flex gap-2">
+                          <a
+                            href={updateInfo.apkDownloadUrl || updateInfo.releaseUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 bg-action-red hover:bg-action-hover text-white rounded font-bold text-xs flex items-center gap-1.5 shadow transition-all"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            Download APK ({updateInfo.latestVersion})
+                          </a>
+                          <a
+                            href={updateInfo.releaseUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 bg-secondary-grey/60 hover:bg-secondary-grey text-gray-300 rounded text-xs flex items-center gap-1 transition-all"
+                          >
+                            Release Notes <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span>You are running the latest version of Vortex Downloader (<strong>{APP_VERSION}</strong>).</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {updateError && (
+                  <div className="p-2.5 bg-red-950/30 border border-red-800/40 rounded text-xs text-red-300 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                    <span>{updateError}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Android App Permissions Section (Storage & Notifications) */}
+              <div className="bg-secondary-grey/20 border border-gray-800 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-action-red" />
+                    <span className="text-xs font-semibold text-white font-mono uppercase tracking-wider">
+                      Android Device Permissions
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRequestPermissions}
+                    disabled={requestingPerms}
+                    className="px-2.5 py-1 bg-action-red/10 hover:bg-action-red/20 text-action-red border border-action-red/30 rounded text-xs font-medium transition-colors cursor-pointer"
+                  >
+                    {requestingPerms ? 'Requesting...' : 'Request Permissions'}
+                  </button>
+                </div>
+
+                <div className="space-y-2 pt-1 font-sans">
+                  {/* Storage permission status */}
+                  <div className="flex items-center justify-between p-2 rounded bg-neutral-dark/60 border border-gray-800/80">
+                    <div className="flex items-center gap-2.5">
+                      <FolderCheck className="w-4 h-4 text-action-red" />
+                      <div>
+                        <p className="text-xs font-medium text-white">Local Device Storage</p>
+                        <p className="text-[11px] text-gray-500">Save extracted 4K/1080p video & MP3 audio to phone storage</p>
+                      </div>
+                    </div>
+                    <span className={`text-[11px] font-mono px-2 py-0.5 rounded font-semibold ${
+                      permissionStatus.storage === 'granted'
+                        ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/30'
+                        : 'bg-amber-950/40 text-amber-400 border border-amber-800/30'
+                    }`}>
+                      {permissionStatus.storage === 'granted' ? 'Allowed' : 'Required for Download'}
+                    </span>
+                  </div>
+
+                  {/* Notification permission status */}
+                  <div className="flex items-center justify-between p-2 rounded bg-neutral-dark/60 border border-gray-800/80">
+                    <div className="flex items-center gap-2.5">
+                      <Bell className="w-4 h-4 text-action-red" />
+                      <div>
+                        <p className="text-xs font-medium text-white">Push Notifications</p>
+                        <p className="text-[11px] text-gray-500">Alert and notify when media download & multiplexing finishes</p>
+                      </div>
+                    </div>
+                    <span className={`text-[11px] font-mono px-2 py-0.5 rounded font-semibold ${
+                      permissionStatus.notifications === 'granted'
+                        ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-800/30'
+                        : 'bg-amber-950/40 text-amber-400 border border-amber-800/30'
+                    }`}>
+                      {permissionStatus.notifications === 'granted' ? 'Allowed' : 'Optional'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Speed Preset Limit */}
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-300 uppercase letter-wider flex items-center gap-1.5 font-mono">
                   <Zap className="w-3.5 h-3.5 text-action-red" />
@@ -81,11 +283,11 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                   ))}
                 </div>
                 <p className="text-[11px] text-gray-500 font-sans">
-                  Controls how quickly downloads simulate in the active progress bar tracker.
+                  Controls bandwidth allocation in the active progress tracker.
                 </p>
               </div>
 
-              {/* Threat splits CPU */}
+              {/* 4. Threat splits CPU */}
               <div className="space-y-2.5">
                 <label className="text-xs font-semibold text-gray-300 uppercase letter-wider flex items-center gap-1.5 font-mono">
                   <Cpu className="w-3.5 h-3.5 text-action-red" />
@@ -107,7 +309,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                 </div>
               </div>
 
-              {/* MP3 Audio Sample conversion rate */}
+              {/* 5. MP3 Audio Sample conversion rate */}
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-300 uppercase letter-wider flex items-center gap-1.5 font-mono">
                   <Volume2 className="w-3.5 h-3.5 text-action-red" />
@@ -130,7 +332,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                 </div>
               </div>
 
-              {/* Toggle rules */}
+              {/* 6. Toggle rules */}
               <div className="space-y-4 pt-2 border-t border-gray-800 font-sans">
                 {/* Auto download */}
                 <label className="flex items-start cursor-pointer group">
@@ -144,10 +346,10 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                   </div>
                   <div className="ml-3">
                     <span className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
-                      Immediate Browser Delivery
+                      Immediate Device Delivery
                     </span>
                     <p className="text-[11px] text-gray-500">
-                      Automatically triggers web-browser save-dialog upon completion of internal Vortex container multiplexing.
+                      Automatically saves media to local storage upon extraction completion.
                     </p>
                   </div>
                 </label>
@@ -164,11 +366,11 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                   </div>
                   <div className="ml-3">
                     <span className="text-sm font-medium text-gray-200 group-hover:text-white transition-colors">
-                      Maintain Archive History
+                      Maintain Local Archive History
                     </span>
                     <p className="text-[11px] text-gray-500 flex items-center gap-1">
                       <Database className="w-3 h-3 inline text-action-red" />
-                      Saves successfully downloaded links in standard client-side browser storage (localStorage).
+                      Saves successfully downloaded links in local device storage.
                     </p>
                   </div>
                 </label>
@@ -198,7 +400,7 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
               <button
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2 rounded text-xs font-bold font-hanken tracking-wide bg-action-red hover:bg-action-hover text-white transition-all duration-200 shadow-lg shadow-action-red/10"
+                className="px-5 py-2 rounded text-xs font-bold font-hanken tracking-wide bg-action-red hover:bg-action-hover text-white transition-all duration-200 shadow-lg shadow-action-red/10 cursor-pointer"
               >
                 APPLY PREFERENCES
               </button>

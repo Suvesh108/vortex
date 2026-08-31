@@ -27,6 +27,7 @@ import FeatureGrid from './components/FeatureGrid';
 import { SAMPLE_PRESETS } from './data';
 import { DownloadStatus, MediaMetadata, MediaQuality, DownloadLog, DownloadHistoryItem, UserSettings } from './types';
 import { extractMediaInfo, downloadMediaDirect } from './extractor';
+import { requestAppPermissions, sendDownloadCompleteNotification } from './permissions';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -85,6 +86,9 @@ export default function App() {
         console.error("Failed to parse user settings", e);
       }
     }
+
+    // Request Android storage & notification permissions on startup
+    requestAppPermissions().catch(console.warn);
   }, []);
 
   // Sync settings helper
@@ -174,6 +178,9 @@ export default function App() {
         setStatus('completed');
         const jobId = Math.random().toString(36).substring(2, 9);
         setCompletedJobId(jobId);
+
+        // Send native device notification
+        sendDownloadCompleteNotification(metadata.title, selectedFormat.format);
 
         if (settings.saveHistory) {
           const nowStr = new Date().toLocaleDateString('en-US', {
