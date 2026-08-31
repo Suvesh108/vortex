@@ -21,17 +21,18 @@
 
 <hr />
 
-## 📱 Android App (v0.2)
+## 📱 Android App (v0.3)
 
-VortexDownloader is available as a standalone Android application with built-in extraction, local file storage, native download notifications, and automatic update checks!
+VortexDownloader is available as a standalone Android application with built-in extraction, local storage path browsing, link vault management, native download notifications, and automatic update checks!
 
-- **Download APK (v0.2)**: [**VortexDownloader-v0.2.apk**](release/VortexDownloader-v0.2.apk)
-- **Version**: `0.2` (Release v0.2)
+- **Download APK (v0.3)**: [**VortexDownloader-v0.3.apk**](release/VortexDownloader-v0.3.apk)
+- **Version**: `0.3` (Release v0.3)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.2**:
+- **What's New in v0.3**:
+  - 📁 **Dedicated Download Storage Location**: Clear path viewer (`Internal Storage > Download > VortexDownloader`) and copy path tools in Settings.
+  - 🗄️ **Full Archived Media Vault History**: Complete history log of all used links and downloads with individual link removal, copy link, re-load, re-save, and clear vault controls.
   - 🔄 **In-App Update Checker**: Directly check GitHub for new versions and download updates within settings.
-  - 🔒 **Focused Permissions**: Scoped only to Local Device Storage (saving media files) and Push Notifications (completion alerts).
-  - ⚡ **Standalone Engine**: No external server required for standard mobile extraction and saving.
+  - 🔒 **Focused Permissions**: Scoped only to Local Device Storage and Push Notifications.
 
 ### Building Android APK Locally
 ```bash

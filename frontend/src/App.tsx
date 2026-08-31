@@ -136,6 +136,34 @@ export default function App() {
       setStatus('ready');
       addLog('success', `Vortex extraction sequence complete! Content state is READY.`);
       addLog('success', `Found ${data.formats.length} adaptive layout quality targets.`);
+
+      if (settings.saveHistory) {
+        const nowStr = new Date().toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        const historyItem: DownloadHistoryItem = {
+          id: Math.random().toString(36).substring(2, 9),
+          title: data.title,
+          originalUrl: urlToExtract,
+          thumbnail: data.thumbnail,
+          size: data.formats?.[0]?.size || 'Direct Stream',
+          resolution: data.formats?.[0]?.resolution || '1080p',
+          format: data.formats?.[0]?.format || 'MP4',
+          timestamp: nowStr
+        };
+
+        setHistory(prev => {
+          const updated = [historyItem, ...prev.filter(h => h.originalUrl !== urlToExtract)];
+          try {
+            localStorage.setItem('vortex_download_history', JSON.stringify(updated));
+          } catch (_) {}
+          return updated;
+        });
+      }
     } catch (err: any) {
       setStatus('ready');
       addLog('error', `Extraction sequence aborted: ${err.message || err}`);
@@ -594,6 +622,11 @@ export default function App() {
             onRemoveItem={handleRemoveHistoryItem}
             onClearAll={handleClearAllHistory}
             onReDownload={handleReDownload}
+            onLoadUrl={(url) => {
+              setInputUrl(url);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              triggerExtraction(url);
+            }}
           />
         </section>
 

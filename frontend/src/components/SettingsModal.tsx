@@ -14,11 +14,15 @@ import {
   FolderCheck,
   CheckCircle2, 
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  Folder,
+  Copy,
+  Check
 } from 'lucide-react';
 import { UserSettings } from '../types';
 import { checkForAppUpdates, UpdateInfo, APP_VERSION } from '../updater';
 import { requestAppPermissions, AppPermissionStatus } from '../permissions';
+import { getDownloadStoragePath } from '../extractor';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -37,6 +41,14 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
     notifications: 'prompt'
   });
   const [requestingPerms, setRequestingPerms] = useState(false);
+  const [copiedPath, setCopiedPath] = useState(false);
+
+  const handleCopyPath = () => {
+    const p = getDownloadStoragePath();
+    navigator.clipboard.writeText('/storage/emulated/0/Download/VortexDownloader');
+    setCopiedPath(true);
+    setTimeout(() => setCopiedPath(false), 2000);
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -261,7 +273,44 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                 </div>
               </div>
 
-              {/* 3. Speed Preset Limit */}
+              {/* 3. Download Storage Location (Browse & Path Viewer) */}
+              <div className="bg-secondary-grey/20 border border-gray-800 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Folder className="w-4 h-4 text-action-red" />
+                    <span className="text-xs font-semibold text-white font-mono uppercase tracking-wider">
+                      Download Storage Location
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopyPath}
+                    className="px-2.5 py-1 bg-secondary-grey/60 hover:bg-secondary-grey text-gray-300 rounded text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer border border-gray-700"
+                  >
+                    {copiedPath ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy Path</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="p-3 rounded bg-neutral-dark/80 border border-gray-800 font-mono text-xs text-action-red flex items-center justify-between gap-2 overflow-x-auto">
+                  <span className="truncate select-all">{getDownloadStoragePath()}</span>
+                </div>
+
+                <p className="text-[11px] text-gray-500 font-sans leading-relaxed">
+                  Downloaded 4K/1080p videos and MP3 tracks are stored in your device's primary <strong>Downloads</strong> folder under <strong>VortexDownloader</strong>. You can browse, play, and share them directly from your phone's <strong>Files</strong> or <strong>Gallery</strong> app.
+                </p>
+              </div>
+
+              {/* 4. Speed Preset Limit */}
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-300 uppercase letter-wider flex items-center gap-1.5 font-mono">
                   <Zap className="w-3.5 h-3.5 text-action-red" />
