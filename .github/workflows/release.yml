@@ -50,7 +50,6 @@ jobs:
         run: |
           mkdir -p dist-apk
           cp android/app/build/outputs/apk/release/app-release.apk dist-apk/VortexDownloader-${{ github.ref_name }}.apk
-          cp android/app/build/outputs/apk/release/app-release.apk dist-apk/vortexdownloader.apk
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
@@ -58,6 +57,5 @@ jobs:
         with:
           files: |
             dist-apk/VortexDownloader-${{ github.ref_name }}.apk
-            dist-apk/vortexdownloader.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

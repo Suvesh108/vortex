@@ -82,10 +82,9 @@ async function run() {
     console.log(`Created release id: ${release.id}`);
   }
 
-  // Upload Assets
+  // Upload Single Release APK Asset
   const apkFiles = [
-    { name: `VortexDownloader-${tag}.apk`, path: `release/VortexDownloader-${tag}.apk` },
-    { name: 'vortexdownloader.apk', path: `release/VortexDownloader-${tag}.apk` }
+    { name: `VortexDownloader-${tag}.apk`, path: `release/VortexDownloader-${tag}.apk` }
   ];
 
   for (const apk of apkFiles) {
