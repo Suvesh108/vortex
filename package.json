@@ -1,7 +1,7 @@
 {
-  "name": "react-example",
+  "name": "vortexdownloader",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:vite\" \"npm run dev:server\"",
@@ -12,9 +12,14 @@
     "build": "cd frontend && npx vite build",
     "preview": "cd frontend && npx vite preview",
     "clean": "rm -rf frontend/dist backend/server.js",
-    "lint": "cd frontend && tsc --noEmit"
+    "lint": "cd frontend && tsc --noEmit",
+    "generate:icons": "node scripts/generate-icons.js",
+    "cap:sync": "npx cap sync android",
+    "build:apk": "node scripts/generate-icons.js && npm run build && npx cap sync android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
     "@google/genai": "^2.4.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
@@ -28,6 +33,7 @@
     "vite": "^6.2.3"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",

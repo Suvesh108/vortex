@@ -12,6 +12,7 @@
 
   <p>
     <a href="#features">Features</a> • 
+    <a href="#android-app">Android APK</a> • 
     <a href="#installation">Installation</a> • 
     <a href="#tech-stack">Tech Stack</a> • 
     <a href="#architecture">Architecture</a>
@@ -19,6 +20,27 @@
 </div>
 
 <hr />
+
+## 📱 Android App (v0.1)
+
+VortexDownloader is also available as an Android application with native dark theme and mobile-optimized interface!
+
+- **Download APK**: [**VortexDownloader-v0.1.apk**](release/VortexDownloader-v0.1.apk)
+- **Version**: `0.1` (Release v0.1)
+- **Package ID**: `io.vortexdownloader.app`
+
+### Building Android APK Locally
+```bash
+# Generate launcher icons from logo
+npm run generate:icons
+
+# Build web distribution and sync Capacitor
+npm run build:apk
+
+# Compile with Gradle
+cd android && ./gradlew assembleRelease
+```
+The signed APK will be generated at `android/app/build/outputs/apk/release/app-release.apk`.
 
 ## ⚡ Features
 
