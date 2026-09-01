@@ -1,7 +1,13 @@
 import { Filesystem, Directory } from '@capacitor/filesystem';
-import { Capacitor } from '@capacitor/core';
+import { registerPlugin, Capacitor } from '@capacitor/core';
 
-export const APP_VERSION = 'v0.3.2';
+export const APP_VERSION = 'v0.3.3';
+
+interface AppUpdaterPlugin {
+  installApk(options: { filePath: string }): Promise<{ success: boolean; message?: string }>;
+}
+
+const AppUpdater = registerPlugin<AppUpdaterPlugin>('AppUpdater');
 
 export interface UpdateInfo {
   hasUpdate: boolean;
@@ -47,7 +53,7 @@ export async function checkForAppUpdates(): Promise<UpdateInfo> {
   }
 
   const data = await res.json();
-  const latestTag = data.tag_name || data.name || 'v0.3.2';
+  const latestTag = data.tag_name || data.name || 'v0.3.3';
   const hasUpdate = isNewerVersion(latestTag, APP_VERSION);
 
   // Find APK asset
@@ -60,7 +66,7 @@ export async function checkForAppUpdates(): Promise<UpdateInfo> {
     currentVersion: APP_VERSION,
     latestVersion: latestTag,
     releaseName: data.name || latestTag,
-    releaseNotes: data.body || 'Performance improvements and bug fixes.',
+    releaseNotes: data.body || 'Performance improvements, local yt-dlp & FFmpeg bundles, and bug fixes.',
     apkDownloadUrl: apkAsset?.browser_download_url || data.html_url,
     releaseUrl: data.html_url,
     publishedAt: data.published_at ? new Date(data.published_at).toLocaleDateString() : 'Recent'
@@ -68,7 +74,7 @@ export async function checkForAppUpdates(): Promise<UpdateInfo> {
 }
 
 /**
- * Download APK inside the app and prompt package installation
+ * Completely internal APK download and native Android package installation prompt
  */
 export async function downloadAndInstallUpdate(
   apkUrl: string,
@@ -79,33 +85,41 @@ export async function downloadAndInstallUpdate(
 
   if (Capacitor.isNativePlatform()) {
     try {
-      progressCb(30);
+      progressCb(25);
+      
+      const subPath = 'Download/VortexDownloader/VortexDownloader-latest.apk';
       const downloadRes = await Filesystem.downloadFile({
         url: apkUrl,
-        path: 'Download/VortexDownloader/VortexDownloader-update.apk',
+        path: subPath,
         directory: Directory.ExternalStorage,
         progress: true,
         recursive: true
       });
-      progressCb(90);
+      
+      progressCb(85);
 
       const uriResult = await Filesystem.getUri({
         directory: Directory.ExternalStorage,
-        path: 'Download/VortexDownloader/VortexDownloader-update.apk'
+        path: subPath
       });
 
-      progressCb(100);
+      progressCb(95);
 
-      // Trigger Android package installer via window / intent
-      if (uriResult?.uri) {
-        window.location.href = uriResult.uri;
-      } else {
-        window.open(apkUrl, '_system');
+      const targetPath = uriResult.uri || downloadRes.path || '';
+
+      // Trigger custom native AppUpdaterPlugin to launch Package Installer internally
+      try {
+        await AppUpdater.installApk({ filePath: targetPath });
+      } catch (pluginErr) {
+        console.warn('Custom plugin installer fallback:', pluginErr);
+        window.location.href = targetPath;
       }
 
-      return { success: true, path: downloadRes.path };
-    } catch (err) {
-      console.warn('Native update download fallback:', err);
+      progressCb(100);
+      return { success: true, path: targetPath };
+    } catch (err: any) {
+      console.warn('Native update download error:', err);
+      // Fallback
       window.open(apkUrl, '_system');
       progressCb(100);
       return { success: true };
@@ -114,7 +128,7 @@ export async function downloadAndInstallUpdate(
     // Browser fallback
     const link = document.createElement('a');
     link.href = apkUrl;
-    link.download = 'VortexDownloader-update.apk';
+    link.download = 'VortexDownloader-latest.apk';
     link.target = '_blank';
     document.body.appendChild(link);
     link.click();

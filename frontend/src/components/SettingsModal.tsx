@@ -347,7 +347,66 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                 </p>
               </div>
 
-              {/* 4. Speed Preset Limit */}
+              {/* 4. Embedded Local Core Engines (yt-dlp, FFmpeg, N_m3u8DL-RE) */}
+              <div className="bg-secondary-grey/20 border border-gray-800 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Cpu className="w-4 h-4 text-action-red" />
+                    <span className="text-xs font-semibold text-white font-mono uppercase tracking-wider">
+                      Bundled Core Engines
+                    </span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950/40 text-emerald-400 border border-emerald-800/30 font-bold">
+                    APK Embedded
+                  </span>
+                </div>
+
+                <div className="space-y-2 pt-1 font-sans">
+                  {/* yt-dlp */}
+                  <div className="flex items-center justify-between p-2.5 rounded bg-neutral-dark/60 border border-gray-800/80">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-white font-mono">yt-dlp</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-secondary-grey/40 text-gray-400 font-mono">v2025.08.15</span>
+                      </div>
+                      <p className="text-[11px] text-gray-500">Universal video/audio extractor & manifest decoder</p>
+                    </div>
+                    <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Local Ready
+                    </span>
+                  </div>
+
+                  {/* FFmpeg */}
+                  <div className="flex items-center justify-between p-2.5 rounded bg-neutral-dark/60 border border-gray-800/80">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-white font-mono">FFmpeg</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-secondary-grey/40 text-gray-400 font-mono">v7.1-static</span>
+                      </div>
+                      <p className="text-[11px] text-gray-500">Lossless audio/video container stitching & transcoding</p>
+                    </div>
+                    <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Local Ready
+                    </span>
+                  </div>
+
+                  {/* N_m3u8DL-RE */}
+                  <div className="flex items-center justify-between p-2.5 rounded bg-neutral-dark/60 border border-gray-800/80">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-white font-mono">N_m3u8DL-RE</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-secondary-grey/40 text-gray-400 font-mono">v0.3.0-beta</span>
+                      </div>
+                      <p className="text-[11px] text-gray-500">Multi-threaded DASH / HLS adaptive stream multiplexer</p>
+                    </div>
+                    <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Local Ready
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. Speed Preset Limit */}
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-gray-300 uppercase letter-wider flex items-center gap-1.5 font-mono">
                   <Zap className="w-3.5 h-3.5 text-action-red" />

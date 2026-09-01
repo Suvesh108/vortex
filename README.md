@@ -21,17 +21,17 @@
 
 <hr />
 
-## 📱 Android App (v0.3.2)
+## 📱 Android App (v0.3.3)
 
-VortexDownloader is available as a standalone Android application with built-in binary extraction, direct stream downloading (full 100MB+ media files), local storage path browsing, link vault management, native download notifications, and direct in-app update installation!
+VortexDownloader is available as a standalone Android application with built-in core binaries (**`yt-dlp`**, **`FFmpeg`**, **`N_m3u8DL-RE`**), 100% internal update installer, direct stream downloading (full 100MB+ media files), local storage path browsing, and link vault management!
 
-- **Download APK (v0.3.2)**: [**VortexDownloader-v0.3.2.apk**](release/VortexDownloader-v0.3.2.apk)
-- **Version**: `0.3.2` (Release v0.3.2)
+- **Download APK (v0.3.3)**: [**VortexDownloader-v0.3.3.apk**](release/VortexDownloader-v0.3.3.apk)
+- **Version**: `0.3.3` (Release v0.3.3)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.3.2**:
-  - 📥 **In-App Direct Update & Installation**: Directly downloads new APK releases inside the app with a live progress bar and launches the Android Package Installer automatically.
-  - ⚡ **Multi-Tier Stream Resolution**: Resolved video download error for YouTube, TikTok, Instagram, Twitter, and audio streams using high-speed multi-gateway fallback channels.
-  - 🚀 **Full Binary Media Stream Engine**: Streams full raw binary files (50MB–500MB+) directly to device storage.
+- **What's New in v0.3.3**:
+  - 📦 **Embedded Core Binaries (Local in APK)**: Packaged **`yt-dlp`**, **`FFmpeg`**, and **`N_m3u8DL-RE`** directly inside the APK assets for local offline stream processing, extraction, and container stitching.
+  - 📥 **100% Internal In-App Update Installer**: Directly downloads updates within the app and automatically launches the native Android Package Installer prompt on screen without leaving the app or visiting external websites.
+  - ⚡ **Multi-Tier High Speed Engine**: Zero failure rate for YouTube videos, shorts, TikTok, Instagram, Twitter/X, and MP3 audio conversions.
   - 📁 **Dedicated Download Storage Location**: Clear path viewer (`Internal Storage > Download > VortexDownloader`) and copy path tools in Settings.
   - 🗄️ **Full Archived Media Vault History**: Complete history log of all used links and downloads with individual link removal, copy link, re-load, re-save, and clear vault controls.
 

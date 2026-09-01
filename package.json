@@ -1,7 +1,7 @@
 {
   "name": "vortexdownloader",
   "private": true,
-  "version": "0.3.2",
+  "version": "0.3.3",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:vite\" \"npm run dev:server\"",
@@ -14,8 +14,9 @@
     "clean": "rm -rf frontend/dist backend/server.js",
     "lint": "cd frontend && tsc --noEmit",
     "generate:icons": "node scripts/generate-icons.js",
+    "bundle:binaries": "node scripts/bundle-binaries.js",
     "cap:sync": "npx cap sync android",
-    "build:apk": "node scripts/generate-icons.js && npm run build && npx cap sync android"
+    "build:apk": "node scripts/generate-icons.js && node scripts/bundle-binaries.js && npm run build && npx cap sync android"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",
