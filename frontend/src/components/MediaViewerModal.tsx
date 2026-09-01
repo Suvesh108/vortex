@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Capacitor } from '@capacitor/core';
-import { resolveDownloadStreamUrl } from '../extractor';
+import { resolveDownloadStreamUrl, getLocalFileUrl } from '../extractor';
 import JSZip from 'jszip';
 import * as XLSX from 'xlsx';
 import {
@@ -149,7 +149,19 @@ function CustomVideoPlayer({ item }: { item: DownloadHistoryItem }) {
       setLoading(true);
       setErrorMsg(null);
 
-      // 1. If we have a local path or direct stream cached
+      // 1. Check if the physical file exists on local device storage for 100% offline playback
+      const cleanTitle = item.title.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 60);
+      const targetExt = item.targetExtension || 'mp4';
+      const filename = `${cleanTitle}.${targetExt}`;
+      
+      const localDiskUri = await getLocalFileUrl(filename);
+      if (localDiskUri && !isCancelled) {
+        setStreamUrl(localDiskUri);
+        setLoading(false);
+        return;
+      }
+
+      // 2. If we have a local path or direct stream cached in history
       if (item.localPath) {
         const localSrc = Capacitor.isNativePlatform() 
           ? Capacitor.convertFileSrc(item.localPath) 
@@ -387,6 +399,18 @@ function CustomAudioPlayer({ item }: { item: DownloadHistoryItem }) {
 
     async function loadAudioStream() {
       setLoading(true);
+
+      // 1. Check if the physical file exists on local device storage for 100% offline playback
+      const cleanTitle = item.title.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 60);
+      const targetExt = item.targetExtension || 'm4a';
+      const filename = `${cleanTitle}.${targetExt}`;
+      
+      const localDiskUri = await getLocalFileUrl(filename);
+      if (localDiskUri && !isCancelled) {
+        setStreamUrl(localDiskUri);
+        setLoading(false);
+        return;
+      }
 
       if (item.localPath) {
         const localSrc = Capacitor.isNativePlatform() 
@@ -702,9 +726,25 @@ function CustomSpreadsheetViewer({ item }: { item: DownloadHistoryItem }) {
    5. CUSTOM PHOTO & LIGHTBOX STUDIO (.jpg)
    ========================================================================= */
 function CustomPhotoViewer({ item }: { item: DownloadHistoryItem }) {
+  const [imgSrc, setImgSrc] = useState<string>(item.thumbnail);
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [filter, setFilter] = useState<'normal' | 'contrast' | 'grayscale' | 'invert'>('normal');
+
+  useEffect(() => {
+    let isCancelled = false;
+    async function loadPhoto() {
+      const cleanTitle = item.title.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 60);
+      const targetExt = item.targetExtension || 'jpg';
+      const filename = `${cleanTitle}.${targetExt}`;
+      const localDiskUri = await getLocalFileUrl(filename);
+      if (localDiskUri && !isCancelled) {
+        setImgSrc(localDiskUri);
+      }
+    }
+    loadPhoto();
+    return () => { isCancelled = true; };
+  }, [item]);
 
   const getFilterStyle = () => {
     if (filter === 'contrast') return 'contrast(150%) brightness(110%)';
@@ -717,7 +757,7 @@ function CustomPhotoViewer({ item }: { item: DownloadHistoryItem }) {
     <div className="w-full flex flex-col items-center space-y-3">
       <div className="relative w-full max-h-[50vh] overflow-hidden bg-black/90 rounded-xl border border-gray-800 flex items-center justify-center p-2">
         <img
-          src={item.thumbnail}
+          src={imgSrc}
           alt={item.title}
           style={{
             transform: `scale(${zoom}) rotate(${rotation}deg)`,

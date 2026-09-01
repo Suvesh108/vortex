@@ -24,7 +24,7 @@ import HistoryList from './components/HistoryList';
 import { SAMPLE_PRESETS } from './data';
 import { DownloadStatus, MediaMetadata, MediaQuality, DownloadLog, DownloadHistoryItem, UserSettings } from './types';
 import { detectFileCategory } from './detector';
-import { extractMediaInfo, downloadMediaDirect } from './extractor';
+import { extractMediaInfo, downloadMediaDirect, deleteLocalFile } from './extractor';
 import { requestAppPermissions } from './permissions';
 
 export default function App() {
@@ -196,18 +196,32 @@ export default function App() {
     triggerExtraction(item.originalUrl);
   };
 
-  const handleRemoveHistoryItem = (id: string) => {
+  const handleRemoveHistoryItem = async (id: string) => {
+    const itemToDelete = history.find(h => h.id === id);
+    if (itemToDelete) {
+      const cleanTitle = itemToDelete.title.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 60);
+      const targetExt = itemToDelete.targetExtension || 'mp4';
+      const filename = `${cleanTitle}.${targetExt}`;
+      await deleteLocalFile(filename);
+      addLog('warning', `🗑️ Permanently erased from internal storage: Download/VortexDownloader/${filename}`);
+    }
+
     const filtered = history.filter(h => h.id !== id);
     setHistory(filtered);
     localStorage.setItem('vortex_download_history', JSON.stringify(filtered));
-    addLog('warning', `Removed item from archive.`);
   };
 
-  const handleClearAllHistory = () => {
-    if (confirm("Permanently wipe local download history logs?")) {
+  const handleClearAllHistory = async () => {
+    if (confirm("Permanently wipe all archived downloads from local device storage?")) {
+      for (const item of history) {
+        const cleanTitle = item.title.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 60);
+        const targetExt = item.targetExtension || 'mp4';
+        const filename = `${cleanTitle}.${targetExt}`;
+        await deleteLocalFile(filename);
+      }
       setHistory([]);
       localStorage.removeItem('vortex_download_history');
-      addLog('warning', `Cleared archived media vault.`);
+      addLog('warning', `🗑️ Wiped all archived files from internal device storage.`);
     }
   };
 

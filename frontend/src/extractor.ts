@@ -632,3 +632,55 @@ function triggerBrowserDownload(url: string, filename: string) {
   link.click();
   document.body.removeChild(link);
 }
+
+/**
+ * Permanently deletes a downloaded file from device internal storage
+ */
+export async function deleteLocalFile(filename: string): Promise<boolean> {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await Filesystem.deleteFile({
+        path: `Download/VortexDownloader/${filename}`,
+        directory: Directory.ExternalStorage
+      });
+      return true;
+    } catch (_) {
+      try {
+        await Filesystem.deleteFile({
+          path: `VortexDownloader/${filename}`,
+          directory: Directory.Documents
+        });
+        return true;
+      } catch (_) {}
+    }
+  }
+  return false;
+}
+
+/**
+ * Checks if a file exists in local storage and returns its playable native URI
+ */
+export async function getLocalFileUrl(filename: string): Promise<string | null> {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const uriRes = await Filesystem.getUri({
+        path: `Download/VortexDownloader/${filename}`,
+        directory: Directory.ExternalStorage
+      });
+      if (uriRes?.uri) {
+        return Capacitor.convertFileSrc(uriRes.uri);
+      }
+    } catch (_) {
+      try {
+        const docUri = await Filesystem.getUri({
+          path: `VortexDownloader/${filename}`,
+          directory: Directory.Documents
+        });
+        if (docUri?.uri) {
+          return Capacitor.convertFileSrc(docUri.uri);
+        }
+      } catch (_) {}
+    }
+  }
+  return null;
+}

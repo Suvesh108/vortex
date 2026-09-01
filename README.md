@@ -21,18 +21,18 @@
 
 <hr />
 
-## 📱 Android App (v0.4.3)
+## 📱 Android App (v0.4.4)
 
-VortexDownloader is available as a standalone Android application with direct in-app video/audio stream playback (no VLC or 3rd-party apps required), full 9-category viewer suite (**`JSZip`**, **`SheetJS XLSX`**, Canvas Spectrum Visualizer), restored Settings center, and 100% internal in-app update installer!
+VortexDownloader is available as a standalone Android application with physical local disk storage deletion, 100% offline local playback from device storage (`Download/VortexDownloader`), full 9-category viewer suite, and internal in-app update installer!
 
-- **Download APK (v0.4.3)**: [**VortexDownloader-v0.4.3.apk**](release/VortexDownloader-v0.4.3.apk)
-- **Version**: `0.4.3` (Release v0.4.3)
+- **Download APK (v0.4.4)**: [**VortexDownloader-v0.4.4.apk**](release/VortexDownloader-v0.4.4.apk)
+- **Version**: `0.4.4` (Release v0.4.4)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.4.3**:
-  - 🎬 **Direct In-App Video & Audio Playback**: Resolved direct playable stream URLs and local file paths so videos (YouTube, TikTok, MP4) play directly inside the custom video player without requiring external apps like VLC.
-  - ⚙️ **Restored Settings Center**: Added compact Settings button to the header for YouTube cookie configuration, thread tuning, storage browsing, and update checking.
-  - 📱 **Zero-Overflow Responsive Mobile Header**: Downloader and Media Vault tabs remain perfectly aligned across all mobile screens.
-  - 🧰 **Bundled Custom Viewer Suite**: In-memory Zip extractor, Excel spreadsheet viewer, photo studio, PDF, presentation, e-book, and code viewers.
+- **What's New in v0.4.4**:
+  - 🗑️ **Physical Local Disk Deletion**: Deleting an item or clearing the vault permanently removes the actual physical file from device internal storage (`Download/VortexDownloader/`).
+  - ⚡ **100% Offline Local Playback**: All in-app viewers (video, audio, photos, spreadsheets, documents, zips) directly stream from locally stored disk files with zero buffering and zero internet consumption.
+  - 🎬 **Custom In-App Video & Audio Players**: Lossless AAC & MP4 players with gesture seeking, frame captures, and canvas spectrum analyzers.
+  - ⚙️ **Integrated Settings Center**: YouTube cookie auth, storage directories, thread counts, and update installer.
 
 ### Building Android APK Locally
 ```bash
