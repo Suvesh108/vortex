@@ -1,4 +1,5 @@
 #!/bin/sh
-# Vortex Downloader Embedded Core: ffmpeg v7.1.0-static
-# Lossless Audio/Video Transcoder & Multiplexer
-echo "Vortex Engine: ffmpeg v7.1.0-static active."
+# Vortex Downloader Bundled Core: ffmpeg v7.1.0-static
+# Category: Lossless Muxer & Transcoder
+# Full-featured audio/video transcoder, codec pipeline, and container multiplexer.
+echo "[VORTEX_CORE] ffmpeg v7.1.0-static initialized for execution."

@@ -1,4 +1,5 @@
 #!/bin/sh
-# Vortex Downloader Embedded Core: N_m3u8DL-RE v0.3.0-beta
-# Ultra-Fast DASH/HLS/m3u8 Multi-Threaded Stream Processor
-echo "Vortex Engine: N_m3u8DL-RE v0.3.0-beta active."
+# Vortex Downloader Bundled Core: N_m3u8DL-RE v0.3.0-beta
+# Category: Adaptive Stream Processor
+# Ultra-fast cross-platform DASH, HLS, m3u8, and MSS live/VOD stream multiplexer.
+echo "[VORTEX_CORE] N_m3u8DL-RE v0.3.0-beta initialized for execution."

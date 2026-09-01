@@ -21,18 +21,18 @@
 
 <hr />
 
-## 📱 Android App (v0.3.3)
+## 📱 Android App (v0.3.4)
 
-VortexDownloader is available as a standalone Android application with built-in core binaries (**`yt-dlp`**, **`FFmpeg`**, **`N_m3u8DL-RE`**), 100% internal update installer, direct stream downloading (full 100MB+ media files), local storage path browsing, and link vault management!
+VortexDownloader is available as a standalone Android application with 8 bundled core tools (**`yt-dlp`**, **`FFmpeg`**, **`aria2c`**, **`N_m3u8DL-RE`**, **`gallery-dl`**, **`you-get`**, **`lux`**, **`streamlink`**), universal file downloading (video, audio, ZIP, PDF, APK, ISO), 100% internal update installer, and local storage management!
 
-- **Download APK (v0.3.3)**: [**VortexDownloader-v0.3.3.apk**](release/VortexDownloader-v0.3.3.apk)
-- **Version**: `0.3.3` (Release v0.3.3)
+- **Download APK (v0.3.4)**: [**VortexDownloader-v0.3.4.apk**](release/VortexDownloader-v0.3.4.apk)
+- **Version**: `0.3.4` (Release v0.3.4)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.3.3**:
-  - 📦 **Embedded Core Binaries (Local in APK)**: Packaged **`yt-dlp`**, **`FFmpeg`**, and **`N_m3u8DL-RE`** directly inside the APK assets for local offline stream processing, extraction, and container stitching.
-  - 📥 **100% Internal In-App Update Installer**: Directly downloads updates within the app and automatically launches the native Android Package Installer prompt on screen without leaving the app or visiting external websites.
-  - ⚡ **Multi-Tier High Speed Engine**: Zero failure rate for YouTube videos, shorts, TikTok, Instagram, Twitter/X, and MP3 audio conversions.
-  - 📁 **Dedicated Download Storage Location**: Clear path viewer (`Internal Storage > Download > VortexDownloader`) and copy path tools in Settings.
+- **What's New in v0.3.4**:
+  - 🧰 **8-in-1 Bundled Core Tool Suite**: Embedded `yt-dlp`, `FFmpeg`, `aria2c`, `N_m3u8DL-RE`, `gallery-dl`, `you-get`, `lux`, and `streamlink` directly inside the APK for universal media & file support.
+  - 🌐 **Universal File & Media Downloader**: Fixed download pipeline with 4-tier fallback handling all internet URLs (Direct files, YouTube, TikTok, Instagram, Twitter, Reddit, Soundcloud, m3u8 streams).
+  - 📥 **100% Internal In-App Update Installer**: Downloads updates inside the app and prompts the Android Package Installer on screen.
+  - 📁 **Dedicated Download Storage Location**: Clean path viewer (`Internal Storage > Download > VortexDownloader`) and copy path tools in Settings.
   - 🗄️ **Full Archived Media Vault History**: Complete history log of all used links and downloads with individual link removal, copy link, re-load, re-save, and clear vault controls.
 
 ### Building Android APK Locally

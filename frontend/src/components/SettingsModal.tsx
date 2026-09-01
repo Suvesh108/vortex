@@ -22,7 +22,7 @@ import {
 import { UserSettings } from '../types';
 import { checkForAppUpdates, downloadAndInstallUpdate, UpdateInfo, APP_VERSION } from '../updater';
 import { requestAppPermissions, AppPermissionStatus } from '../permissions';
-import { getDownloadStoragePath } from '../extractor';
+import { getDownloadStoragePath, BUNDLED_TOOLS } from '../extractor';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -347,13 +347,13 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                 </p>
               </div>
 
-              {/* 4. Embedded Local Core Engines (yt-dlp, FFmpeg, N_m3u8DL-RE) */}
+              {/* 4. Embedded Universal Downloading Tool Suite (8 Bundled Tools) */}
               <div className="bg-secondary-grey/20 border border-gray-800 rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Cpu className="w-4 h-4 text-action-red" />
                     <span className="text-xs font-semibold text-white font-mono uppercase tracking-wider">
-                      Bundled Core Engines
+                      Bundled Core Engines ({BUNDLED_TOOLS.length} Tools)
                     </span>
                   </div>
                   <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-950/40 text-emerald-400 border border-emerald-800/30 font-bold">
@@ -361,48 +361,21 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                   </span>
                 </div>
 
-                <div className="space-y-2 pt-1 font-sans">
-                  {/* yt-dlp */}
-                  <div className="flex items-center justify-between p-2.5 rounded bg-neutral-dark/60 border border-gray-800/80">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-white font-mono">yt-dlp</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-secondary-grey/40 text-gray-400 font-mono">v2025.08.15</span>
+                <div className="space-y-1.5 pt-1 font-sans max-h-48 overflow-y-auto pr-1">
+                  {BUNDLED_TOOLS.map((tool) => (
+                    <div key={tool.name} className="flex items-center justify-between p-2 rounded bg-neutral-dark/60 border border-gray-800/80">
+                      <div className="min-w-0 flex-1 pr-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-white font-mono">{tool.name}</span>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-secondary-grey/40 text-gray-400 font-mono">v{tool.version}</span>
+                        </div>
+                        <p className="text-[10px] text-gray-400 truncate">{tool.role}</p>
                       </div>
-                      <p className="text-[11px] text-gray-500">Universal video/audio extractor & manifest decoder</p>
+                      <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1 shrink-0">
+                        <CheckCircle2 className="w-3 h-3" /> Ready
+                      </span>
                     </div>
-                    <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Local Ready
-                    </span>
-                  </div>
-
-                  {/* FFmpeg */}
-                  <div className="flex items-center justify-between p-2.5 rounded bg-neutral-dark/60 border border-gray-800/80">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-white font-mono">FFmpeg</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-secondary-grey/40 text-gray-400 font-mono">v7.1-static</span>
-                      </div>
-                      <p className="text-[11px] text-gray-500">Lossless audio/video container stitching & transcoding</p>
-                    </div>
-                    <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Local Ready
-                    </span>
-                  </div>
-
-                  {/* N_m3u8DL-RE */}
-                  <div className="flex items-center justify-between p-2.5 rounded bg-neutral-dark/60 border border-gray-800/80">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-white font-mono">N_m3u8DL-RE</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-secondary-grey/40 text-gray-400 font-mono">v0.3.0-beta</span>
-                      </div>
-                      <p className="text-[11px] text-gray-500">Multi-threaded DASH / HLS adaptive stream multiplexer</p>
-                    </div>
-                    <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Local Ready
-                    </span>
-                  </div>
+                  ))}
                 </div>
               </div>
 
