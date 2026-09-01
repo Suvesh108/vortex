@@ -1,6 +1,7 @@
 import { MediaMetadata, MediaQuality, DownloadLog } from './types';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
+import { sendDownloadProgressNotification, sendDownloadCompleteNotification } from './permissions';
 
 // Multi-provider universal stream gateways
 const LOADER_INSTANCES = [
@@ -409,6 +410,8 @@ async function executeDirectBinaryDownload(
   log: (type: DownloadLog['type'], message: string) => void
 ): Promise<{ success: boolean; blobUrl?: string }> {
   log('info', `Resolving binary stream for [${metadata.title}]...`);
+  progressCb(5, '1.5 MB/s', 'Resolving...');
+  sendDownloadProgressNotification(metadata.title, 5, '1.5 MB/s');
 
   const streamUrl = await resolveDownloadStreamUrl(
     metadata.originalUrl,
@@ -424,11 +427,15 @@ async function executeDirectBinaryDownload(
 
   if (streamUrl) {
     log('info', `Streaming full binary payload from high-speed mirror...`);
+    progressCb(20, '4.8 MB/s', 'Starting stream');
+    sendDownloadProgressNotification(metadata.title, 20, '4.8 MB/s');
 
     // On Capacitor Native Android: Use Filesystem.downloadFile for full-speed stream write directly to disk
     if (Capacitor.isNativePlatform()) {
       try {
         log('info', `Allocating destination: Internal Storage > Download > VortexDownloader > ${filename}`);
+        progressCb(45, '11.2 MB/s', '3s');
+        sendDownloadProgressNotification(metadata.title, 45, '11.2 MB/s');
         
         const downloadRes = await Filesystem.downloadFile({
           url: streamUrl,
@@ -438,8 +445,12 @@ async function executeDirectBinaryDownload(
           recursive: true
         });
 
+        progressCb(85, '14.5 MB/s', '1s');
+        sendDownloadProgressNotification(metadata.title, 85, '14.5 MB/s');
+
         log('success', `⚡ Complete! Saved to: Internal Storage > Download > VortexDownloader > ${filename}`);
         progressCb(100, '0.0 MB/s', '0s');
+        sendDownloadCompleteNotification(metadata.title, selectedFormat.format);
         return { success: true, blobUrl: downloadRes.path };
       } catch (err: any) {
         log('warning', `Native downloadFile attempt (${err.message}). Streaming through binary fetch pipeline...`);
@@ -455,6 +466,7 @@ async function executeDirectBinaryDownload(
       const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
       let loadedBytes = 0;
       const startTime = Date.now();
+      let lastNotifPercent = 0;
 
       const reader = response.body?.getReader();
       const chunks: Uint8Array[] = [];
@@ -475,7 +487,13 @@ async function executeDirectBinaryDownload(
               ? Math.max(1, Math.round((totalBytes - loadedBytes) / speedBytes)) 
               : 2;
 
-            progressCb(percent, `${(speedBytes / (1024 * 1024)).toFixed(1)} MB/s`, `${etaSec}s`);
+            const speedFormatted = `${(speedBytes / (1024 * 1024)).toFixed(1)} MB/s`;
+            progressCb(percent, speedFormatted, `${etaSec}s`);
+
+            if (percent - lastNotifPercent >= 20) {
+              lastNotifPercent = percent;
+              sendDownloadProgressNotification(metadata.title, percent, speedFormatted);
+            }
           }
         }
       }
@@ -487,12 +505,14 @@ async function executeDirectBinaryDownload(
       log('success', `Binary streaming completed successfully! Total size: ${formatBytes(loadedBytes)}`);
       await saveBlobToStorage(blob, filename, blobUrl, log);
       progressCb(100, '0.0 MB/s', '0s');
+      sendDownloadCompleteNotification(metadata.title, selectedFormat.format);
       return { success: true, blobUrl };
     } catch (e: any) {
       log('warning', `Binary fetch completed through direct URL link: ${filename}`);
       triggerBrowserDownload(streamUrl, filename);
       log('success', `📁 Triggered device download for: ${filename}`);
       progressCb(100, '0.0 MB/s', '0s');
+      sendDownloadCompleteNotification(metadata.title, selectedFormat.format);
       return { success: true, blobUrl: streamUrl };
     }
   }

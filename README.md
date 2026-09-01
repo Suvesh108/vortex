@@ -21,19 +21,19 @@
 
 <hr />
 
-## 📱 Android App (v0.3.5)
+## 📱 Android App (v0.3.6)
 
-VortexDownloader is available as a standalone Android application with 8 bundled core tools (**`yt-dlp`**, **`FFmpeg`**, **`aria2c`**, **`N_m3u8DL-RE`**, **`gallery-dl`**, **`you-get`**, **`lux`**, **`streamlink`**), native CORS bypass via `CapacitorHttp`, YouTube cookie authentication, streamlined minimal UI, and 100% internal in-app update installer!
+VortexDownloader is available as a standalone Android application with 8 bundled core tools (**`yt-dlp`**, **`FFmpeg`**, **`aria2c`**, **`N_m3u8DL-RE`**, **`gallery-dl`**, **`you-get`**, **`lux`**, **`streamlink`**), separate Archived Media Vault page, live notification progress tracking, responsive mobile layout, and 100% internal in-app update installer!
 
-- **Download APK (v0.3.5)**: [**VortexDownloader-v0.3.5.apk**](release/VortexDownloader-v0.3.5.apk)
-- **Version**: `0.3.5` (Release v0.3.5)
+- **Download APK (v0.3.6)**: [**VortexDownloader-v0.3.6.apk**](release/VortexDownloader-v0.3.6.apk)
+- **Version**: `0.3.6` (Release v0.3.6)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.3.5**:
-  - 🛡️ **Stream Extraction Resolution & Native CORS Bypass**: Enabled `CapacitorHttp` natively in Android to eliminate CORS failures and upgraded Cobalt v10 & Loader.to multiplexing pipelines.
-  - 🍪 **YouTube Cookie Authentication**: Added Netscape `cookies.txt` & session string authentication to `yt-dlp` and Settings to bypass bot-checks and age gates.
-  - 📱 **Sleek, Streamlined Mobile UI/UX**: Removed redundant step text ("Paste, Choose, Download") and the "High-Octane Core Architecture" box grid. Fixed mobile text layout and horizontal overflow issues.
-  - 🧰 **8-in-1 Bundled Core Tool Suite**: Embedded `yt-dlp`, `FFmpeg`, `aria2c`, `N_m3u8DL-RE`, `gallery-dl`, `you-get`, `lux`, and `streamlink` inside the APK.
-  - 📥 **100% Internal In-App Update Installer**: Downloads updates inside the app and triggers the Android Package Installer on screen.
+- **What's New in v0.3.6**:
+  - 🗄️ **Dedicated Archived Media Vault Page**: Moved Settings and Media Vault to top navigation bar and menu drawer; created a separate dedicated page for managing downloaded history.
+  - 📊 **Real-time Download Progress Tracking**: Fixed progress bar visibility with smooth byte updates, speed rate, and remaining ETA.
+  - 🔔 **Live Download Progress & Completion Notifications**: Sends native notification updates during active downloads with percentage tracking and a notification on completion.
+  - 📱 **Mobile UI/UX Layout Overhaul**: Fixed all mobile overflow, padding, and text-wrapping bugs across compact and large phone screens.
+  - 🧰 **8-in-1 Bundled Core Tool Suite**: Embedded `yt-dlp`, `FFmpeg`, `aria2c`, `N_m3u8DL-RE`, `gallery-dl`, `you-get`, `lux`, and `streamlink`.
 
 ### Building Android APK Locally
 ```bash
