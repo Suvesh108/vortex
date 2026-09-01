@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Capacitor } from '@capacitor/core';
+import { resolveDownloadStreamUrl } from '../extractor';
 import JSZip from 'jszip';
 import * as XLSX from 'xlsx';
 import {
@@ -129,14 +131,71 @@ export default function MediaViewerModal({ item, isOpen, onClose }: MediaViewerM
    1. CUSTOM VIDEO PLAYER (.mp4)
    ========================================================================= */
 function CustomVideoPlayer({ item }: { item: DownloadHistoryItem }) {
+  const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState('00:00');
   const [duration, setDuration] = useState('00:00');
   const [isMuted, setIsMuted] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
-  const [volume, setVolume] = useState(1);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadPlayableStream() {
+      setLoading(true);
+      setErrorMsg(null);
+
+      // 1. If we have a local path or direct stream cached
+      if (item.localPath) {
+        const localSrc = Capacitor.isNativePlatform() 
+          ? Capacitor.convertFileSrc(item.localPath) 
+          : item.localPath;
+        setStreamUrl(localSrc);
+        setLoading(false);
+        return;
+      }
+
+      if (item.directStreamUrl && item.directStreamUrl.startsWith('http')) {
+        setStreamUrl(item.directStreamUrl);
+        setLoading(false);
+        return;
+      }
+
+      // If the original URL is already a direct video file
+      if (item.originalUrl.match(/\.(mp4|mkv|webm|avi|mov|ts)(\?.*)?$/i)) {
+        setStreamUrl(item.originalUrl);
+        setLoading(false);
+        return;
+      }
+
+      // 2. Resolve direct high-speed stream binary from gateway
+      try {
+        const resolved = await resolveDownloadStreamUrl(item.originalUrl, 'MP4', item.resolution || '1080p');
+        if (!isCancelled) {
+          if (resolved) {
+            setStreamUrl(resolved);
+            setLoading(false);
+          } else {
+            // Fallback to original URL
+            setStreamUrl(item.originalUrl);
+            setLoading(false);
+          }
+        }
+      } catch (err: any) {
+        if (!isCancelled) {
+          setStreamUrl(item.originalUrl);
+          setLoading(false);
+        }
+      }
+    }
+
+    loadPlayableStream();
+    return () => { isCancelled = true; };
+  }, [item]);
 
   const formatTime = (secs: number) => {
     if (isNaN(secs)) return '00:00';
@@ -203,20 +262,30 @@ function CustomVideoPlayer({ item }: { item: DownloadHistoryItem }) {
     <div className="w-full flex flex-col items-center justify-center space-y-3">
       {/* Video Viewport */}
       <div className="relative w-full aspect-video max-h-[50vh] bg-black rounded-xl overflow-hidden shadow-2xl border border-gray-800 flex items-center justify-center group">
-        <video
-          ref={videoRef}
-          src={item.originalUrl}
-          poster={item.thumbnail}
-          onTimeUpdate={handleTimeUpdate}
-          onEnded={() => setIsPlaying(false)}
-          className="w-full h-full object-contain cursor-pointer"
-          onClick={togglePlay}
-          muted={isMuted}
-          playsInline
-        />
+        {loading ? (
+          <div className="flex flex-col items-center justify-center space-y-2 p-6 text-center">
+            <div className="w-9 h-9 rounded-full border-2 border-action-red/25 border-t-action-red animate-spin" />
+            <span className="text-xs font-mono text-gray-300">Resolving direct playback stream...</span>
+          </div>
+        ) : (
+          <video
+            ref={videoRef}
+            src={streamUrl || undefined}
+            poster={item.thumbnail}
+            onTimeUpdate={handleTimeUpdate}
+            onEnded={() => setIsPlaying(false)}
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            className="w-full h-full object-contain cursor-pointer"
+            onClick={togglePlay}
+            muted={isMuted}
+            playsInline
+            controls={false}
+          />
+        )}
 
         {/* Overlay Play Indicator */}
-        {!isPlaying && (
+        {!loading && !isPlaying && (
           <div 
             onClick={togglePlay}
             className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer transition-opacity"
@@ -228,9 +297,11 @@ function CustomVideoPlayer({ item }: { item: DownloadHistoryItem }) {
         )}
 
         {/* Timecode badge */}
-        <div className="absolute bottom-2 left-2 bg-black/80 px-2 py-0.5 rounded text-[10px] font-mono text-white">
-          {currentTime} / {duration}
-        </div>
+        {!loading && (
+          <div className="absolute bottom-2 left-2 bg-black/80 px-2 py-0.5 rounded text-[10px] font-mono text-white">
+            {currentTime} / {duration}
+          </div>
+        )}
       </div>
 
       {/* Video Controls Bar */}
@@ -248,7 +319,7 @@ function CustomVideoPlayer({ item }: { item: DownloadHistoryItem }) {
           <div className="flex items-center space-x-1 sm:space-x-2">
             <button
               onClick={() => skipSeconds(-10)}
-              className="p-1.5 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white"
+              className="p-1.5 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white cursor-pointer"
               title="Rewind 10s"
             >
               <SkipBack className="w-4 h-4" />
@@ -256,14 +327,14 @@ function CustomVideoPlayer({ item }: { item: DownloadHistoryItem }) {
 
             <button
               onClick={togglePlay}
-              className="p-2 rounded-lg bg-action-red hover:bg-action-hover text-white shadow-md shadow-action-red/20"
+              className="p-2 rounded-lg bg-action-red hover:bg-action-hover text-white shadow-md shadow-action-red/20 cursor-pointer"
             >
               {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-white ml-0.5" />}
             </button>
 
             <button
               onClick={() => skipSeconds(10)}
-              className="p-1.5 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white"
+              className="p-1.5 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white cursor-pointer"
               title="Forward 10s"
             >
               <SkipForward className="w-4 h-4" />
@@ -271,7 +342,7 @@ function CustomVideoPlayer({ item }: { item: DownloadHistoryItem }) {
 
             <button
               onClick={() => setIsMuted(!isMuted)}
-              className="p-1.5 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white"
+              className="p-1.5 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white cursor-pointer"
             >
               {isMuted ? <VolumeX className="w-4 h-4 text-action-red" /> : <Volume2 className="w-4 h-4" />}
             </button>
@@ -280,7 +351,7 @@ function CustomVideoPlayer({ item }: { item: DownloadHistoryItem }) {
           <div className="flex items-center space-x-2">
             <button
               onClick={takeSnapshot}
-              className="p-1.5 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white"
+              className="p-1.5 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white cursor-pointer"
               title="Capture frame screenshot"
             >
               <Camera className="w-4 h-4" />
@@ -288,7 +359,7 @@ function CustomVideoPlayer({ item }: { item: DownloadHistoryItem }) {
 
             <button
               onClick={handleSpeedChange}
-              className="px-2 py-1 rounded bg-secondary-grey/40 text-xs font-mono font-bold text-gray-300 hover:text-white border border-gray-800"
+              className="px-2 py-1 rounded bg-secondary-grey/40 text-xs font-mono font-bold text-gray-300 hover:text-white border border-gray-800 cursor-pointer"
             >
               {playbackRate}x
             </button>
@@ -303,11 +374,58 @@ function CustomVideoPlayer({ item }: { item: DownloadHistoryItem }) {
    2. CUSTOM AUDIO PLAYER WITH CANVAS SPECTRUM VISUALIZER (.m4a)
    ========================================================================= */
 function CustomAudioPlayer({ item }: { item: DownloadHistoryItem }) {
+  const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(20);
+  const [progress, setProgress] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadAudioStream() {
+      setLoading(true);
+
+      if (item.localPath) {
+        const localSrc = Capacitor.isNativePlatform() 
+          ? Capacitor.convertFileSrc(item.localPath) 
+          : item.localPath;
+        setStreamUrl(localSrc);
+        setLoading(false);
+        return;
+      }
+
+      if (item.directStreamUrl && item.directStreamUrl.startsWith('http')) {
+        setStreamUrl(item.directStreamUrl);
+        setLoading(false);
+        return;
+      }
+
+      if (item.originalUrl.match(/\.(m4a|mp3|wav|aac|flac|ogg|opus)(\?.*)?$/i)) {
+        setStreamUrl(item.originalUrl);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const resolved = await resolveDownloadStreamUrl(item.originalUrl, 'M4A', 'Audio');
+        if (!isCancelled) {
+          setStreamUrl(resolved || item.originalUrl);
+          setLoading(false);
+        }
+      } catch (_) {
+        if (!isCancelled) {
+          setStreamUrl(item.originalUrl);
+          setLoading(false);
+        }
+      }
+    }
+
+    loadAudioStream();
+    return () => { isCancelled = true; };
+  }, [item]);
 
   const togglePlay = () => {
     if (audioRef.current) {
@@ -351,8 +469,10 @@ function CustomAudioPlayer({ item }: { item: DownloadHistoryItem }) {
     <div className="w-full max-w-md flex flex-col items-center space-y-5 py-2">
       <audio
         ref={audioRef}
-        src={item.originalUrl}
+        src={streamUrl || undefined}
         onEnded={() => setIsPlaying(false)}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
         muted={isMuted}
       />
 

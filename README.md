@@ -21,22 +21,18 @@
 
 <hr />
 
-## 📱 Android App (v0.4.2)
+## 📱 Android App (v0.4.3)
 
-VortexDownloader is available as a standalone Android application with custom bundled In-App Media Player & 9-Category Viewer Suite (powered by **`JSZip`**, **`SheetJS XLSX`**, Canvas Spectrum Analyzer, and Custom Video/Audio Engines), zero mobile header overflow, and 100% internal in-app update installer!
+VortexDownloader is available as a standalone Android application with direct in-app video/audio stream playback (no VLC or 3rd-party apps required), full 9-category viewer suite (**`JSZip`**, **`SheetJS XLSX`**, Canvas Spectrum Visualizer), restored Settings center, and 100% internal in-app update installer!
 
-- **Download APK (v0.4.2)**: [**VortexDownloader-v0.4.2.apk**](release/VortexDownloader-v0.4.2.apk)
-- **Version**: `0.4.2` (Release v0.4.2)
+- **Download APK (v0.4.3)**: [**VortexDownloader-v0.4.3.apk**](release/VortexDownloader-v0.4.3.apk)
+- **Version**: `0.4.3` (Release v0.4.3)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.4.2**:
-  - 📱 **Zero-Overflow Responsive Mobile Header**: Fixed tab switch boundaries on compact mobile viewports so **Downloader** and **Media Vault** buttons remain perfectly aligned without clipping.
-  - 🧰 **Bundled Custom Viewer Suite & Libraries**:
-    - **Custom Video Player**: Gesture seek (+/- 10s), canvas frame snapshot, speed controls, and audio boost.
-    - **Real-Time Audio Spectrum Analyzer**: Web Audio API canvas frequency visualizer with spinning vinyl disk.
-    - **In-Memory Zip Archive Engine (`JSZip`)**: Inspect, list directory tree, and extract archive contents directly in memory.
-    - **Spreadsheet Workbook Engine (`SheetJS XLSX`)**: Multi-sheet workbook viewer with cell search and sorting.
-    - **Photo Studio**: Zoom/pan with contrast, brightness, and grayscale filters.
-    - **Document, Presentation, E-Book & Code Viewers**: Complete standalone viewer suite.
+- **What's New in v0.4.3**:
+  - 🎬 **Direct In-App Video & Audio Playback**: Resolved direct playable stream URLs and local file paths so videos (YouTube, TikTok, MP4) play directly inside the custom video player without requiring external apps like VLC.
+  - ⚙️ **Restored Settings Center**: Added compact Settings button to the header for YouTube cookie configuration, thread tuning, storage browsing, and update checking.
+  - 📱 **Zero-Overflow Responsive Mobile Header**: Downloader and Media Vault tabs remain perfectly aligned across all mobile screens.
+  - 🧰 **Bundled Custom Viewer Suite**: In-memory Zip extractor, Excel spreadsheet viewer, photo studio, PDF, presentation, e-book, and code viewers.
 
 ### Building Android APK Locally
 ```bash

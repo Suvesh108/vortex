@@ -1,12 +1,13 @@
-import { Zap, Database } from 'lucide-react';
+import { Zap, Database, Settings } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: 'downloader' | 'vault';
   onSelectTab: (tab: 'downloader' | 'vault') => void;
+  onOpenSettings: () => void;
   vaultCount: number;
 }
 
-export default function Header({ activeTab, onSelectTab, vaultCount }: HeaderProps) {
+export default function Header({ activeTab, onSelectTab, onOpenSettings, vaultCount }: HeaderProps) {
   const handleTabClick = (tab: 'downloader' | 'vault') => {
     onSelectTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -38,37 +39,49 @@ export default function Header({ activeTab, onSelectTab, vaultCount }: HeaderPro
         </span>
       </div>
 
-      {/* Navigation Switch Tabs (Responsive & Never Overflowing) */}
-      <nav className="flex items-center space-x-1 sm:space-x-2 bg-secondary-grey/30 border border-gray-800 rounded-full p-0.5 sm:p-1 shrink-0">
-        <button 
-          onClick={() => handleTabClick('downloader')} 
-          className={`px-2.5 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-mono font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
-            activeTab === 'downloader'
-              ? 'bg-action-red text-white shadow-sm shadow-action-red/30'
-              : 'text-gray-400 hover:text-white hover:bg-secondary-grey/40'
-          }`}
-        >
-          <Zap className="w-3.5 h-3.5" />
-          <span>Downloader</span>
-        </button>
+      {/* Right Controls: Tabs + Settings Button */}
+      <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+        {/* Navigation Switch Tabs */}
+        <nav className="flex items-center space-x-1 sm:space-x-2 bg-secondary-grey/30 border border-gray-800 rounded-full p-0.5 sm:p-1">
+          <button 
+            onClick={() => handleTabClick('downloader')} 
+            className={`px-2.5 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-mono font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
+              activeTab === 'downloader'
+                ? 'bg-action-red text-white shadow-sm shadow-action-red/30'
+                : 'text-gray-400 hover:text-white hover:bg-secondary-grey/40'
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5" />
+            <span>Downloader</span>
+          </button>
 
-        <button 
-          onClick={() => handleTabClick('vault')} 
-          className={`px-2.5 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-mono font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
-            activeTab === 'vault'
-              ? 'bg-action-red text-white shadow-sm shadow-action-red/30'
-              : 'text-gray-400 hover:text-white hover:bg-secondary-grey/40'
-          }`}
+          <button 
+            onClick={() => handleTabClick('vault')} 
+            className={`px-2.5 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-mono font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
+              activeTab === 'vault'
+                ? 'bg-action-red text-white shadow-sm shadow-action-red/30'
+                : 'text-gray-400 hover:text-white hover:bg-secondary-grey/40'
+            }`}
+          >
+            <Database className="w-3.5 h-3.5" />
+            <span>Vault</span>
+            {vaultCount > 0 && (
+              <span className="ml-0.5 sm:ml-1 px-1.5 py-0.2 text-[9px] sm:text-[10px] rounded-full bg-white/20 text-white font-mono">
+                {vaultCount}
+              </span>
+            )}
+          </button>
+        </nav>
+
+        {/* Compact Settings Button */}
+        <button
+          onClick={onOpenSettings}
+          className="p-2 rounded-full bg-secondary-grey/30 hover:bg-secondary-grey/60 border border-gray-800 text-gray-400 hover:text-white transition-colors cursor-pointer"
+          title="Settings & Preferences"
         >
-          <Database className="w-3.5 h-3.5" />
-          <span>Vault</span>
-          {vaultCount > 0 && (
-            <span className="ml-0.5 sm:ml-1 px-1.5 py-0.2 text-[9px] sm:text-[10px] rounded-full bg-white/20 text-white font-mono">
-              {vaultCount}
-            </span>
-          )}
+          <Settings className="w-4 h-4 hover:rotate-45 transition-transform duration-300" />
         </button>
-      </nav>
+      </div>
     </header>
   );
 }

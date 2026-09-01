@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 
 import Header from './components/Header';
+import SettingsModal from './components/SettingsModal';
 import MediaViewerModal from './components/MediaViewerModal';
 import TermsModal from './components/TermsModal';
 import PrivacyModal from './components/PrivacyModal';
@@ -50,6 +51,7 @@ export default function App() {
   const [history, setHistory] = useState<DownloadHistoryItem[]>([]);
   const [viewingItem, setViewingItem] = useState<DownloadHistoryItem | null>(null);
 
+  const [showSettings, setShowSettings] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
 
@@ -61,6 +63,12 @@ export default function App() {
     saveHistory: true,
     backendUrl: ''
   });
+
+  const handleUpdateSettings = (newSettings: UserSettings) => {
+    setSettings(newSettings);
+    localStorage.setItem('vortex_settings', JSON.stringify(newSettings));
+    addLog('info', 'User settings updated.');
+  };
 
   const addLog = (type: DownloadLog['type'], message: string) => {
     const newLog: DownloadLog = {
@@ -131,7 +139,7 @@ export default function App() {
     addLog('info', `Converting & downloading [${metadata.category || 'FILE'}] → .${targetExt}...`);
 
     try {
-      await downloadMediaDirect(
+      const downloadRes = await downloadMediaDirect(
         metadata,
         selectedFormat,
         settings.backendUrl,
@@ -159,6 +167,8 @@ export default function App() {
           format: selectedFormat.format,
           category: metadata.category,
           targetExtension: targetExt,
+          directStreamUrl: downloadRes.blobUrl,
+          localPath: downloadRes.blobUrl,
           timestamp: new Date().toLocaleString()
         };
         const updated = [historyEntry, ...history];
@@ -208,10 +218,11 @@ export default function App() {
       {/* Background glow accent */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[800px] h-[300px] bg-gradient-to-b from-action-red/5 to-transparent blur-3xl pointer-events-none select-none -z-10" />
 
-      {/* Header component with tab switching */}
+      {/* Header component with tab switching and settings */}
       <Header 
         activeTab={activeTab}
         onSelectTab={(tab) => setActiveTab(tab)}
+        onOpenSettings={() => setShowSettings(true)}
         vaultCount={history.length}
       />
 
@@ -614,6 +625,12 @@ export default function App() {
       />
 
       {/* Modals */}
+      <SettingsModal 
+        isOpen={showSettings} 
+        onClose={() => setShowSettings(false)} 
+        settings={settings} 
+        onUpdateSettings={handleUpdateSettings} 
+      />
       <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
       <PrivacyModal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
     </div>

@@ -247,7 +247,7 @@ export async function extractMediaInfo(
 /**
  * Resolve direct high-speed stream URL using multi-tier fallback
  */
-async function resolveDownloadStreamUrl(
+export async function resolveDownloadStreamUrl(
   url: string,
   format: string,
   resolution: string,

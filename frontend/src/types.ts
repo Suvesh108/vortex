@@ -42,6 +42,8 @@ export interface DownloadHistoryItem {
   category?: FileCategory;
   targetExtension?: string;
   timestamp: string;
+  directStreamUrl?: string;
+  localPath?: string;
 }
 
 export interface UserSettings {
