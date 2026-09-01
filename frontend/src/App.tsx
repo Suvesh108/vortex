@@ -23,7 +23,6 @@ import TermsModal from './components/TermsModal';
 import PrivacyModal from './components/PrivacyModal';
 import TerminalLogs from './components/TerminalLogs';
 import HistoryList from './components/HistoryList';
-import FeatureGrid from './components/FeatureGrid';
 import { SAMPLE_PRESETS } from './data';
 import { DownloadStatus, MediaMetadata, MediaQuality, DownloadLog, DownloadHistoryItem, UserSettings } from './types';
 import { extractMediaInfo, downloadMediaDirect } from './extractor';
@@ -605,11 +604,8 @@ export default function App() {
           />
         </section>
 
-        {/* Feature grid information matching screenshot */}
-        <FeatureGrid />
-
         {/* Archive Historical Library Persistent Tracker log history */}
-        <section className="border-t border-gray-800 pt-16 space-y-6">
+        <section id="vault" className="border-t border-gray-800 pt-12 space-y-6 scroll-mt-20">
           <div className="space-y-1 text-left">
             <h2 className="font-hanken font-extrabold text-xl text-white tracking-tight">Archived Media Vault</h2>
             <p className="text-xs text-gray-500">

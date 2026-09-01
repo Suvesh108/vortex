@@ -44,4 +44,5 @@ export interface UserSettings {
   autoDownload: boolean;
   saveHistory: boolean;
   backendUrl?: string;
+  youtubeCookie?: string;
 }

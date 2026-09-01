@@ -53,6 +53,31 @@ def format_speed(speed_bytes):
     except Exception:
         return "0.0 B/s"
 
+def get_cookie_opts():
+    cookie_opts = {}
+    
+    # 1. Custom cookies.txt path from env or local backend dir
+    cookie_file = os.getenv('YTDLP_COOKIES_PATH', 'cookies.txt')
+    if os.path.isfile(cookie_file):
+        cookie_opts['cookiefile'] = cookie_file
+    elif os.path.isfile(os.path.join(os.path.dirname(__file__), 'cookies.txt')):
+        cookie_opts['cookiefile'] = os.path.join(os.path.dirname(__file__), 'cookies.txt')
+
+    # 2. Browser cookies option
+    browser = os.getenv('YTDLP_COOKIES_BROWSER')
+    if browser:
+        cookie_opts['cookiesfrombrowser'] = (browser,)
+
+    # 3. Raw cookie string in env
+    raw_cookie = os.getenv('YTDLP_RAW_COOKIE')
+    if raw_cookie:
+        cookie_opts['http_headers'] = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+            'Cookie': raw_cookie
+        }
+        
+    return cookie_opts
+
 def extract_info(url):
     ydl_opts = {
         'quiet': True,
@@ -60,6 +85,7 @@ def extract_info(url):
         'skip_download': True,
         'extract_flat': False,
         'noplaylist': True,
+        **get_cookie_opts()
     }
     
     try:
@@ -209,6 +235,7 @@ def download_media(url, format_id, output_path):
         'quiet': True,
         'no_warnings': True,
         'noplaylist': True,
+        **get_cookie_opts()
     }
     
     if is_audio:

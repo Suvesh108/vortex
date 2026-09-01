@@ -493,6 +493,24 @@ export default function SettingsModal({ isOpen, onClose, settings, onUpdateSetti
                   </div>
                 </label>
 
+                {/* YouTube Cookies Authentication */}
+                <div className="space-y-1.5 pt-2 border-t border-gray-800 font-sans">
+                  <label className="text-xs font-semibold text-gray-300 uppercase letter-wider flex items-center gap-1.5 font-mono">
+                    <ShieldCheck className="w-3.5 h-3.5 text-action-red" />
+                    YouTube Cookie Authentication (Optional)
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Paste Netscape cookies.txt or session cookie string (e.g. SID=...; HSID=...)"
+                    value={settings.youtubeCookie || ''}
+                    onChange={(e) => updateField('youtubeCookie', e.target.value)}
+                    className="w-full bg-secondary-grey/40 border border-gray-800 rounded px-3 py-2 text-xs font-mono text-white placeholder-gray-600 focus:outline-none focus:border-action-red resize-none"
+                  />
+                  <p className="text-[11px] text-gray-500">
+                    Bypasses YouTube bot-check, age restrictions, and sign-in requirements for yt-dlp.
+                  </p>
+                </div>
+
                 {/* Custom Backend URL */}
                 <div className="space-y-1.5 pt-2 border-t border-gray-800 font-sans">
                   <label className="text-xs font-semibold text-gray-300 uppercase letter-wider flex items-center gap-1.5 font-mono">

@@ -44,18 +44,18 @@ export default function Header({ onOpenSettings, onScrollToSection }: HeaderProp
 
       <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center space-x-8">
         <button 
-          onClick={() => handleNavClick('guide')} 
+          onClick={() => handleNavClick('input-url-stage')} 
           className="text-gray-400 hover:text-white transition-colors duration-200 text-sm font-medium flex items-center gap-1.5 cursor-pointer"
         >
           <BookOpen className="w-4 h-4 text-action-red opacity-80" />
-          Guide
+          Downloader
         </button>
         <button 
-          onClick={() => handleNavClick('features')} 
+          onClick={() => handleNavClick('vault')} 
           className="text-gray-400 hover:text-white transition-colors duration-200 text-sm font-medium flex items-center gap-1.5 cursor-pointer"
         >
           <Star className="w-4 h-4 text-action-red opacity-80" />
-          Features
+          Vault
         </button>
       </nav>
 
@@ -84,18 +84,18 @@ export default function Header({ onOpenSettings, onScrollToSection }: HeaderProp
       {menuOpen && (
         <div className="absolute top-16 left-0 w-full bg-neutral-dark/95 backdrop-blur-md border-b border-border-card flex flex-col p-4 space-y-2.5 md:hidden z-50 transition-all duration-200">
           <button 
-            onClick={() => handleNavClick('guide')} 
+            onClick={() => handleNavClick('input-url-stage')} 
             className="text-gray-300 hover:text-white hover:bg-secondary-grey/30 py-2.5 px-4 rounded transition-all duration-200 text-sm font-medium flex items-center gap-2 w-full text-left cursor-pointer"
           >
             <BookOpen className="w-4 h-4 text-action-red" />
-            Guide
+            Downloader
           </button>
           <button 
-            onClick={() => handleNavClick('features')} 
+            onClick={() => handleNavClick('vault')} 
             className="text-gray-300 hover:text-white hover:bg-secondary-grey/30 py-2.5 px-4 rounded transition-all duration-200 text-sm font-medium flex items-center gap-2 w-full text-left cursor-pointer"
           >
             <Star className="w-4 h-4 text-action-red" />
-            Features
+            Media Vault
           </button>
         </div>
       )}

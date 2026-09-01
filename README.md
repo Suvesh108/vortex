@@ -21,19 +21,19 @@
 
 <hr />
 
-## 📱 Android App (v0.3.4)
+## 📱 Android App (v0.3.5)
 
-VortexDownloader is available as a standalone Android application with 8 bundled core tools (**`yt-dlp`**, **`FFmpeg`**, **`aria2c`**, **`N_m3u8DL-RE`**, **`gallery-dl`**, **`you-get`**, **`lux`**, **`streamlink`**), universal file downloading (video, audio, ZIP, PDF, APK, ISO), 100% internal update installer, and local storage management!
+VortexDownloader is available as a standalone Android application with 8 bundled core tools (**`yt-dlp`**, **`FFmpeg`**, **`aria2c`**, **`N_m3u8DL-RE`**, **`gallery-dl`**, **`you-get`**, **`lux`**, **`streamlink`**), native CORS bypass via `CapacitorHttp`, YouTube cookie authentication, streamlined minimal UI, and 100% internal in-app update installer!
 
-- **Download APK (v0.3.4)**: [**VortexDownloader-v0.3.4.apk**](release/VortexDownloader-v0.3.4.apk)
-- **Version**: `0.3.4` (Release v0.3.4)
+- **Download APK (v0.3.5)**: [**VortexDownloader-v0.3.5.apk**](release/VortexDownloader-v0.3.5.apk)
+- **Version**: `0.3.5` (Release v0.3.5)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.3.4**:
-  - 🧰 **8-in-1 Bundled Core Tool Suite**: Embedded `yt-dlp`, `FFmpeg`, `aria2c`, `N_m3u8DL-RE`, `gallery-dl`, `you-get`, `lux`, and `streamlink` directly inside the APK for universal media & file support.
-  - 🌐 **Universal File & Media Downloader**: Fixed download pipeline with 4-tier fallback handling all internet URLs (Direct files, YouTube, TikTok, Instagram, Twitter, Reddit, Soundcloud, m3u8 streams).
-  - 📥 **100% Internal In-App Update Installer**: Downloads updates inside the app and prompts the Android Package Installer on screen.
-  - 📁 **Dedicated Download Storage Location**: Clean path viewer (`Internal Storage > Download > VortexDownloader`) and copy path tools in Settings.
-  - 🗄️ **Full Archived Media Vault History**: Complete history log of all used links and downloads with individual link removal, copy link, re-load, re-save, and clear vault controls.
+- **What's New in v0.3.5**:
+  - 🛡️ **Stream Extraction Resolution & Native CORS Bypass**: Enabled `CapacitorHttp` natively in Android to eliminate CORS failures and upgraded Cobalt v10 & Loader.to multiplexing pipelines.
+  - 🍪 **YouTube Cookie Authentication**: Added Netscape `cookies.txt` & session string authentication to `yt-dlp` and Settings to bypass bot-checks and age gates.
+  - 📱 **Sleek, Streamlined Mobile UI/UX**: Removed redundant step text ("Paste, Choose, Download") and the "High-Octane Core Architecture" box grid. Fixed mobile text layout and horizontal overflow issues.
+  - 🧰 **8-in-1 Bundled Core Tool Suite**: Embedded `yt-dlp`, `FFmpeg`, `aria2c`, `N_m3u8DL-RE`, `gallery-dl`, `you-get`, `lux`, and `streamlink` inside the APK.
+  - 📥 **100% Internal In-App Update Installer**: Downloads updates inside the app and triggers the Android Package Installer on screen.
 
 ### Building Android APK Locally
 ```bash

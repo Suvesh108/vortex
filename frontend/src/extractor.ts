@@ -254,14 +254,15 @@ async function resolveDownloadStreamUrl(
         const progressUrl = data.progress_url || `https://lto2.affadaffa.com/api/progress?id=${data.id}`;
         logger('info', `Building high-bitrate multiplex container on cloud worker...`);
         
-        // Poll for completion
-        for (let attempt = 0; attempt < 8; attempt++) {
+        // Poll for completion (up to 15 attempts)
+        for (let attempt = 0; attempt < 15; attempt++) {
           await new Promise(r => setTimeout(r, 1200));
           try {
             const pRes = await fetch(progressUrl, { signal: AbortSignal.timeout(4000) });
             if (pRes.ok) {
               const pData = await pRes.json();
-              if (pData.download_url) {
+              if (pData.text) logger('info', `Multiplex status: ${pData.text} (${pData.progress || 0}%)`);
+              if (pData.success === 1 && pData.download_url) {
                 logger('success', `Multiplex complete! Stream ready for transmission.`);
                 return pData.download_url;
               }
@@ -274,7 +275,7 @@ async function resolveDownloadStreamUrl(
     logger('warning', `Primary stream engine busy (${err.message}). Trying secondary mirror...`);
   }
 
-  // 2. Secondary Engine: Cobalt Nodes
+  // 2. Secondary Engine: Cobalt Nodes (v10 + v7 compatible)
   for (const cobaltApi of COBALT_INSTANCES) {
     try {
       logger('info', `Resolving binary stream via mirror [${new URL(cobaltApi).hostname}]...`);
@@ -287,6 +288,8 @@ async function resolveDownloadStreamUrl(
         body: JSON.stringify({
           url,
           videoQuality: targetFormat,
+          audioFormat: 'mp3',
+          downloadMode: isAudioOnly ? 'audio' : 'auto',
           isAudioOnly,
           aFormat: isAudioOnly ? 'mp3' : undefined
         }),
