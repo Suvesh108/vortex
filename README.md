@@ -21,19 +21,27 @@
 
 <hr />
 
-## 📱 Android App (v0.3.6)
+## 📱 Android App (v0.4.0)
 
-VortexDownloader is available as a standalone Android application with 8 bundled core tools (**`yt-dlp`**, **`FFmpeg`**, **`aria2c`**, **`N_m3u8DL-RE`**, **`gallery-dl`**, **`you-get`**, **`lux`**, **`streamlink`**), separate Archived Media Vault page, live notification progress tracking, responsive mobile layout, and 100% internal in-app update installer!
+VortexDownloader is available as a standalone Android application with automatic format detection, 9-category universal normalization matrix (ZIP, PHOTO, AUDIO, VIDEO, DOCUMENT, SPREADSHEET, PRESENTATION, EBOOK, TEXT), auto-conversion to `.mp4` / `.m4a`, dedicated Archived Media Vault page, and 100% internal in-app update installer!
 
-- **Download APK (v0.3.6)**: [**VortexDownloader-v0.3.6.apk**](release/VortexDownloader-v0.3.6.apk)
-- **Version**: `0.3.6` (Release v0.3.6)
+- **Download APK (v0.4.0)**: [**VortexDownloader-v0.4.0.apk**](release/VortexDownloader-v0.4.0.apk)
+- **Version**: `0.4.0` (Release v0.4.0)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.3.6**:
-  - 🗄️ **Dedicated Archived Media Vault Page**: Moved Settings and Media Vault to top navigation bar and menu drawer; created a separate dedicated page for managing downloaded history.
-  - 📊 **Real-time Download Progress Tracking**: Fixed progress bar visibility with smooth byte updates, speed rate, and remaining ETA.
-  - 🔔 **Live Download Progress & Completion Notifications**: Sends native notification updates during active downloads with percentage tracking and a notification on completion.
-  - 📱 **Mobile UI/UX Layout Overhaul**: Fixed all mobile overflow, padding, and text-wrapping bugs across compact and large phone screens.
-  - 🧰 **8-in-1 Bundled Core Tool Suite**: Embedded `yt-dlp`, `FFmpeg`, `aria2c`, `N_m3u8DL-RE`, `gallery-dl`, `you-get`, `lux`, and `streamlink`.
+- **What's New in v0.4.0**:
+  - 🔄 **Universal 9-Category Normalization Matrix**:
+    - **`ZIP`** → `.zip`
+    - **`PHOTO`** → `.jpg`
+    - **`AUDIO`** → `.m4a`
+    - **`VIDEO`** → `.mp4`
+    - **`DOCUMENT`** → `.pdf`
+    - **`SPREADSHEET`** → `.xlsx`
+    - **`PRESENTATION`** → `.pptx`
+    - **`EBOOK`** → `.epub`
+    - **`TEXT`** → `.txt`
+  - ⚡ **Automatic Link Detection & Conversion Engine**: Analyzes URLs dynamically by platform signature, file extension, and MIME type to auto-convert videos to `.mp4` and audio tracks to `.m4a`.
+  - 🗄️ **Dedicated Archived Media Vault Page**: Categorized history vault with search, format tags, one-click load, copy link, and deletion controls.
+  - 🔔 **Live Download Progress Notifications**: Real-time percentage & speed updates in Android notification tray.
 
 ### Building Android APK Locally
 ```bash

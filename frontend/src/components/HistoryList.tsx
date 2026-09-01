@@ -113,15 +113,22 @@ export default function HistoryList({ history, onRemoveItem, onClearAll, onReDow
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="absolute top-1 left-1 bg-black/85 px-1 py-0.5 rounded text-[8px] font-mono text-action-red font-bold">
-                    {item.format}
+                  <div className="absolute top-1 left-1 bg-black/85 px-1.5 py-0.5 rounded text-[8px] font-mono text-action-red font-bold uppercase">
+                    {item.category || item.format} (.{item.targetExtension || 'mp4'})
                   </div>
                 </div>
 
                 <div className="min-w-0 flex-1 space-y-1">
-                  <h4 className="text-xs font-bold text-gray-200 truncate group-hover:text-white transition-colors">
-                    {item.title}
-                  </h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs font-bold text-gray-200 truncate group-hover:text-white transition-colors">
+                      {item.title}
+                    </h4>
+                    {item.targetExtension && (
+                      <span className="text-[9px] font-mono px-1 rounded bg-secondary-grey/60 text-gray-400">
+                        .{item.targetExtension}
+                      </span>
+                    )}
+                  </div>
 
                   {/* URL snippet */}
                   <div className="flex items-center gap-1.5 text-[11px] text-gray-400 font-mono">

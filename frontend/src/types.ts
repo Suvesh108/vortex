@@ -1,12 +1,15 @@
+import { FileCategory } from './detector';
+
 export type DownloadStatus = 'idle' | 'fetching' | 'ready' | 'downloading' | 'completed' | 'failed';
 
 export interface MediaQuality {
   id: string;
-  format: 'MP4' | 'MP3' | 'MKV' | 'M4A';
+  format: string; // 'MP4', 'M4A', 'ZIP', 'JPG', 'PDF', 'XLSX', 'PPTX', 'EPUB', 'TXT'
   resolution: string;
   size: string;
   bitrate: string;
   directUrl?: string;
+  targetExtension?: string;
 }
 
 export interface MediaMetadata {
@@ -15,6 +18,8 @@ export interface MediaMetadata {
   creator: string;
   thumbnail: string;
   originalUrl: string;
+  category?: FileCategory;
+  targetExtension?: string;
   formats: MediaQuality[];
   downloadUrl?: string;
 }
@@ -34,6 +39,8 @@ export interface DownloadHistoryItem {
   size: string;
   resolution: string;
   format: string;
+  category?: FileCategory;
+  targetExtension?: string;
   timestamp: string;
 }
 

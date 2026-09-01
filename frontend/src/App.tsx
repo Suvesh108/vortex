@@ -12,8 +12,13 @@ import {
   ArrowLeft,
   Database,
   Zap,
-  Activity,
-  Check
+  Layers,
+  FileArchive,
+  Image,
+  FileText,
+  FileSpreadsheet,
+  BookOpen,
+  Presentation
 } from 'lucide-react';
 
 import Header from './components/Header';
@@ -24,10 +29,9 @@ import TerminalLogs from './components/TerminalLogs';
 import HistoryList from './components/HistoryList';
 import { SAMPLE_PRESETS } from './data';
 import { DownloadStatus, MediaMetadata, MediaQuality, DownloadLog, DownloadHistoryItem, UserSettings } from './types';
+import { detectFileCategory, CATEGORY_SPECS, FileCategory } from './detector';
 import { extractMediaInfo, downloadMediaDirect } from './extractor';
-import { requestAppPermissions, sendDownloadCompleteNotification } from './permissions';
-
-const API_BASE = import.meta.env.VITE_API_URL || '';
+import { requestAppPermissions } from './permissions';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'downloader' | 'vault'>('downloader');
@@ -40,7 +44,8 @@ export default function App() {
     format: 'MP4',
     resolution: '1080p',
     size: 'N/A',
-    bitrate: 'N/A'
+    bitrate: 'N/A',
+    targetExtension: 'mp4'
   });
 
   const [downloadProgress, setDownloadProgress] = useState(0);
@@ -79,9 +84,9 @@ export default function App() {
   };
 
   useEffect(() => {
-    addLog('system', 'Vortex Downloader initialized. Ready for ingestion.');
+    addLog('system', 'Vortex Universal Downloader v0.4.0 active.');
     requestAppPermissions().then((status) => {
-      addLog('info', `Device permissions check: Storage [${status.storage}], Notifications [${status.notifications}]`);
+      addLog('info', `Permissions check: Storage [${status.storage}], Notifications [${status.notifications}]`);
     });
 
     const savedHistory = localStorage.getItem('vortex_download_history');
@@ -123,7 +128,7 @@ export default function App() {
         setSelectedFormat(data.formats[0]);
       }
       setStatus('ready');
-      addLog('success', `Metadata decoded: "${data.title}"`);
+      addLog('success', `Metadata decoded: "${data.title}" [Category: ${data.category || 'UNIVERSAL'}]`);
     } catch (err: any) {
       setStatus('failed');
       addLog('error', `Extraction failure: ${err.message || 'Stream not accessible'}`);
@@ -135,7 +140,8 @@ export default function App() {
 
     setStatus('downloading');
     setDownloadProgress(0);
-    addLog('info', `Beginning direct binary stream for [${selectedFormat.format} - ${selectedFormat.resolution}]...`);
+    const targetExt = selectedFormat.targetExtension || metadata.targetExtension || 'mp4';
+    addLog('info', `Converting & downloading [${metadata.category || 'FILE'}] → .${targetExt}...`);
 
     try {
       await downloadMediaDirect(
@@ -164,6 +170,8 @@ export default function App() {
           size: selectedFormat.size,
           resolution: selectedFormat.resolution,
           format: selectedFormat.format,
+          category: metadata.category,
+          targetExtension: targetExt,
           timestamp: new Date().toLocaleString()
         };
         const updated = [historyEntry, ...history];
@@ -171,7 +179,7 @@ export default function App() {
         localStorage.setItem('vortex_download_history', JSON.stringify(updated));
       }
 
-      addLog('success', `File processing finished: ${metadata.title}.${selectedFormat.format.toLowerCase()}`);
+      addLog('success', `File saved as: ${metadata.title}.${targetExt}`);
     } catch (err: any) {
       setStatus('failed');
       addLog('error', `Download error: ${err.message || 'Stream pipeline failed'}`);
@@ -179,8 +187,9 @@ export default function App() {
   };
 
   const triggerFileSave = (title: string, format: string, size: string, resolution: string) => {
-    addLog('success', `Exported "${title}.${format.toLowerCase()}" to disk.`);
-    alert(`File saved to device storage: Download/VortexDownloader/${title}.${format.toLowerCase()}`);
+    const targetExt = selectedFormat.targetExtension || metadata?.targetExtension || 'mp4';
+    addLog('success', `Exported "${title}.${targetExt}" to disk.`);
+    alert(`File saved to device storage: Download/VortexDownloader/${title}.${targetExt}`);
   };
 
   const handleReDownload = (item: DownloadHistoryItem) => {
@@ -204,6 +213,8 @@ export default function App() {
       addLog('warning', `Cleared archived media vault.`);
     }
   };
+
+  const detectedLive = inputUrl.trim() ? detectFileCategory(inputUrl) : null;
 
   return (
     <div className="min-h-screen bg-neutral-dark text-[#e5e2e1] font-sans flex flex-col relative antialiased selection:bg-action-red selection:text-white w-full max-w-full overflow-x-hidden">
@@ -229,7 +240,7 @@ export default function App() {
               <div className="inline-flex items-center space-x-1.5 bg-secondary-grey/40 border border-gray-800/80 rounded-full px-3 py-1">
                 <span className="w-2 h-2 rounded-full bg-action-red animate-pulse" />
                 <span className="text-[10px] font-bold tracking-widest font-mono text-gray-400 uppercase">
-                  Vortex Core Engine Active
+                  Universal Format Matrix Active
                 </span>
               </div>
 
@@ -238,7 +249,7 @@ export default function App() {
               </h1>
 
               <p className="text-xs sm:text-sm text-gray-400 max-w-md mx-auto leading-relaxed font-sans px-2">
-                High-speed universal stream extraction & direct file downloading with zero compromises.
+                Auto-detects & converts all formats: Video (<strong className="text-gray-300">.mp4</strong>), Audio (<strong className="text-gray-300">.m4a</strong>), Photo (<strong className="text-gray-300">.jpg</strong>), Zip (<strong className="text-gray-300">.zip</strong>), PDF (<strong className="text-gray-300">.pdf</strong>), Excel (<strong className="text-gray-300">.xlsx</strong>), PPT (<strong className="text-gray-300">.pptx</strong>), Ebook (<strong className="text-gray-300">.epub</strong>), Text (<strong className="text-gray-300">.txt</strong>).
               </p>
             </div>
 
@@ -246,16 +257,23 @@ export default function App() {
             <section className="bg-surface-card border border-gray-800/80 p-4 sm:p-6 md:p-8 rounded-xl space-y-6 subtle-glow w-full max-w-full overflow-hidden">
               
               <div className="space-y-3">
-                <label className="block text-[11px] font-mono font-bold tracking-widest text-[#ebbbb4]/80 uppercase">
-                  Universal Stream & File Ingestion
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-[11px] font-mono font-bold tracking-widest text-[#ebbbb4]/80 uppercase">
+                    Universal Stream & File Ingestion
+                  </label>
+                  {detectedLive && (
+                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border uppercase flex items-center gap-1 ${detectedLive.badgeColor}`}>
+                      Auto-detected: {detectedLive.category} (→ .{detectedLive.targetExtension})
+                    </span>
+                  )}
+                </div>
                 
                 {/* Input form */}
                 <div className="flex flex-col sm:flex-row gap-2.5 w-full">
                   <div className="relative flex-1 min-w-0">
                     <input
                       type="text"
-                      placeholder="Paste URL (YouTube, TikTok, Twitter, MP4, ZIP, etc.)..."
+                      placeholder="Paste URL (YouTube, TikTok, Soundcloud, ZIP, PDF, XLSX, MP4, etc.)..."
                       value={inputUrl}
                       onChange={(e) => setInputUrl(e.target.value)}
                       onKeyDown={(e) => {
@@ -317,7 +335,7 @@ export default function App() {
                   <div className="py-8 text-center space-y-3">
                     <div className="w-9 h-9 rounded-full border-2 border-action-red/25 border-t-action-red animate-spin mx-auto" />
                     <p className="text-xs font-mono text-gray-400 animate-pulse">
-                      Decoding stream manifest via native multi-engine pipeline...
+                      Analyzing link & decoding stream target to normalized format...
                     </p>
                   </div>
                 ) : metadata ? (
@@ -348,6 +366,14 @@ export default function App() {
                       {/* Details & Formats */}
                       <div className="flex-1 min-w-0 space-y-3 text-left w-full">
                         <div>
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="px-2 py-0.2 rounded bg-action-red/20 border border-action-red/30 text-action-red text-[10px] font-mono font-bold uppercase">
+                              {metadata.category || 'UNIVERSAL'}
+                            </span>
+                            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/30 border border-emerald-800/30 px-1.5 py-0.2 rounded">
+                              Auto-Normalizing to .{metadata.targetExtension || selectedFormat.targetExtension || 'mp4'}
+                            </span>
+                          </div>
                           <h3 className="font-hanken font-bold text-sm sm:text-base text-white leading-snug line-clamp-2">
                             {metadata.title}
                           </h3>
@@ -359,18 +385,19 @@ export default function App() {
                         {/* Format Chips */}
                         <div className="space-y-1.5">
                           <span className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-wider block">
-                            Select Quality Format:
+                            Target Format & Quality:
                           </span>
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                             {metadata.formats.map((fmt) => {
                               const isSelected = selectedFormat.id === fmt.id;
+                              const isAudio = fmt.format === 'M4A' || fmt.targetExtension === 'm4a';
                               return (
                                 <button
                                   key={fmt.id}
                                   onClick={() => {
                                     if (status !== 'downloading') {
                                       setSelectedFormat(fmt);
-                                      addLog('info', `Selected format: ${fmt.format} ${fmt.resolution}`);
+                                      addLog('info', `Selected: ${fmt.format} ${fmt.resolution} (→ .${fmt.targetExtension || 'mp4'})`);
                                     }
                                   }}
                                   disabled={status === 'downloading'}
@@ -381,14 +408,14 @@ export default function App() {
                                   }`}
                                 >
                                   <div className="flex items-center gap-1.5 truncate">
-                                    {fmt.format === 'MP3' || fmt.format === 'M4A' ? (
+                                    {isAudio ? (
                                       <FileAudio className="w-3.5 h-3.5 text-action-red shrink-0" />
                                     ) : (
                                       <FileVideo className="w-3.5 h-3.5 text-action-red shrink-0" />
                                     )}
                                     <span className="truncate">{fmt.resolution}</span>
                                   </div>
-                                  <span className="text-[9px] opacity-60 font-mono shrink-0">{fmt.format}</span>
+                                  <span className="text-[9px] opacity-60 font-mono shrink-0">.{fmt.targetExtension || 'mp4'}</span>
                                 </button>
                               );
                             })}
@@ -404,7 +431,7 @@ export default function App() {
                           <div className="flex items-center space-x-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-action-red animate-ping" />
                             <span className="font-mono text-xs text-white font-bold uppercase">
-                              Downloading Stream Binary...
+                              Converting & Streaming (→ .{selectedFormat.targetExtension || metadata.targetExtension || 'mp4'})...
                             </span>
                           </div>
                           
@@ -428,7 +455,7 @@ export default function App() {
                         </div>
 
                         <p className="text-[10px] text-gray-500 font-mono">
-                          Directly streaming full binary payload into device storage.
+                          Normalizing file into standard .{selectedFormat.targetExtension || metadata.targetExtension || 'mp4'} container directly in storage.
                         </p>
                       </div>
                     )}
@@ -441,7 +468,9 @@ export default function App() {
                             <CheckCircle2 className="w-5 h-5" />
                           </div>
                           <div>
-                            <h4 className="text-xs sm:text-sm font-bold text-white">Download Completed Successfully!</h4>
+                            <h4 className="text-xs sm:text-sm font-bold text-white">
+                              Successfully Converted & Saved as .{selectedFormat.targetExtension || metadata.targetExtension || 'mp4'}!
+                            </h4>
                             <p className="text-[11px] text-gray-400 mt-0.5">
                               Saved to <strong>Internal Storage &gt; Download &gt; VortexDownloader</strong>
                             </p>
@@ -476,7 +505,7 @@ export default function App() {
                           className="w-full sm:w-auto bg-action-red hover:bg-action-hover text-white py-3.5 px-8 rounded-lg text-xs font-extrabold tracking-wider font-hanken transition-all flex items-center justify-center space-x-2 shadow-lg shadow-action-red/20 cursor-pointer"
                         >
                           <Download className="w-4 h-4" />
-                          <span>START DOWNLOAD ({selectedFormat.format} • {selectedFormat.resolution})</span>
+                          <span>DOWNLOAD AS .{selectedFormat.targetExtension || metadata.targetExtension || 'MP4'} ({selectedFormat.resolution})</span>
                         </button>
                       </div>
                     )}
@@ -489,9 +518,9 @@ export default function App() {
                       <Compass className="w-5 h-5 animate-pulse" />
                     </div>
                     <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-gray-300">Ingestion Standby</h4>
+                      <h4 className="text-xs sm:text-sm font-bold text-gray-300">Universal Format Engine Standby</h4>
                       <p className="text-[11px] text-gray-500 max-w-xs mx-auto mt-0.5 leading-relaxed">
-                        Paste any video, audio, or direct file URL above to begin extraction.
+                        Paste any link to auto-detect and convert to standard format.
                       </p>
                     </div>
                   </div>
@@ -507,7 +536,7 @@ export default function App() {
                     status === 'completed' ? 'bg-green-500' : 'bg-action-red animate-pulse'
                   }`} />
                   <span className="text-gray-400 capitalize">
-                    {status === 'fetching' ? 'Resolving stream...' :
+                    {status === 'fetching' ? 'Auto-converting stream...' :
                      status === 'downloading' ? 'Downloading...' :
                      status === 'completed' ? 'Extraction completed' :
                      'Standby Ready'}
@@ -515,7 +544,7 @@ export default function App() {
                 </div>
                 
                 <span className="text-gray-400 font-mono">
-                  Engine: <strong>Native Multi-Tool</strong>
+                  Standard Matrix: <strong>9 Formats</strong>
                 </span>
               </div>
             </section>

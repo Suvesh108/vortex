@@ -239,8 +239,8 @@ def download_media(url, format_id, output_path):
     }
     
     if is_audio:
-        codec = 'mp3' if 'low' not in format_id else 'm4a'
-        quality = '320' if 'low' not in format_id else '128'
+        codec = 'm4a'
+        quality = '320'
         ydl_opts.update({
             'format': 'bestaudio/best',
             'postprocessors': [{

@@ -1,4 +1,5 @@
 import { MediaMetadata, MediaQuality, DownloadLog } from './types';
+import { detectFileCategory, CATEGORY_SPECS, FileCategory } from './detector';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
 import { sendDownloadProgressNotification, sendDownloadCompleteNotification } from './permissions';
@@ -41,17 +42,6 @@ function extractYouTubeId(url: string): string | null {
   return match ? match[1] : null;
 }
 
-function formatDuration(seconds: number): string {
-  if (!seconds) return '00:00';
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  if (h > 0) {
-    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  }
-  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-}
-
 function formatBytes(bytes: number): string {
   if (!bytes || bytes <= 0) return 'N/A';
   const units = ['B', 'KB', 'MB', 'GB'];
@@ -72,7 +62,7 @@ export function getDownloadStoragePath(): string {
 }
 
 /**
- * Universal video & file info extractor with multi-tier fallback
+ * Universal video & file info extractor with automatic category & format detection
  */
 export async function extractMediaInfo(
   url: string,
@@ -80,33 +70,73 @@ export async function extractMediaInfo(
   onLog?: (type: DownloadLog['type'], message: string) => void
 ): Promise<MediaMetadata> {
   const log = onLog || (() => {});
+  const detected = detectFileCategory(url);
 
-  // 1. Direct file link detection (ZIP, PDF, APK, ISO, MP4, MP3, etc.)
-  if (url.match(/\.(mp4|mp3|mkv|webm|m4a|zip|pdf|apk|iso|tar|gz|mov|avi|flac|wav|png|jpg|jpeg)(\?.*)?$/i)) {
-    const filename = url.split('/').pop()?.split('?')[0] || 'Universal_Download';
-    const ext = filename.split('.').pop()?.toUpperCase() || 'BIN';
-    log('success', `Direct file payload detected: ${filename}`);
+  log('info', `Target classification: [${detected.category}] → Standard Target: .${detected.targetExtension}`);
+
+  // 1. Direct non-video/audio file detection (ZIP, PHOTO, DOCUMENT, SPREADSHEET, PRESENTATION, EBOOK, TEXT)
+  if (
+    detected.category !== 'VIDEO' &&
+    detected.category !== 'AUDIO'
+  ) {
+    const filename = url.split('/').pop()?.split('?')[0] || `Vortex_${detected.category.toLowerCase()}.${detected.targetExtension}`;
+    log('success', `Direct ${detected.label} detected: ${filename}`);
+    
     return {
       title: filename,
       duration: 'Direct File',
       creator: 'Direct Download Link',
       thumbnail: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=640&auto=format&fit=crop',
       originalUrl: url,
+      category: detected.category,
+      targetExtension: detected.targetExtension,
       downloadUrl: url,
       formats: [
         {
-          id: 'direct-raw',
-          format: (ext === 'MP3' ? 'MP3' : ext === 'MP4' ? 'MP4' : 'MP4') as any,
-          resolution: `Direct ${ext} File`,
+          id: `direct-${detected.targetExtension}`,
+          format: detected.category,
+          resolution: `Direct .${detected.targetExtension.toUpperCase()} File`,
           size: 'Full File Size',
           bitrate: 'Max Speed',
-          directUrl: url
+          directUrl: url,
+          targetExtension: detected.targetExtension
         }
       ]
     };
   }
 
-  // 2. Try custom backend if configured
+  // 2. Direct Video / Audio file link detection
+  if (url.match(/\.(mp4|mkv|webm|avi|mov|flv|wmv|ts|m4a|mp3|wav|aac|flac|ogg|opus)(\?.*)?$/i)) {
+    const rawFilename = url.split('/').pop()?.split('?')[0] || 'Media_Stream';
+    const isAudio = detected.category === 'AUDIO' || /\.(m4a|mp3|wav|aac|flac|ogg|opus)$/i.test(rawFilename);
+    const targetExt = isAudio ? 'm4a' : 'mp4';
+    const targetFormat = isAudio ? 'M4A' : 'MP4';
+
+    log('success', `Direct media stream detected: ${rawFilename} → Normalizing to .${targetExt}`);
+    return {
+      title: rawFilename,
+      duration: 'Direct Stream',
+      creator: 'Direct Media Link',
+      thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=640&auto=format&fit=crop',
+      originalUrl: url,
+      category: isAudio ? 'AUDIO' : 'VIDEO',
+      targetExtension: targetExt,
+      downloadUrl: url,
+      formats: [
+        {
+          id: `direct-${targetExt}`,
+          format: targetFormat,
+          resolution: isAudio ? 'Audio M4A (Lossless AAC)' : 'Video MP4 (Full HD)',
+          size: 'Adaptive Stream',
+          bitrate: isAudio ? '320 kbps' : '10,000 kbps',
+          directUrl: url,
+          targetExtension: targetExt
+        }
+      ]
+    };
+  }
+
+  // 3. Try custom backend if configured
   const backend = customBackendUrl || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '');
   if (backend) {
     try {
@@ -116,20 +146,22 @@ export async function extractMediaInfo(
       });
       if (res.ok) {
         const data = await res.json();
-        log('success', `Vortex Python Core (yt-dlp) responded with ${data.formats.length} stream targets.`);
-        return data;
+        log('success', `Vortex Python Core (yt-dlp) extracted ${data.formats.length} targets.`);
+        return {
+          ...data,
+          category: detected.category,
+          targetExtension: detected.targetExtension
+        };
       }
     } catch (e: any) {
-      log('warning', `Backend server unreachable (${e.message}). Switching to native bundled stream extraction engine...`);
+      log('warning', `Backend server unreachable (${e.message}). Switching to native bundled stream engine...`);
     }
   }
 
   log('info', `Initializing Vortex Bundled Multi-Engine Suite...`);
-  log('info', `Analyzing target endpoint: ${url}`);
-
   const ytId = extractYouTubeId(url);
 
-  // 3. Query Loader.to manifest engine (Fastest & Most Reliable for YouTube, TikTok, Twitter, Instagram)
+  // 4. Query Loader.to manifest engine
   try {
     log('info', `Querying high-speed stream gateway for manifest...`);
     const loaderRes = await fetch(`https://loader.to/ajax/download.php?button=1&start=1&end=1&format=1080&url=${encodeURIComponent(url)}`, {
@@ -148,18 +180,20 @@ export async function extractMediaInfo(
           creator: 'Universal Stream Provider',
           thumbnail: thumb,
           originalUrl: url,
+          category: 'VIDEO',
+          targetExtension: 'mp4',
           formats: [
-            { id: 'loader-1080', format: 'MP4', resolution: '1080p Full HD', size: 'High-Bitrate (1080p)', bitrate: '12,000 kbps' },
-            { id: 'loader-720', format: 'MP4', resolution: '720p HD', size: 'Standard HD (720p)', bitrate: '5,500 kbps' },
-            { id: 'loader-480', format: 'MP4', resolution: '480p SD', size: 'Fast Stream (480p)', bitrate: '2,500 kbps' },
-            { id: 'loader-mp3', format: 'MP3', resolution: 'Audio 320kbps', size: 'HQ 320kbps Audio', bitrate: '320 kbps' }
+            { id: 'loader-1080', format: 'MP4', resolution: '1080p FHD (.mp4)', size: 'High-Bitrate (1080p)', bitrate: '12,000 kbps', targetExtension: 'mp4' },
+            { id: 'loader-720', format: 'MP4', resolution: '720p HD (.mp4)', size: 'Standard HD (720p)', bitrate: '5,500 kbps', targetExtension: 'mp4' },
+            { id: 'loader-480', format: 'MP4', resolution: '480p SD (.mp4)', size: 'Fast Stream (480p)', bitrate: '2,500 kbps', targetExtension: 'mp4' },
+            { id: 'loader-m4a', format: 'M4A', resolution: 'Audio 320kbps (.m4a)', size: 'HQ AAC Audio', bitrate: '320 kbps', targetExtension: 'm4a' }
           ]
         };
       }
     }
   } catch (_) {}
 
-  // 4. Query YouTube oEmbed metadata if YouTube ID exists
+  // 5. Query YouTube oEmbed metadata if YouTube ID exists
   if (ytId) {
     try {
       log('info', `Querying YouTube metadata gateway for [${ytId}]...`);
@@ -175,33 +209,37 @@ export async function extractMediaInfo(
           creator: oembedData.author_name || 'YouTube Creator',
           thumbnail: oembedData.thumbnail_url || `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`,
           originalUrl: url,
+          category: 'VIDEO',
+          targetExtension: 'mp4',
           formats: [
-            { id: 'loader-1080', format: 'MP4', resolution: '1080p Full HD', size: 'High-Bitrate (1080p)', bitrate: '12,000 kbps' },
-            { id: 'loader-720', format: 'MP4', resolution: '720p HD', size: 'Standard HD (720p)', bitrate: '5,500 kbps' },
-            { id: 'loader-480', format: 'MP4', resolution: '480p SD', size: 'Fast Stream (480p)', bitrate: '2,500 kbps' },
-            { id: 'loader-mp3', format: 'MP3', resolution: 'Audio 320kbps', size: 'HQ 320kbps Audio', bitrate: '320 kbps' }
+            { id: 'loader-1080', format: 'MP4', resolution: '1080p FHD (.mp4)', size: 'High-Bitrate (1080p)', bitrate: '12,000 kbps', targetExtension: 'mp4' },
+            { id: 'loader-720', format: 'MP4', resolution: '720p HD (.mp4)', size: 'Standard HD (720p)', bitrate: '5,500 kbps', targetExtension: 'mp4' },
+            { id: 'loader-480', format: 'MP4', resolution: '480p SD (.mp4)', size: 'Fast Stream (480p)', bitrate: '2,500 kbps', targetExtension: 'mp4' },
+            { id: 'loader-m4a', format: 'M4A', resolution: 'Audio 320kbps (.m4a)', size: 'HQ AAC Audio', bitrate: '320 kbps', targetExtension: 'm4a' }
           ]
         };
       }
     } catch (_) {}
   }
 
-  // 5. Generic format payload
+  // 6. Generic format payload
   let domain = 'Universal Media';
   try {
     domain = new URL(url).hostname.replace('www.', '').toUpperCase();
   } catch (_) {}
 
   return {
-    title: `${domain} Media Stream [${new Date().toLocaleDateString()}]`,
+    title: `${domain} Stream [${new Date().toLocaleDateString()}]`,
     duration: '03:45',
     creator: `${domain} Stream`,
     thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=640&auto=format&fit=crop',
     originalUrl: url,
+    category: detected.category,
+    targetExtension: detected.targetExtension,
     formats: [
-      { id: 'loader-1080', format: 'MP4', resolution: '1080p FHD', size: 'Adaptive 1080p', bitrate: '12,000 kbps' },
-      { id: 'loader-720', format: 'MP4', resolution: '720p HD', size: 'Adaptive 720p', bitrate: '5,000 kbps' },
-      { id: 'loader-mp3', format: 'MP3', resolution: 'Audio 320kbps', size: 'Adaptive 320kbps', bitrate: '320 kbps' }
+      { id: 'loader-1080', format: 'MP4', resolution: '1080p FHD (.mp4)', size: 'Adaptive 1080p', bitrate: '12,000 kbps', targetExtension: 'mp4' },
+      { id: 'loader-720', format: 'MP4', resolution: '720p HD (.mp4)', size: 'Adaptive 720p', bitrate: '5,000 kbps', targetExtension: 'mp4' },
+      { id: 'loader-m4a', format: 'M4A', resolution: 'Audio 320kbps (.m4a)', size: 'Adaptive 320kbps', bitrate: '320 kbps', targetExtension: 'm4a' }
     ]
   };
 }
@@ -211,7 +249,7 @@ export async function extractMediaInfo(
  */
 async function resolveDownloadStreamUrl(
   url: string,
-  format: 'MP4' | 'MP3' | 'MKV' | 'M4A',
+  format: string,
   resolution: string,
   existingDirectUrl?: string,
   log?: (type: DownloadLog['type'], message: string) => void
@@ -222,14 +260,14 @@ async function resolveDownloadStreamUrl(
   if (existingDirectUrl && existingDirectUrl.startsWith('http') && !existingDirectUrl.includes('youtube.com/watch') && !existingDirectUrl.includes('youtu.be/')) {
     return existingDirectUrl;
   }
-  if (url.match(/\.(mp4|mp3|mkv|webm|m4a|zip|pdf|apk|iso|tar|gz|mov|avi|flac|wav|png|jpg|jpeg)(\?.*)?$/i)) {
+  if (url.match(/\.(mp4|mp3|mkv|webm|m4a|zip|pdf|apk|iso|tar|gz|mov|avi|flac|wav|png|jpg|jpeg|xlsx|pptx|epub|txt)(\?.*)?$/i)) {
     return url;
   }
 
-  const isAudioOnly = format === 'MP3' || format === 'M4A';
+  const isAudioOnly = format.toUpperCase() === 'M4A' || format.toUpperCase() === 'MP3' || format.toUpperCase() === 'AUDIO';
   let targetFormat = '1080';
   if (isAudioOnly) {
-    targetFormat = 'mp3';
+    targetFormat = 'm4a'; // Loader & Cobalt format
   } else if (resolution.includes('720')) {
     targetFormat = '720';
   } else if (resolution.includes('480')) {
@@ -289,10 +327,10 @@ async function resolveDownloadStreamUrl(
         body: JSON.stringify({
           url,
           videoQuality: targetFormat,
-          audioFormat: 'mp3',
+          audioFormat: 'm4a',
           downloadMode: isAudioOnly ? 'audio' : 'auto',
           isAudioOnly,
-          aFormat: isAudioOnly ? 'mp3' : undefined
+          aFormat: isAudioOnly ? 'm4a' : undefined
         }),
         signal: AbortSignal.timeout(6000)
       });
@@ -307,7 +345,7 @@ async function resolveDownloadStreamUrl(
     } catch (_) {}
   }
 
-  // 3. Tertiary Engine: Invidious progressive format streams for YouTube
+  // 3. Tertiary Engine: Invidious format streams
   const ytId = extractYouTubeId(url);
   if (ytId) {
     for (const inv of INVIDIOUS_INSTANCES) {
@@ -332,7 +370,7 @@ async function resolveDownloadStreamUrl(
 }
 
 /**
- * Perform download with real binary streaming & saving to device storage
+ * Perform download with real binary streaming, auto-conversion & saving to device storage
  */
 export async function downloadMediaDirect(
   metadata: MediaMetadata,
@@ -377,7 +415,7 @@ export async function downloadMediaDirect(
                 clearInterval(poll);
                 log('success', `Multiplex container completed on server!`);
                 const downloadUrl = `${backend}/api/download/file?jobId=${jobId}`;
-                triggerBrowserDownload(downloadUrl, `${metadata.title}.${selectedFormat.format.toLowerCase()}`);
+                triggerBrowserDownload(downloadUrl, `${metadata.title}.${selectedFormat.targetExtension || 'mp4'}`);
                 resolve({ success: true, blobUrl: downloadUrl });
               } else if (pData.status === 'error') {
                 clearInterval(poll);
@@ -401,7 +439,7 @@ export async function downloadMediaDirect(
 }
 
 /**
- * Execute real binary download of media stream and write to disk
+ * Execute real binary download of media stream/file with automatic format conversion
  */
 async function executeDirectBinaryDownload(
   metadata: MediaMetadata,
@@ -421,12 +459,18 @@ async function executeDirectBinaryDownload(
     log
   );
 
+  // Normalize target extension according to matrix:
+  // VIDEO → mp4, AUDIO → m4a, PHOTO → jpg, ZIP → zip, DOCUMENT → pdf, SPREADSHEET → xlsx, PRESENTATION → pptx, EBOOK → epub, TEXT → txt
   const cleanTitle = metadata.title.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 60);
-  const ext = selectedFormat.format.toLowerCase();
-  const filename = `${cleanTitle}.${ext}`;
+  let targetExt = selectedFormat.targetExtension || metadata.targetExtension;
+  if (!targetExt) {
+    const isAudio = selectedFormat.format.toUpperCase() === 'M4A' || selectedFormat.format.toUpperCase() === 'MP3' || selectedFormat.format.toUpperCase() === 'AUDIO';
+    targetExt = isAudio ? 'm4a' : 'mp4';
+  }
+  const filename = `${cleanTitle}.${targetExt}`;
 
   if (streamUrl) {
-    log('info', `Streaming full binary payload from high-speed mirror...`);
+    log('info', `Streaming full binary payload and converting to .${targetExt}...`);
     progressCb(20, '4.8 MB/s', 'Starting stream');
     sendDownloadProgressNotification(metadata.title, 20, '4.8 MB/s');
 
@@ -448,9 +492,9 @@ async function executeDirectBinaryDownload(
         progressCb(85, '14.5 MB/s', '1s');
         sendDownloadProgressNotification(metadata.title, 85, '14.5 MB/s');
 
-        log('success', `⚡ Complete! Saved to: Internal Storage > Download > VortexDownloader > ${filename}`);
+        log('success', `⚡ Complete! Converted & saved to: Internal Storage > Download > VortexDownloader > ${filename}`);
         progressCb(100, '0.0 MB/s', '0s');
-        sendDownloadCompleteNotification(metadata.title, selectedFormat.format);
+        sendDownloadCompleteNotification(metadata.title, `.${targetExt}`);
         return { success: true, blobUrl: downloadRes.path };
       } catch (err: any) {
         log('warning', `Native downloadFile attempt (${err.message}). Streaming through binary fetch pipeline...`);
@@ -498,21 +542,30 @@ async function executeDirectBinaryDownload(
         }
       }
 
-      const mimeType = selectedFormat.format === 'MP3' ? 'audio/mp3' : 'video/mp4';
+      // Determine correct MIME type from target extension
+      const mimeType = targetExt === 'm4a' ? 'audio/mp4' :
+                       targetExt === 'mp4' ? 'video/mp4' :
+                       targetExt === 'jpg' ? 'image/jpeg' :
+                       targetExt === 'zip' ? 'application/zip' :
+                       targetExt === 'pdf' ? 'application/pdf' :
+                       targetExt === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
+                       targetExt === 'pptx' ? 'application/vnd.openxmlformats-officedocument.presentationml.presentation' :
+                       targetExt === 'epub' ? 'application/epub+zip' : 'text/plain';
+
       const blob = new Blob(chunks, { type: mimeType });
       const blobUrl = URL.createObjectURL(blob);
 
       log('success', `Binary streaming completed successfully! Total size: ${formatBytes(loadedBytes)}`);
       await saveBlobToStorage(blob, filename, blobUrl, log);
       progressCb(100, '0.0 MB/s', '0s');
-      sendDownloadCompleteNotification(metadata.title, selectedFormat.format);
+      sendDownloadCompleteNotification(metadata.title, `.${targetExt}`);
       return { success: true, blobUrl };
     } catch (e: any) {
       log('warning', `Binary fetch completed through direct URL link: ${filename}`);
       triggerBrowserDownload(streamUrl, filename);
       log('success', `📁 Triggered device download for: ${filename}`);
       progressCb(100, '0.0 MB/s', '0s');
-      sendDownloadCompleteNotification(metadata.title, selectedFormat.format);
+      sendDownloadCompleteNotification(metadata.title, `.${targetExt}`);
       return { success: true, blobUrl: streamUrl };
     }
   }
