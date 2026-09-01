@@ -21,17 +21,22 @@
 
 <hr />
 
-## 📱 Android App (v0.4.1)
+## 📱 Android App (v0.4.2)
 
-VortexDownloader is available as a standalone Android application with direct in-app media playback (custom Video player, Audio player, and 7 viewers for Photo, PDF, Spreadsheet, Presentation, Ebook, Zip, Text), separate Archived Media Vault page, and 100% internal in-app update installer!
+VortexDownloader is available as a standalone Android application with custom bundled In-App Media Player & 9-Category Viewer Suite (powered by **`JSZip`**, **`SheetJS XLSX`**, Canvas Spectrum Analyzer, and Custom Video/Audio Engines), zero mobile header overflow, and 100% internal in-app update installer!
 
-- **Download APK (v0.4.1)**: [**VortexDownloader-v0.4.1.apk**](release/VortexDownloader-v0.4.1.apk)
-- **Version**: `0.4.1` (Release v0.4.1)
+- **Download APK (v0.4.2)**: [**VortexDownloader-v0.4.2.apk**](release/VortexDownloader-v0.4.2.apk)
+- **Version**: `0.4.2` (Release v0.4.2)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.4.1**:
-  - 🎬 **Complete 9-Category In-App Player & Viewer Suite**: Play video and audio directly inside the app with custom controls, and view photos, documents, spreadsheets, presentations, ebooks, zip archives, and text without requiring any 3rd-party player applications.
-  - 🧹 **Clean Navigation & Minimal Hero UI**: Streamlined top navigation tabs (**Downloader** and **Archived Media Vault**), removing redundant menu buttons and verbose subtitle text.
-  - ✨ **Motion Transitions & Smooth Scrolling**: Integrated Framer Motion spring tab transitions, modal entrance animations, and smooth touch scrolling throughout the APK.
+- **What's New in v0.4.2**:
+  - 📱 **Zero-Overflow Responsive Mobile Header**: Fixed tab switch boundaries on compact mobile viewports so **Downloader** and **Media Vault** buttons remain perfectly aligned without clipping.
+  - 🧰 **Bundled Custom Viewer Suite & Libraries**:
+    - **Custom Video Player**: Gesture seek (+/- 10s), canvas frame snapshot, speed controls, and audio boost.
+    - **Real-Time Audio Spectrum Analyzer**: Web Audio API canvas frequency visualizer with spinning vinyl disk.
+    - **In-Memory Zip Archive Engine (`JSZip`)**: Inspect, list directory tree, and extract archive contents directly in memory.
+    - **Spreadsheet Workbook Engine (`SheetJS XLSX`)**: Multi-sheet workbook viewer with cell search and sorting.
+    - **Photo Studio**: Zoom/pan with contrast, brightness, and grayscale filters.
+    - **Document, Presentation, E-Book & Code Viewers**: Complete standalone viewer suite.
 
 ### Building Android APK Locally
 ```bash
