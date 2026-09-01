@@ -21,27 +21,17 @@
 
 <hr />
 
-## 📱 Android App (v0.4.0)
+## 📱 Android App (v0.4.1)
 
-VortexDownloader is available as a standalone Android application with automatic format detection, 9-category universal normalization matrix (ZIP, PHOTO, AUDIO, VIDEO, DOCUMENT, SPREADSHEET, PRESENTATION, EBOOK, TEXT), auto-conversion to `.mp4` / `.m4a`, dedicated Archived Media Vault page, and 100% internal in-app update installer!
+VortexDownloader is available as a standalone Android application with direct in-app media playback (custom Video player, Audio player, and 7 viewers for Photo, PDF, Spreadsheet, Presentation, Ebook, Zip, Text), separate Archived Media Vault page, and 100% internal in-app update installer!
 
-- **Download APK (v0.4.0)**: [**VortexDownloader-v0.4.0.apk**](release/VortexDownloader-v0.4.0.apk)
-- **Version**: `0.4.0` (Release v0.4.0)
+- **Download APK (v0.4.1)**: [**VortexDownloader-v0.4.1.apk**](release/VortexDownloader-v0.4.1.apk)
+- **Version**: `0.4.1` (Release v0.4.1)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.4.0**:
-  - 🔄 **Universal 9-Category Normalization Matrix**:
-    - **`ZIP`** → `.zip`
-    - **`PHOTO`** → `.jpg`
-    - **`AUDIO`** → `.m4a`
-    - **`VIDEO`** → `.mp4`
-    - **`DOCUMENT`** → `.pdf`
-    - **`SPREADSHEET`** → `.xlsx`
-    - **`PRESENTATION`** → `.pptx`
-    - **`EBOOK`** → `.epub`
-    - **`TEXT`** → `.txt`
-  - ⚡ **Automatic Link Detection & Conversion Engine**: Analyzes URLs dynamically by platform signature, file extension, and MIME type to auto-convert videos to `.mp4` and audio tracks to `.m4a`.
-  - 🗄️ **Dedicated Archived Media Vault Page**: Categorized history vault with search, format tags, one-click load, copy link, and deletion controls.
-  - 🔔 **Live Download Progress Notifications**: Real-time percentage & speed updates in Android notification tray.
+- **What's New in v0.4.1**:
+  - 🎬 **Complete 9-Category In-App Player & Viewer Suite**: Play video and audio directly inside the app with custom controls, and view photos, documents, spreadsheets, presentations, ebooks, zip archives, and text without requiring any 3rd-party player applications.
+  - 🧹 **Clean Navigation & Minimal Hero UI**: Streamlined top navigation tabs (**Downloader** and **Archived Media Vault**), removing redundant menu buttons and verbose subtitle text.
+  - ✨ **Motion Transitions & Smooth Scrolling**: Integrated Framer Motion spring tab transitions, modal entrance animations, and smooth touch scrolling throughout the APK.
 
 ### Building Android APK Locally
 ```bash

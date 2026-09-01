@@ -1,25 +1,19 @@
 import { useState } from 'react';
-import { Settings, Zap, Database, Menu, X, Shield } from 'lucide-react';
+import { Zap, Database, Menu, X } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: 'downloader' | 'vault';
   onSelectTab: (tab: 'downloader' | 'vault') => void;
-  onOpenSettings: () => void;
   vaultCount: number;
 }
 
-export default function Header({ activeTab, onSelectTab, onOpenSettings, vaultCount }: HeaderProps) {
+export default function Header({ activeTab, onSelectTab, vaultCount }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleTabClick = (tab: 'downloader' | 'vault') => {
     onSelectTab(tab);
     setMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleOpenSettingsClick = () => {
-    onOpenSettings();
-    setMenuOpen(false);
   };
 
   return (
@@ -48,30 +42,30 @@ export default function Header({ activeTab, onSelectTab, onOpenSettings, vaultCo
         </span>
       </div>
 
-      {/* Desktop Navigation Tabs in Center */}
-      <nav className="hidden md:flex items-center space-x-2 bg-secondary-grey/30 border border-gray-800 rounded-full p-1">
+      {/* Navigation Tabs */}
+      <nav className="flex items-center space-x-2 bg-secondary-grey/30 border border-gray-800 rounded-full p-1">
         <button 
           onClick={() => handleTabClick('downloader')} 
-          className={`px-4 py-1.5 rounded-full text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+          className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
             activeTab === 'downloader'
               ? 'bg-action-red text-white shadow-sm shadow-action-red/30'
               : 'text-gray-400 hover:text-white hover:bg-secondary-grey/40'
           }`}
         >
           <Zap className="w-3.5 h-3.5" />
-          Downloader
+          <span>Downloader</span>
         </button>
 
         <button 
           onClick={() => handleTabClick('vault')} 
-          className={`px-4 py-1.5 rounded-full text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+          className={`px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-mono font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
             activeTab === 'vault'
               ? 'bg-action-red text-white shadow-sm shadow-action-red/30'
               : 'text-gray-400 hover:text-white hover:bg-secondary-grey/40'
           }`}
         >
           <Database className="w-3.5 h-3.5" />
-          Archived Vault
+          <span>Media Vault</span>
           {vaultCount > 0 && (
             <span className="ml-1 px-1.5 py-0.2 text-[10px] rounded-full bg-white/20 text-white font-mono">
               {vaultCount}
@@ -79,76 +73,6 @@ export default function Header({ activeTab, onSelectTab, onOpenSettings, vaultCo
           )}
         </button>
       </nav>
-
-      {/* Right controls: Settings & Mobile Drawer Toggle */}
-      <div className="flex items-center space-x-2">
-        {/* Settings button */}
-        <button
-          onClick={handleOpenSettingsClick}
-          className="p-2 text-gray-400 hover:text-white transition-all duration-200 rounded-lg hover:bg-secondary-grey/50 border border-transparent hover:border-gray-800 cursor-pointer flex items-center gap-1.5"
-          title="Settings & Preferences"
-          id="btn-open-settings"
-        >
-          <Settings className="w-5 h-5 hover:rotate-45 transition-transform duration-300" />
-          <span className="hidden sm:inline text-xs font-mono font-bold text-gray-300">Settings</span>
-        </button>
-
-        {/* Mobile menu hamburger toggle */}
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="p-2 text-gray-400 hover:text-white transition-all duration-200 rounded-lg hover:bg-secondary-grey/50 border border-gray-800/60 cursor-pointer md:hidden"
-          aria-label="Toggle navigation menu"
-        >
-          {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-      </div>
-
-      {/* Mobile Menu Dropdown Drawer */}
-      {menuOpen && (
-        <div className="absolute top-16 left-0 w-full bg-neutral-dark/98 backdrop-blur-xl border-b border-gray-800/90 flex flex-col p-4 space-y-2 md:hidden z-50 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-          <button 
-            onClick={() => handleTabClick('downloader')} 
-            className={`py-3 px-4 rounded-lg transition-all text-xs font-mono font-bold flex items-center justify-between w-full text-left cursor-pointer ${
-              activeTab === 'downloader'
-                ? 'bg-action-red text-white'
-                : 'text-gray-300 hover:bg-secondary-grey/40 hover:text-white'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <Zap className="w-4 h-4" />
-              <span>Downloader Engine</span>
-            </div>
-            {activeTab === 'downloader' && <span className="text-[10px] uppercase font-mono">Active</span>}
-          </button>
-
-          <button 
-            onClick={() => handleTabClick('vault')} 
-            className={`py-3 px-4 rounded-lg transition-all text-xs font-mono font-bold flex items-center justify-between w-full text-left cursor-pointer ${
-              activeTab === 'vault'
-                ? 'bg-action-red text-white'
-                : 'text-gray-300 hover:bg-secondary-grey/40 hover:text-white'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <Database className="w-4 h-4" />
-              <span>Archived Media Vault</span>
-            </div>
-            <span className="px-2 py-0.5 rounded-full text-[10px] bg-secondary-grey/60 text-gray-300 font-mono">
-              {vaultCount} saved
-            </span>
-          </button>
-
-          <div className="border-t border-gray-800/80 my-1 pt-1">
-            <button 
-              onClick={handleOpenSettingsClick} 
-              className="py-3 px-4 rounded-lg transition-all text-xs font-mono font-bold flex items-center gap-2.5 w-full text-left text-gray-300 hover:bg-secondary-grey/40 hover:text-white cursor-pointer"
-            >
-              <Settings className="w-4 h-4 text-action-red" />
-              <span>Settings & Update Center</span>
-            </button>
-          </div>
-        </div>
-      )}
     </header>
   );
 }
