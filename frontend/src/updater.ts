@@ -1,7 +1,7 @@
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { registerPlugin, Capacitor } from '@capacitor/core';
 
-export const APP_VERSION = 'v0.4.4';
+export const APP_VERSION = 'v0.4.5';
 
 interface AppUpdaterPlugin {
   installApk(options: { filePath: string }): Promise<{ success: boolean; message?: string }>;

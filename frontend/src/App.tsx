@@ -11,12 +11,21 @@ import {
   Clock, 
   ArrowLeft,
   Database,
-  Zap
+  Zap,
+  Globe,
+  Scissors,
+  FolderOpen,
+  Shield,
+  Sparkles
 } from 'lucide-react';
 
 import Header from './components/Header';
 import SettingsModal from './components/SettingsModal';
 import MediaViewerModal from './components/MediaViewerModal';
+import FileManagerModal from './components/FileManagerModal';
+import MediaTrimmerModal from './components/MediaTrimmerModal';
+import SecretVaultModal from './components/SecretVaultModal';
+import WebBrowserModal from './components/WebBrowserModal';
 import TermsModal from './components/TermsModal';
 import PrivacyModal from './components/PrivacyModal';
 import TerminalLogs from './components/TerminalLogs';
@@ -52,6 +61,10 @@ export default function App() {
   const [viewingItem, setViewingItem] = useState<DownloadHistoryItem | null>(null);
 
   const [showSettings, setShowSettings] = useState(false);
+  const [showBrowser, setShowBrowser] = useState(false);
+  const [showFileManager, setShowFileManager] = useState(false);
+  const [showSecretVault, setShowSecretVault] = useState(false);
+  const [trimmingItem, setTrimmingItem] = useState<DownloadHistoryItem | null>(null);
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
 
@@ -232,11 +245,14 @@ export default function App() {
       {/* Background glow accent */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[800px] h-[300px] bg-gradient-to-b from-action-red/5 to-transparent blur-3xl pointer-events-none select-none -z-10" />
 
-      {/* Header component with tab switching and settings */}
+      {/* Header component with tab switching, quick tools, and settings */}
       <Header 
         activeTab={activeTab}
         onSelectTab={(tab) => setActiveTab(tab)}
         onOpenSettings={() => setShowSettings(true)}
+        onOpenBrowser={() => setShowBrowser(true)}
+        onOpenFileManager={() => setShowFileManager(true)}
+        onOpenSecretVault={() => setShowSecretVault(true)}
         vaultCount={history.length}
       />
 
@@ -269,6 +285,67 @@ export default function App() {
                 <p className="text-xs sm:text-sm text-gray-400 max-w-md mx-auto leading-relaxed font-sans px-2">
                   High-speed universal stream extraction & direct in-app media playback.
                 </p>
+              </div>
+
+              {/* Quick Tools Navigation Bar */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
+                <button
+                  onClick={() => setShowBrowser(true)}
+                  className="p-3 rounded-2xl bg-surface-card border border-gray-800/80 hover:border-cyan-500/50 hover:bg-cyan-950/10 transition-all flex items-center space-x-2.5 text-left group cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform shrink-0">
+                    <Globe className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold font-hanken text-white group-hover:text-cyan-400 truncate">Web Browser</div>
+                    <div className="text-[10px] font-mono text-gray-500 truncate">1-Tap Sniffer</div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setShowFileManager(true)}
+                  className="p-3 rounded-2xl bg-surface-card border border-gray-800/80 hover:border-amber-500/50 hover:bg-amber-950/10 transition-all flex items-center space-x-2.5 text-left group cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform shrink-0">
+                    <FolderOpen className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold font-hanken text-white group-hover:text-amber-400 truncate">File Manager</div>
+                    <div className="text-[10px] font-mono text-gray-500 truncate">Batch Actions</div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setShowSecretVault(true)}
+                  className="p-3 rounded-2xl bg-surface-card border border-gray-800/80 hover:border-emerald-500/50 hover:bg-emerald-950/10 transition-all flex items-center space-x-2.5 text-left group cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
+                    <Shield className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold font-hanken text-white group-hover:text-emerald-400 truncate">Secret Vault</div>
+                    <div className="text-[10px] font-mono text-gray-500 truncate">PIN / Biometric</div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (history.length > 0) {
+                      setTrimmingItem(history[0]);
+                    } else {
+                      alert('Download a video or audio file first to use the Trimmer Studio!');
+                    }
+                  }}
+                  className="p-3 rounded-2xl bg-surface-card border border-gray-800/80 hover:border-action-red/50 hover:bg-action-red/10 transition-all flex items-center space-x-2.5 text-left group cursor-pointer"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-action-red/10 border border-action-red/20 flex items-center justify-center text-action-red group-hover:scale-105 transition-transform shrink-0">
+                    <Scissors className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold font-hanken text-white group-hover:text-action-red truncate">Trimmer Studio</div>
+                    <div className="text-[10px] font-mono text-gray-500 truncate">Cut & Convert</div>
+                  </div>
+                </button>
               </div>
 
               {/* Ingestion Stage Card */}
@@ -636,6 +713,58 @@ export default function App() {
         item={viewingItem}
         isOpen={!!viewingItem}
         onClose={() => setViewingItem(null)}
+      />
+
+      {/* IN-APP FILE & STORAGE MANAGER MODAL */}
+      <FileManagerModal
+        isOpen={showFileManager}
+        onClose={() => setShowFileManager(false)}
+        items={history}
+        onDeleteItems={async (ids) => {
+          for (const id of ids) {
+            await handleRemoveHistoryItem(id);
+          }
+        }}
+        onPlayItem={(item) => {
+          setShowFileManager(false);
+          setViewingItem(item);
+        }}
+      />
+
+      {/* IN-APP MEDIA TRIMMER & CONVERTER MODAL */}
+      <MediaTrimmerModal
+        isOpen={!!trimmingItem}
+        onClose={() => setTrimmingItem(null)}
+        item={trimmingItem}
+        onSaveTrimmed={(trimmed) => {
+          const updated = [trimmed, ...history];
+          setHistory(updated);
+          localStorage.setItem('vortex_download_history', JSON.stringify(updated));
+          addLog('success', `Exported trimmed file: ${trimmed.title}`);
+        }}
+      />
+
+      {/* SECRET PRIVATE VAULT MODAL */}
+      <SecretVaultModal
+        isOpen={showSecretVault}
+        onClose={() => setShowSecretVault(false)}
+        allHistoryItems={history}
+        onPlayItem={(item) => {
+          setShowSecretVault(false);
+          setViewingItem(item);
+        }}
+      />
+
+      {/* IN-APP WEB BROWSER & SNIFFER MODAL */}
+      <WebBrowserModal
+        isOpen={showBrowser}
+        onClose={() => setShowBrowser(false)}
+        onDownloadUrl={(url) => {
+          setInputUrl(url);
+          setActiveTab('downloader');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          triggerExtraction(url);
+        }}
       />
 
       {/* Modals */}

@@ -451,6 +451,39 @@ function CustomAudioPlayer({ item }: { item: DownloadHistoryItem }) {
     return () => { isCancelled = true; };
   }, [item]);
 
+  // Background MediaSession lockscreen controls
+  useEffect(() => {
+    if ('mediaSession' in navigator && item) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: item.title,
+        artist: 'Vortex Lossless Audio Engine',
+        album: 'Vortex Vault',
+        artwork: [
+          { src: item.thumbnail || '', sizes: '512x512', type: 'image/jpeg' }
+        ]
+      });
+
+      navigator.mediaSession.setActionHandler('play', () => {
+        if (audioRef.current) {
+          audioRef.current.play().catch(() => {});
+          setIsPlaying(true);
+        }
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          setIsPlaying(false);
+        }
+      });
+      navigator.mediaSession.setActionHandler('seekbackward', () => {
+        if (audioRef.current) audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - 10);
+      });
+      navigator.mediaSession.setActionHandler('seekforward', () => {
+        if (audioRef.current) audioRef.current.currentTime = Math.min(audioRef.current.duration || 0, audioRef.current.currentTime + 10);
+      });
+    }
+  }, [item]);
+
   const togglePlay = () => {
     if (audioRef.current) {
       if (isPlaying) audioRef.current.pause();

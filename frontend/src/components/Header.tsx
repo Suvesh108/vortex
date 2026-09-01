@@ -1,23 +1,34 @@
-import { Zap, Database, Settings } from 'lucide-react';
+import { Zap, Database, Settings, Globe, FolderOpen, Shield } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: 'downloader' | 'vault';
   onSelectTab: (tab: 'downloader' | 'vault') => void;
   onOpenSettings: () => void;
+  onOpenBrowser: () => void;
+  onOpenFileManager: () => void;
+  onOpenSecretVault: () => void;
   vaultCount: number;
 }
 
-export default function Header({ activeTab, onSelectTab, onOpenSettings, vaultCount }: HeaderProps) {
+export default function Header({
+  activeTab,
+  onSelectTab,
+  onOpenSettings,
+  onOpenBrowser,
+  onOpenFileManager,
+  onOpenSecretVault,
+  vaultCount
+}: HeaderProps) {
   const handleTabClick = (tab: 'downloader' | 'vault') => {
     onSelectTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <header className="w-full max-w-full bg-neutral-dark/95 backdrop-blur-md border-b border-gray-800/80 h-16 flex items-center justify-between px-2.5 sm:px-6 md:px-10 sticky top-0 z-40 overflow-x-hidden">
+    <header className="w-full max-w-full bg-neutral-dark/95 backdrop-blur-md border-b border-gray-800/80 h-16 flex items-center justify-between px-2.5 sm:px-6 md:px-8 sticky top-0 z-40 overflow-x-hidden">
       {/* Brand logo & title */}
       <div 
-        className="flex items-center space-x-2 cursor-pointer group shrink-0 min-w-0 mr-2"
+        className="flex items-center space-x-2 cursor-pointer group shrink-0 min-w-0 mr-1.5"
         onClick={() => handleTabClick('downloader')}
       >
         <div className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center subtle-glow group-hover:scale-105 transition-transform duration-300 shrink-0">
@@ -39,13 +50,13 @@ export default function Header({ activeTab, onSelectTab, onOpenSettings, vaultCo
         </span>
       </div>
 
-      {/* Right Controls: Tabs + Settings Button */}
-      <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+      {/* Center/Right: Tabs + Quick Tool Icons */}
+      <div className="flex items-center space-x-1 sm:space-x-1.5 shrink-0">
         {/* Navigation Switch Tabs */}
-        <nav className="flex items-center space-x-1 sm:space-x-2 bg-secondary-grey/30 border border-gray-800 rounded-full p-0.5 sm:p-1">
+        <nav className="flex items-center space-x-1 bg-secondary-grey/30 border border-gray-800 rounded-full p-0.5 sm:p-1">
           <button 
             onClick={() => handleTabClick('downloader')} 
-            className={`px-2.5 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-mono font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-mono font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
               activeTab === 'downloader'
                 ? 'bg-action-red text-white shadow-sm shadow-action-red/30'
                 : 'text-gray-400 hover:text-white hover:bg-secondary-grey/40'
@@ -57,7 +68,7 @@ export default function Header({ activeTab, onSelectTab, onOpenSettings, vaultCo
 
           <button 
             onClick={() => handleTabClick('vault')} 
-            className={`px-2.5 sm:px-4 py-1.5 rounded-full text-[11px] sm:text-xs font-mono font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
+            className={`px-2.5 sm:px-3.5 py-1.5 rounded-full text-[11px] sm:text-xs font-mono font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
               activeTab === 'vault'
                 ? 'bg-action-red text-white shadow-sm shadow-action-red/30'
                 : 'text-gray-400 hover:text-white hover:bg-secondary-grey/40'
@@ -66,20 +77,47 @@ export default function Header({ activeTab, onSelectTab, onOpenSettings, vaultCo
             <Database className="w-3.5 h-3.5" />
             <span>Vault</span>
             {vaultCount > 0 && (
-              <span className="ml-0.5 sm:ml-1 px-1.5 py-0.2 text-[9px] sm:text-[10px] rounded-full bg-white/20 text-white font-mono">
+              <span className="ml-0.5 px-1.5 py-0.2 text-[9px] sm:text-[10px] rounded-full bg-white/20 text-white font-mono">
                 {vaultCount}
               </span>
             )}
           </button>
         </nav>
 
+        {/* Quick Access Tools: Web Browser */}
+        <button
+          onClick={onOpenBrowser}
+          className="p-2 rounded-full bg-secondary-grey/30 hover:bg-secondary-grey/60 border border-gray-800 text-gray-400 hover:text-cyan-400 transition-colors cursor-pointer hidden xs:flex items-center justify-center"
+          title="In-App Web Browser & Sniffer"
+        >
+          <Globe className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Quick Access Tools: File Manager */}
+        <button
+          onClick={onOpenFileManager}
+          className="p-2 rounded-full bg-secondary-grey/30 hover:bg-secondary-grey/60 border border-gray-800 text-gray-400 hover:text-amber-400 transition-colors cursor-pointer hidden xs:flex items-center justify-center"
+          title="Storage File Manager"
+        >
+          <FolderOpen className="w-3.5 h-3.5" />
+        </button>
+
+        {/* Quick Access Tools: Secret Vault */}
+        <button
+          onClick={onOpenSecretVault}
+          className="p-2 rounded-full bg-secondary-grey/30 hover:bg-secondary-grey/60 border border-gray-800 text-gray-400 hover:text-emerald-400 transition-colors cursor-pointer flex items-center justify-center"
+          title="Secret Private Vault (PIN/Biometric)"
+        >
+          <Shield className="w-3.5 h-3.5" />
+        </button>
+
         {/* Compact Settings Button */}
         <button
           onClick={onOpenSettings}
-          className="p-2 rounded-full bg-secondary-grey/30 hover:bg-secondary-grey/60 border border-gray-800 text-gray-400 hover:text-white transition-colors cursor-pointer"
+          className="p-2 rounded-full bg-secondary-grey/30 hover:bg-secondary-grey/60 border border-gray-800 text-gray-400 hover:text-white transition-colors cursor-pointer flex items-center justify-center"
           title="Settings & Preferences"
         >
-          <Settings className="w-4 h-4 hover:rotate-45 transition-transform duration-300" />
+          <Settings className="w-3.5 h-3.5 hover:rotate-45 transition-transform duration-300" />
         </button>
       </div>
     </header>

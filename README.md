@@ -21,18 +21,20 @@
 
 <hr />
 
-## 📱 Android App (v0.4.4)
+## 📱 Android App (v0.4.5)
 
-VortexDownloader is available as a standalone Android application with physical local disk storage deletion, 100% offline local playback from device storage (`Download/VortexDownloader`), full 9-category viewer suite, and internal in-app update installer!
+VortexDownloader is available as a standalone Android application with 6 major new powerhouse features: In-App File & Storage Manager, Turbo Multi-Segment Downloader, Background Audio & Lockscreen Media Controls, Video & Audio Trimmer Studio, Biometric/PIN Secret Vault, and In-App Web Browser with 1-Tap Media Sniffer!
 
-- **Download APK (v0.4.4)**: [**VortexDownloader-v0.4.4.apk**](release/VortexDownloader-v0.4.4.apk)
-- **Version**: `0.4.4` (Release v0.4.4)
+- **Download APK (v0.4.5)**: [**VortexDownloader-v0.4.5.apk**](release/VortexDownloader-v0.4.5.apk)
+- **Version**: `0.4.5` (Release v0.4.5)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.4.4**:
-  - 🗑️ **Physical Local Disk Deletion**: Deleting an item or clearing the vault permanently removes the actual physical file from device internal storage (`Download/VortexDownloader/`).
-  - ⚡ **100% Offline Local Playback**: All in-app viewers (video, audio, photos, spreadsheets, documents, zips) directly stream from locally stored disk files with zero buffering and zero internet consumption.
-  - 🎬 **Custom In-App Video & Audio Players**: Lossless AAC & MP4 players with gesture seeking, frame captures, and canvas spectrum analyzers.
-  - ⚙️ **Integrated Settings Center**: YouTube cookie auth, storage directories, thread counts, and update installer.
+- **What's New in v0.4.5**:
+  - 📂 **In-App Storage File Manager**: Browse files, filter by category, sort (Date/Size/Name), batch select, batch delete, and batch share.
+  - 🎞️ **Media Trimmer & Converter Studio**: Visual dual-slider timecode trimmer with instant live preview and video-to-audio (`.mp4` → `.m4a` ringtone) converter.
+  - 🔐 **Private Secret Vault**: 4-digit PIN lock and biometric fingerprint authentication to protect confidential downloads.
+  - 🌐 **In-App Web Browser & Media Sniffer**: Integrated web browser with popular bookmarks and floating 1-tap media sniffer.
+  - 🎵 **Background Audio & MediaSession**: Lockscreen media notification controls (Play/Pause, Skip, Seek, Artwork).
+  - ⚡ **100% Offline Local Playback & Physical Disk Deletion**: Seamless offline local storage streaming with zero buffering.
 
 ### Building Android APK Locally
 ```bash
