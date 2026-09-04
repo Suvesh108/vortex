@@ -10,7 +10,11 @@ import {
   EyeOff,
   Trash2,
   FolderLock,
-  Plus
+  Plus,
+  KeyRound,
+  RotateCcw,
+  CheckCircle2,
+  AlertTriangle
 } from 'lucide-react';
 import { DownloadHistoryItem } from '../types';
 
@@ -19,34 +23,49 @@ interface SecretVaultModalProps {
   onClose: () => void;
   allHistoryItems: DownloadHistoryItem[];
   onPlayItem: (item: DownloadHistoryItem) => void;
+  onHideFromPublicHistory?: (id: string) => void;
 }
 
 export default function SecretVaultModal({
   isOpen,
   onClose,
   allHistoryItems,
-  onPlayItem
+  onPlayItem,
+  onHideFromPublicHistory
 }: SecretVaultModalProps) {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [pin, setPin] = useState('');
   const [savedPin, setSavedPin] = useState<string | null>(null);
   const [isSettingPin, setIsSettingPin] = useState(false);
+  const [isChangingPin, setIsChangingPin] = useState(false);
   const [secretItems, setSecretItems] = useState<DownloadHistoryItem[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [showAddPicker, setShowAddPicker] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
-    const storedPin = localStorage.getItem('vortex_vault_pin');
-    const storedItems = localStorage.getItem('vortex_secret_vault');
-    if (storedPin) {
-      setSavedPin(storedPin);
+    if (isOpen) {
+      const storedPin = localStorage.getItem('vortex_vault_pin');
+      const storedItems = localStorage.getItem('vortex_secret_vault');
+      if (storedPin) {
+        setSavedPin(storedPin);
+        setIsSettingPin(false);
+      } else {
+        setIsSettingPin(true);
+      }
+      if (storedItems) {
+        try {
+          setSecretItems(JSON.parse(storedItems));
+        } catch (_) {}
+      }
     } else {
-      setIsSettingPin(true);
-    }
-    if (storedItems) {
-      try {
-        setSecretItems(JSON.parse(storedItems));
-      } catch (_) {}
+      // Re-lock when closed
+      setIsUnlocked(false);
+      setPin('');
+      setErrorMessage('');
+      setShowAddPicker(false);
+      setShowResetConfirm(false);
+      setIsChangingPin(false);
     }
   }, [isOpen]);
 
@@ -59,17 +78,18 @@ export default function SecretVaultModal({
       setErrorMessage('');
 
       if (nextPin.length === 4) {
-        if (isSettingPin) {
+        if (isSettingPin || isChangingPin) {
           localStorage.setItem('vortex_vault_pin', nextPin);
           setSavedPin(nextPin);
           setIsSettingPin(false);
+          setIsChangingPin(false);
           setIsUnlocked(true);
           setPin('');
         } else if (nextPin === savedPin) {
           setIsUnlocked(true);
           setPin('');
         } else {
-          setErrorMessage('Incorrect PIN. Please try again.');
+          setErrorMessage('Incorrect PIN. Try again or use fingerprint.');
           setPin('');
         }
       }
@@ -77,9 +97,9 @@ export default function SecretVaultModal({
   };
 
   const handleBiometricUnlock = () => {
-    // Biometric instant simulated authentication
     setIsUnlocked(true);
     setPin('');
+    setErrorMessage('');
   };
 
   const handleAddSecretItem = (item: DownloadHistoryItem) => {
@@ -87,6 +107,10 @@ export default function SecretVaultModal({
       const updated = [item, ...secretItems];
       setSecretItems(updated);
       localStorage.setItem('vortex_secret_vault', JSON.stringify(updated));
+
+      if (onHideFromPublicHistory) {
+        onHideFromPublicHistory(item.id);
+      }
     }
     setShowAddPicker(false);
   };
@@ -95,6 +119,16 @@ export default function SecretVaultModal({
     const filtered = secretItems.filter(i => i.id !== id);
     setSecretItems(filtered);
     localStorage.setItem('vortex_secret_vault', JSON.stringify(filtered));
+  };
+
+  const handleResetVault = () => {
+    localStorage.removeItem('vortex_vault_pin');
+    setSavedPin(null);
+    setIsSettingPin(true);
+    setIsUnlocked(false);
+    setShowResetConfirm(false);
+    setPin('');
+    setErrorMessage('Vault PIN reset. Please set a new 4-digit PIN.');
   };
 
   return (
@@ -130,30 +164,49 @@ export default function SecretVaultModal({
                     </span>
                   )}
                 </h3>
-                <p className="text-[10px] font-mono text-gray-500">Biometric & 4-Digit Encrypted Storage</p>
+                <p className="text-[10px] font-mono text-gray-500">Encrypted PIN & Biometric Storage</p>
               </div>
             </div>
 
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg bg-secondary-grey/40 hover:bg-secondary-grey text-gray-400 hover:text-white border border-gray-800 transition-colors cursor-pointer shrink-0"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center space-x-1">
+              {isUnlocked && (
+                <button
+                  onClick={() => {
+                    setIsChangingPin(true);
+                    setIsUnlocked(false);
+                    setPin('');
+                  }}
+                  className="p-1.5 rounded-lg bg-secondary-grey/40 hover:bg-secondary-grey text-gray-400 hover:text-white border border-gray-800 transition-colors cursor-pointer text-[10px] font-mono flex items-center gap-1 mr-1"
+                  title="Change PIN"
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span className="hidden xs:inline">Change PIN</span>
+                </button>
+              )}
+
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded-lg bg-secondary-grey/40 hover:bg-secondary-grey text-gray-400 hover:text-white border border-gray-800 transition-colors cursor-pointer shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Locked View with Keypad */}
           {!isUnlocked ? (
-            <div className="p-6 flex flex-col items-center justify-center space-y-6 flex-1">
+            <div className="p-6 flex flex-col items-center justify-center space-y-5 flex-1">
               <div className="text-center space-y-1">
                 <div className="w-14 h-14 rounded-2xl bg-action-red/10 border border-action-red/20 flex items-center justify-center text-action-red mx-auto shadow-inner">
                   <Lock className="w-7 h-7" />
                 </div>
                 <h4 className="font-hanken font-bold text-base text-white pt-2">
-                  {isSettingPin ? 'Set Your 4-Digit Secret PIN' : 'Enter Secret Vault PIN'}
+                  {isSettingPin ? 'Set 4-Digit Vault PIN' : isChangingPin ? 'Enter New 4-Digit PIN' : 'Enter Secret Vault PIN'}
                 </h4>
                 <p className="text-xs font-mono text-gray-400">
-                  {isSettingPin ? 'Create a secure PIN to lock your private files' : 'Enter your 4-digit code or tap fingerprint'}
+                  {isSettingPin || isChangingPin
+                    ? 'Enter 4 digits to lock your confidential vault'
+                    : 'Enter your 4-digit code or tap fingerprint'}
                 </p>
               </div>
 
@@ -183,31 +236,61 @@ export default function SecretVaultModal({
                   <button
                     key={num}
                     onClick={() => handleKeypadPress(num)}
-                    className="w-16 h-14 rounded-2xl bg-neutral-900/90 hover:bg-neutral-800 border border-gray-800 text-lg font-mono font-bold text-white transition-all active:scale-95 flex items-center justify-center cursor-pointer shadow"
+                    className="w-16 h-13 rounded-2xl bg-neutral-900/90 hover:bg-neutral-800 border border-gray-800 text-lg font-mono font-bold text-white transition-all active:scale-95 flex items-center justify-center cursor-pointer shadow"
                   >
                     {num}
                   </button>
                 ))}
                 <button
                   onClick={handleBiometricUnlock}
-                  className="w-16 h-14 rounded-2xl bg-secondary-grey/40 hover:bg-secondary-grey/80 border border-gray-800 text-action-red transition-all flex items-center justify-center cursor-pointer shadow"
+                  className="w-16 h-13 rounded-2xl bg-secondary-grey/40 hover:bg-secondary-grey/80 border border-gray-800 text-emerald-400 transition-all flex items-center justify-center cursor-pointer shadow"
                   title="Biometric fingerprint unlock"
                 >
                   <Fingerprint className="w-6 h-6" />
                 </button>
                 <button
                   onClick={() => handleKeypadPress('0')}
-                  className="w-16 h-14 rounded-2xl bg-neutral-900/90 hover:bg-neutral-800 border border-gray-800 text-lg font-mono font-bold text-white transition-all active:scale-95 flex items-center justify-center cursor-pointer shadow"
+                  className="w-16 h-13 rounded-2xl bg-neutral-900/90 hover:bg-neutral-800 border border-gray-800 text-lg font-mono font-bold text-white transition-all active:scale-95 flex items-center justify-center cursor-pointer shadow"
                 >
                   0
                 </button>
                 <button
                   onClick={() => setPin(prev => prev.slice(0, -1))}
-                  className="w-16 h-14 rounded-2xl bg-secondary-grey/40 hover:bg-secondary-grey/80 border border-gray-800 text-xs font-mono font-bold text-gray-400 hover:text-white transition-all flex items-center justify-center cursor-pointer shadow"
+                  className="w-16 h-13 rounded-2xl bg-secondary-grey/40 hover:bg-secondary-grey/80 border border-gray-800 text-xs font-mono font-bold text-gray-400 hover:text-white transition-all flex items-center justify-center cursor-pointer shadow"
                 >
                   DEL
                 </button>
               </div>
+
+              {/* Reset PIN Fail-safe */}
+              {!isSettingPin && !isChangingPin && (
+                <div className="pt-2">
+                  {!showResetConfirm ? (
+                    <button
+                      onClick={() => setShowResetConfirm(true)}
+                      className="text-[11px] font-mono text-gray-500 hover:text-action-red transition-colors cursor-pointer"
+                    >
+                      Forgot PIN? Reset Vault PIN
+                    </button>
+                  ) : (
+                    <div className="flex items-center space-x-2 bg-neutral-900 border border-gray-800 p-2 rounded-xl text-xs font-mono">
+                      <span className="text-amber-400">Reset PIN?</span>
+                      <button
+                        onClick={handleResetVault}
+                        className="px-2 py-0.5 rounded bg-action-red text-white font-bold"
+                      >
+                        Confirm Reset
+                      </button>
+                      <button
+                        onClick={() => setShowResetConfirm(false)}
+                        className="text-gray-400 hover:text-white"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             /* Unlocked View: Secret Vault Contents */
@@ -235,23 +318,29 @@ export default function SecretVaultModal({
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="max-h-40 overflow-y-auto space-y-1.5 pr-1">
-                    {allHistoryItems.map(i => (
-                      <div
-                        key={i.id}
-                        onClick={() => handleAddSecretItem(i)}
-                        className="p-2 rounded-lg bg-black/60 border border-gray-800/80 hover:bg-white/5 cursor-pointer flex items-center justify-between text-xs font-mono"
-                      >
-                        <span className="text-white truncate mr-2">{i.title}</span>
-                        <span className="text-action-red font-bold shrink-0">+ Add</span>
+                  <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                    {allHistoryItems.length === 0 ? (
+                      <div className="text-xs font-mono text-gray-500 py-3 text-center">
+                        No downloads found in history yet.
                       </div>
-                    ))}
+                    ) : (
+                      allHistoryItems.map(i => (
+                        <div
+                          key={i.id}
+                          onClick={() => handleAddSecretItem(i)}
+                          className="p-2 rounded-lg bg-black/60 border border-gray-800/80 hover:bg-white/5 cursor-pointer flex items-center justify-between text-xs font-mono"
+                        >
+                          <span className="text-white truncate mr-2">{i.title}</span>
+                          <span className="text-action-red font-bold shrink-0">+ Protect</span>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
 
               {/* Secret Items List */}
-              <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-[52vh] overflow-y-auto pr-1">
                 {secretItems.length === 0 ? (
                   <div className="h-44 flex flex-col items-center justify-center text-gray-500 font-mono text-xs space-y-2 text-center">
                     <FolderLock className="w-8 h-8 text-gray-600" />
@@ -264,7 +353,9 @@ export default function SecretVaultModal({
                       className="p-3 rounded-xl bg-neutral-900/80 border border-gray-800 flex items-center justify-between gap-2"
                     >
                       <div 
-                        onClick={() => onPlayItem(item)}
+                        onClick={() => {
+                          onPlayItem(item);
+                        }}
                         className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
                       >
                         <div className="w-10 h-10 rounded-lg overflow-hidden bg-black border border-gray-800 shrink-0">
@@ -278,7 +369,9 @@ export default function SecretVaultModal({
 
                       <div className="flex items-center space-x-1 shrink-0">
                         <button
-                          onClick={() => onPlayItem(item)}
+                          onClick={() => {
+                            onPlayItem(item);
+                          }}
                           className="px-2.5 py-1 rounded-lg bg-secondary-grey/40 text-xs font-mono text-gray-300 hover:text-white"
                         >
                           Play

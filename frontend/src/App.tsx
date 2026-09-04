@@ -736,6 +736,7 @@ export default function App() {
         isOpen={!!trimmingItem}
         onClose={() => setTrimmingItem(null)}
         item={trimmingItem}
+        allItems={history}
         onSaveTrimmed={(trimmed) => {
           const updated = [trimmed, ...history];
           setHistory(updated);
@@ -749,6 +750,9 @@ export default function App() {
         isOpen={showSecretVault}
         onClose={() => setShowSecretVault(false)}
         allHistoryItems={history}
+        onHideFromPublicHistory={(id) => {
+          handleRemoveHistoryItem(id);
+        }}
         onPlayItem={(item) => {
           setShowSecretVault(false);
           setViewingItem(item);

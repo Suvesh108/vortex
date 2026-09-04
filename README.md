@@ -21,14 +21,17 @@
 
 <hr />
 
-## 📱 Android App (v0.5.0)
+## 📱 Android App (v0.5.1)
 
-VortexDownloader is available as a standalone Android application with specialized extraction and direct downloading support for **16 top video and cloud file hosting providers** (TeraBox, DiskWala, DoodStream, Streamtape, FileMoon, VidBunker, ByteDisk, StreamWish, Vidhide, FileLions, MixDrop, StreamHG, VidGuard, Upstream, VOE, StreamSB), built-in Packed JS deobfuscation, in-app file manager, secret vault, and internal update installer!
+VortexDownloader is available as a standalone Android application with fixed in-app web browser & sniffer, upgraded secret private vault with PIN management/reset, enhanced precision media trimmer studio, and 16-host universal media extraction suite!
 
-- **Download APK (v0.5.0)**: [**VortexDownloader-v0.5.0.apk**](release/VortexDownloader-v0.5.0.apk)
-- **Version**: `0.5.0` (Release v0.5.0)
+- **Download APK (v0.5.1)**: [**VortexDownloader-v0.5.1.apk**](release/VortexDownloader-v0.5.1.apk)
+- **Version**: `0.5.1` (Release v0.5.1)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.5.0**:
+- **What's New in v0.5.1**:
+  - 🌐 **Fixed In-App Web Browser**: Clean search query integration (DuckDuckGo / keywords), live sniffer status banner, fast bookmarks hub, and floating 1-tap extraction FAB.
+  - 🔐 **Fixed Secret Private Vault**: Keypad PIN authentication, Change PIN option, Forgot PIN / Reset fail-safe, and auto-hide from public vault when protected.
+  - 🎞️ **Fixed Media Trimmer Studio**: Resolved local device playback paths, millisecond precision step buttons (`-1s`, `+1s`, `-5s`, `+5s`, `Set to Current`), A-B loop preview, and audio/video lossless export.
   - 🌐 **16-Host Universal Media Engine**: Dedicated scrapers, API resolvers, and stream decoders for:
     - 📦 **TeraBox** (terabox.com, teraboxapp.com, 1024tera.com, 4funbox, nephobox, etc.)
     - 💿 **DiskWala** (diskwala.com, diskwla.in)
