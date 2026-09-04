@@ -49,6 +49,28 @@ export const SAMPLE_PRESETS = [
       { id: 'mp4-720', format: 'MP4', resolution: '720p', size: '82.8 MB', bitrate: '6,000 kbps' },
       { id: 'm4a-192', format: 'M4A', resolution: 'Audio 192kbps', size: '47.1 MB', bitrate: '192 kbps' },
     ] as MediaQuality[]
+  },
+  {
+    title: 'TeraBox Cloud Archive [Documentary 1080p]',
+    creator: 'TeraBox Cloud Host',
+    duration: '45:10',
+    url: 'https://teraboxapp.com/s/1terabox-demo-archive',
+    thumbnail: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=640&auto=format&fit=crop',
+    formats: [
+      { id: 'terabox-1080', format: 'MP4', resolution: '1080p Full HD (.mp4)', size: '380.4 MB', bitrate: '12,000 kbps' },
+      { id: 'terabox-m4a', format: 'M4A', resolution: 'Lossless AAC (.m4a)', size: '48.2 MB', bitrate: '320 kbps' }
+    ] as MediaQuality[]
+  },
+  {
+    title: 'Streamtape / DoodStream High-Speed Video',
+    creator: 'Streamtape Storage',
+    duration: '22:15',
+    url: 'https://streamtape.com/v/streamtape-demo-video',
+    thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=640&auto=format&fit=crop',
+    formats: [
+      { id: 'streamtape-1080', format: 'MP4', resolution: '1080p High Bitrate (.mp4)', size: '188.5 MB', bitrate: '10,000 kbps' },
+      { id: 'streamtape-720', format: 'MP4', resolution: '720p HD (.mp4)', size: '94.2 MB', bitrate: '5,000 kbps' }
+    ] as MediaQuality[]
   }
 ];
 

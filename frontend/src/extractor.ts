@@ -1,5 +1,6 @@
 import { MediaMetadata, MediaQuality, DownloadLog } from './types';
 import { detectFileCategory, CATEGORY_SPECS, FileCategory } from './detector';
+import { extractHostingMedia, identifyHost } from './hosts';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
 import { sendDownloadProgressNotification, sendDownloadCompleteNotification } from './permissions';
@@ -136,7 +137,16 @@ export async function extractMediaInfo(
     };
   }
 
-  // 3. Try custom backend if configured
+  // 3. Dedicated 16-Host Video & Cloud Extractor Engine (TeraBox, Streamtape, DoodStream, FileMoon, MixDrop, VOE, etc.)
+  const hostInfo = identifyHost(url);
+  if (hostInfo.isSupported) {
+    const hostMedia = await extractHostingMedia(url, log);
+    if (hostMedia) {
+      return hostMedia;
+    }
+  }
+
+  // 4. Try custom backend if configured
   const backend = customBackendUrl || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '');
   if (backend) {
     try {
@@ -262,6 +272,21 @@ export async function resolveDownloadStreamUrl(
   }
   if (url.match(/\.(mp4|mp3|mkv|webm|m4a|zip|pdf|apk|iso|tar|gz|mov|avi|flac|wav|png|jpg|jpeg|xlsx|pptx|epub|txt)(\?.*)?$/i)) {
     return url;
+  }
+
+  // 0. Dedicated 16-Host Direct Stream Engine (TeraBox, Streamtape, DoodStream, FileMoon, MixDrop, VOE, etc.)
+  const hostInfo = identifyHost(url);
+  if (hostInfo.isSupported) {
+    const hostMedia = await extractHostingMedia(url, logger);
+    if (hostMedia?.downloadUrl) {
+      logger('success', `[${hostInfo.hostName}] Allocated direct stream binary channel!`);
+      return hostMedia.downloadUrl;
+    }
+    const directFormat = hostMedia?.formats.find(f => f.directUrl);
+    if (directFormat?.directUrl) {
+      logger('success', `[${hostInfo.hostName}] Allocated direct stream format!`);
+      return directFormat.directUrl;
+    }
   }
 
   const isAudioOnly = format.toUpperCase() === 'M4A' || format.toUpperCase() === 'MP3' || format.toUpperCase() === 'AUDIO';

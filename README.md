@@ -21,20 +21,33 @@
 
 <hr />
 
-## 📱 Android App (v0.4.5)
+## 📱 Android App (v0.5.0)
 
-VortexDownloader is available as a standalone Android application with 6 major new powerhouse features: In-App File & Storage Manager, Turbo Multi-Segment Downloader, Background Audio & Lockscreen Media Controls, Video & Audio Trimmer Studio, Biometric/PIN Secret Vault, and In-App Web Browser with 1-Tap Media Sniffer!
+VortexDownloader is available as a standalone Android application with specialized extraction and direct downloading support for **16 top video and cloud file hosting providers** (TeraBox, DiskWala, DoodStream, Streamtape, FileMoon, VidBunker, ByteDisk, StreamWish, Vidhide, FileLions, MixDrop, StreamHG, VidGuard, Upstream, VOE, StreamSB), built-in Packed JS deobfuscation, in-app file manager, secret vault, and internal update installer!
 
-- **Download APK (v0.4.5)**: [**VortexDownloader-v0.4.5.apk**](release/VortexDownloader-v0.4.5.apk)
-- **Version**: `0.4.5` (Release v0.4.5)
+- **Download APK (v0.5.0)**: [**VortexDownloader-v0.5.0.apk**](release/VortexDownloader-v0.5.0.apk)
+- **Version**: `0.5.0` (Release v0.5.0)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.4.5**:
-  - 📂 **In-App Storage File Manager**: Browse files, filter by category, sort (Date/Size/Name), batch select, batch delete, and batch share.
-  - 🎞️ **Media Trimmer & Converter Studio**: Visual dual-slider timecode trimmer with instant live preview and video-to-audio (`.mp4` → `.m4a` ringtone) converter.
-  - 🔐 **Private Secret Vault**: 4-digit PIN lock and biometric fingerprint authentication to protect confidential downloads.
-  - 🌐 **In-App Web Browser & Media Sniffer**: Integrated web browser with popular bookmarks and floating 1-tap media sniffer.
-  - 🎵 **Background Audio & MediaSession**: Lockscreen media notification controls (Play/Pause, Skip, Seek, Artwork).
-  - ⚡ **100% Offline Local Playback & Physical Disk Deletion**: Seamless offline local storage streaming with zero buffering.
+- **What's New in v0.5.0**:
+  - 🌐 **16-Host Universal Media Engine**: Dedicated scrapers, API resolvers, and stream decoders for:
+    - 📦 **TeraBox** (terabox.com, teraboxapp.com, 1024tera.com, 4funbox, nephobox, etc.)
+    - 💿 **DiskWala** (diskwala.com, diskwla.in)
+    - 🦤 **DoodStream** (doodstream.com, dood.to, dood.so, dood.ws, dood.sh, etc.)
+    - 📼 **Streamtape** (streamtape.com, streamtape.net, streamta.pe, tapecontent.net, strtape.cloud)
+    - 🌙 **FileMoon** (filemoon.sx, filemoon.to, filemoon.in, filemoon.link)
+    - 🛡️ **VidBunker** (vidbunker.com, vidbunker.to)
+    - 💾 **ByteDisk** (bytedisk.com, bytebox)
+    - 🌠 **StreamWish** (streamwish.to, swhls.com, wishfast.top, wishembed.pro)
+    - 👁️ **Vidhide** (vidhide.com, vidhidepro.com, vidhideplus.com, vidhide.org)
+    - 🦁 **FileLions** (filelions.com, filelions.to, filelions.site, filelions.online)
+    - 💧 **MixDrop** (mixdrop.co, mixdrop.to, mixdrop.sx, mixdrop.bz, mixdrop.ch)
+    - ⚡ **StreamHG** (streamhg.com)
+    - 🛡️ **VidGuard** (vidguard.to, vgembed.com, vidguard.net)
+    - 🌊 **Upstream** (upstream.to, upstreamcdn.co)
+    - 🎭 **VOE** (voe.sx, voe-network.net, voeunblk.com)
+    - 📺 **StreamSB** (streamsb.net, sbchill.com, sbfull.com, sbfast.com, sbembed.com)
+  - 🔓 **Packed JS Deobfuscator Engine (`unpackJs`)**: Automatically unrolls Dean Edwards' packed javascript `eval(function(p,a,c,k,e,d)...)` blocks across hosting sites.
+  - 📂 **Full In-App Suite**: File Manager, Media Trimmer, PIN/Biometric Secret Vault, Web Browser with 1-Tap Sniffer, and Background MediaSession Controls.
 
 ### Building Android APK Locally
 ```bash
