@@ -50,6 +50,33 @@ interface Job {
 
 const jobs: Record<string, Job> = {};
 
+/**
+ * Security: Validate URL against SSRF & malicious protocols
+ */
+function isValidExternalUrl(rawUrl: string): boolean {
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return false;
+    }
+    const host = parsed.hostname.toLowerCase();
+    // Block internal loopback and cloud metadata endpoints
+    if (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '::1' ||
+      host === '169.254.169.254' ||
+      host.endsWith('.local') ||
+      host.endsWith('.internal')
+    ) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Helper to add logs to a job
 function addJobLog(job: Job, type: LogItem['type'], message: string) {
   const now = new Date();
@@ -89,8 +116,8 @@ app.get('/api/health', (req, res) => {
 // 1. GET /api/info - Fetch video metadata
 app.get('/api/info', (req, res) => {
   const videoUrl = req.query.url as string;
-  if (!videoUrl) {
-    return res.status(400).json({ error: 'URL parameter is required.' });
+  if (!videoUrl || !isValidExternalUrl(videoUrl)) {
+    return res.status(400).json({ error: 'Valid HTTP/HTTPS URL parameter is required.' });
   }
 
   console.log(`Fetching info for URL: ${videoUrl}`);
@@ -131,22 +158,27 @@ app.get('/api/info', (req, res) => {
 app.post('/api/download', (req, res) => {
   const { url, formatId, title, format } = req.body;
 
-  if (!url || !formatId || !title || !format) {
-    return res.status(400).json({ error: 'Missing required parameters (url, formatId, title, format).' });
+  if (!url || !formatId || !title || !format || !isValidExternalUrl(url)) {
+    return res.status(400).json({ error: 'Valid parameters (url, formatId, title, format) required.' });
   }
 
   const jobId = Math.random().toString(36).substring(2, 15);
-  // Sanitize title for file name
-  const sanitizedTitle = title.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-  const extension = format.toLowerCase();
+  // Sanitize title and extension against path traversal
+  const sanitizedTitle = String(title).replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 80);
+  const extension = String(format).toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 10) || 'mp4';
   const fileName = `${sanitizedTitle}_${jobId}.${extension}`;
-  const filePath = path.join(TEMP_DIR, fileName);
+  const filePath = path.resolve(TEMP_DIR, fileName);
+
+  // Security Check: Enforce filePath remains inside TEMP_DIR
+  if (!filePath.startsWith(path.resolve(TEMP_DIR))) {
+    return res.status(400).json({ error: 'Invalid destination path.' });
+  }
 
   const job: Job = {
     id: jobId,
     url,
     formatId,
-    title,
+    title: sanitizedTitle,
     extension,
     status: 'downloading',
     progress: 0,
@@ -162,8 +194,7 @@ app.post('/api/download', (req, res) => {
 
   console.log(`Starting download job: ${jobId} for URL: ${url}`);
 
-  // Spawn python script in download mode
-  const pythonProcess = spawn('python', [pythonScript, 'download', url, formatId, filePath]);
+  const pythonProcess = spawn('python', [pythonScript, 'download', url, String(formatId), filePath]);
 
   pythonProcess.stdout.on('data', (data) => {
     const lines = data.toString().split('\n');
@@ -172,7 +203,6 @@ app.post('/api/download', (req, res) => {
       if (!cleanLine) continue;
 
       if (cleanLine.startsWith('[PROGRESS]')) {
-        // Format: [PROGRESS] 45.2% | SPEED: 12.4 MB/s | ETA: 15s
         const match = cleanLine.match(/\[PROGRESS\]\s+([\d.]+)%\s+\|\s+SPEED:\s+([^\s]+ [^\s]+)\s+\|\s+ETA:\s+([^\s]+)/);
         if (match) {
           job.progress = Math.floor(parseFloat(match[1]));
@@ -180,13 +210,12 @@ app.post('/api/download', (req, res) => {
           job.eta = match[3];
         } else if (cleanLine.includes('Stitching')) {
           job.progress = 99;
-          addJobLog(job, 'success', 'Multiplex container downloading completed. Compiling and stitching audio/video tracks...');
+          addJobLog(job, 'success', 'Multiplex container downloading completed. Compiling audio/video...');
         }
       } else if (cleanLine.startsWith('[STATUS]')) {
         addJobLog(job, 'info', cleanLine.replace('[STATUS]', '').trim());
       } else if (cleanLine.startsWith('[SUCCESS]')) {
         addJobLog(job, 'success', 'Lossless tag injection completed successfully!');
-        addJobLog(job, 'success', `Deliverable saved in cache folder.`);
         job.status = 'completed';
         job.progress = 100;
       } else if (cleanLine.startsWith('[ERROR]')) {
@@ -195,7 +224,6 @@ app.post('/api/download', (req, res) => {
         job.status = 'error';
         job.error = errMsg;
       } else {
-        // Generic log from subprocess stdout
         addJobLog(job, 'info', cleanLine);
       }
     }
@@ -251,14 +279,13 @@ app.get('/api/download/file', (req, res) => {
     return res.status(400).send('File is not ready or has been removed.');
   }
 
-  const originalFilename = `${job.title.replace(/[^a-zA-Z0-9]/g, '_')}.${job.extension}`;
+  const originalFilename = `${job.title}.${job.extension}`;
   console.log(`Delivering file ${job.filePath} as ${originalFilename}`);
 
   res.download(job.filePath, originalFilename, (err) => {
     if (err) {
       console.error('Error delivering file:', err);
     } else {
-      // Clean up file after successful download (wait 5s to ensure stream is fully closed)
       setTimeout(() => {
         fs.unlink(job.filePath, () => {
           console.log(`Cleaned up temporary download file: ${job.filePath}`);

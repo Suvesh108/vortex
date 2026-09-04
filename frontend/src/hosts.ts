@@ -17,9 +17,26 @@
  * 14. Upstream
  * 15. VOE
  * 16. StreamSB
+ * + Recursive Iframe/Embed Aggregator Engine (rou.video and multi-host aggregators)
  */
 
 import { MediaMetadata, MediaQuality, DownloadLog } from './types';
+
+/**
+ * Clean & validate input URLs against unsafe protocols
+ */
+export function sanitizeMediaUrl(rawUrl: string): string | null {
+  try {
+    const trimmed = rawUrl.trim();
+    const parsed = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return null;
+    }
+    return parsed.toString();
+  } catch (_) {
+    return null;
+  }
+}
 
 /**
  * Dean Edwards' JavaScript Packer Unpacker
@@ -58,10 +75,11 @@ export function unpackJs(packedCode: string): string {
 export interface HostMatchResult {
   hostName: string;
   isSupported: boolean;
+  isAggregator?: boolean;
 }
 
 /**
- * Identify if a given URL matches any of the 16 supported video hosting providers
+ * Identify if a given URL matches any of the 16 supported video hosting providers or video aggregators
  */
 export function identifyHost(url: string): HostMatchResult {
   try {
@@ -115,37 +133,48 @@ export function identifyHost(url: string): HostMatchResult {
     if (host.includes('streamsb') || host.includes('sbchill') || host.includes('sbfull') || host.includes('sbfast') || host.includes('sbembed') || host.includes('sbvideo') || host.includes('sblona') || host.includes('watchsb')) {
       return { hostName: 'StreamSB', isSupported: true };
     }
+    if (host.includes('rou.video') || host.includes('embed') || host.includes('player') || host.includes('watch')) {
+      return { hostName: 'Video Aggregator', isSupported: true, isAggregator: true };
+    }
   } catch (_) {}
 
   return { hostName: 'Generic Media', isSupported: false };
 }
 
 /**
- * Universal Scraper & Extractor for all 16 hosting platforms
+ * Universal Scraper & Extractor for all 16 hosting platforms + Aggregators
  */
 export async function extractHostingMedia(
   url: string,
   onLog?: (type: DownloadLog['type'], message: string) => void
 ): Promise<MediaMetadata | null> {
   const log = onLog || (() => {});
-  const hostInfo = identifyHost(url);
+  const cleanUrl = sanitizeMediaUrl(url);
+  if (!cleanUrl) return null;
 
-  if (!hostInfo.isSupported) return null;
+  const hostInfo = identifyHost(cleanUrl);
+
+  if (!hostInfo.isSupported) {
+    // Try aggregator fallback inspection
+    return await extractAggregatorMedia(cleanUrl, log);
+  }
 
   log('info', `⚡ Dedicated Extractor Initialized: [${hostInfo.hostName} Core Engine]`);
 
   try {
     switch (hostInfo.hostName) {
       case 'TeraBox':
-        return await extractTeraBox(url, log);
+        return await extractTeraBox(cleanUrl, log);
       case 'Streamtape':
-        return await extractStreamtape(url, log);
+        return await extractStreamtape(cleanUrl, log);
       case 'DoodStream':
-        return await extractDoodStream(url, log);
+        return await extractDoodStream(cleanUrl, log);
       case 'MixDrop':
-        return await extractMixDrop(url, log);
+        return await extractMixDrop(cleanUrl, log);
       case 'VOE':
-        return await extractVOE(url, log);
+        return await extractVOE(cleanUrl, log);
+      case 'Video Aggregator':
+        return await extractAggregatorMedia(cleanUrl, log);
       case 'FileMoon':
       case 'StreamWish':
       case 'Vidhide':
@@ -158,12 +187,94 @@ export async function extractHostingMedia(
       case 'ByteDisk':
       case 'StreamSB':
       default:
-        return await extractGenericPackedVideoHost(url, hostInfo.hostName, log);
+        return await extractGenericPackedVideoHost(cleanUrl, hostInfo.hostName, log);
     }
   } catch (err: any) {
     log('warning', `[${hostInfo.hostName}] Extractor encountered exception: ${err.message || 'Stream parsing failed'}`);
     return null;
   }
+}
+
+/* =========================================================================
+   RECURSIVE AGGREGATOR / IFRAME CRAWLER (rou.video and embed portals)
+   ========================================================================= */
+export async function extractAggregatorMedia(
+  url: string,
+  log: (type: DownloadLog['type'], message: string) => void
+): Promise<MediaMetadata | null> {
+  log('info', `Analyzing portal/aggregator structure for embedded media...`);
+
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(7000) });
+    if (!res.ok) return null;
+
+    const html = await res.text();
+
+    // 1. Scan for iframes pointing to known video hosts
+    const iframeRegex = /<iframe[^>]+src=["']([^"']+)["']/gi;
+    let match;
+    const candidates: string[] = [];
+
+    while ((match = iframeRegex.exec(html)) !== null) {
+      let src = match[1];
+      if (src.startsWith('//')) src = 'https:' + src;
+      if (src.startsWith('http')) candidates.push(src);
+    }
+
+    // 2. Scan for video/source tags
+    const sourceRegex = /<(?:video|source)[^>]+src=["']([^"']+\.(?:m3u8|mp4|webm|mkv)[^"']*)["']/gi;
+    while ((match = sourceRegex.exec(html)) !== null) {
+      let src = match[1];
+      if (src.startsWith('//')) src = 'https:' + src;
+      if (src.startsWith('http')) candidates.push(src);
+    }
+
+    // 3. Scan for window.location redirects or embedded player links
+    const linkRegex = /(https?:\/\/[a-zA-Z0-9.-]+\/(?:e|v|d|embed|video|player|watch)\/[a-zA-Z0-9_-]+)/gi;
+    while ((match = linkRegex.exec(html)) !== null) {
+      candidates.push(match[1]);
+    }
+
+    // Evaluate candidates with host engine
+    for (const candidate of candidates) {
+      const childHost = identifyHost(candidate);
+      if (childHost.isSupported && childHost.hostName !== 'Video Aggregator') {
+        log('success', `Discovered embedded [${childHost.hostName}] stream source: ${candidate}`);
+        const result = await extractHostingMedia(candidate, log);
+        if (result) return result;
+      }
+    }
+
+    // Direct stream in aggregator
+    const directStream = candidates.find(c => /\.(m3u8|mp4)(\?.*)?$/i.test(c));
+    if (directStream) {
+      const title = html.match(/<title>(.*?)<\/title>/i)?.[1]?.trim() || 'Aggregated Media Stream';
+      log('success', `Extracted direct stream from portal: "${title}"`);
+      return {
+        title,
+        duration: 'Direct Stream',
+        creator: 'Web Stream Portal',
+        thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=640&auto=format&fit=crop',
+        originalUrl: url,
+        category: 'VIDEO',
+        targetExtension: 'mp4',
+        downloadUrl: directStream,
+        formats: [
+          {
+            id: 'aggregator-1080',
+            format: 'MP4',
+            resolution: '1080p Stream (.mp4)',
+            size: 'Adaptive Stream',
+            bitrate: '10,000 kbps',
+            directUrl: directStream,
+            targetExtension: 'mp4'
+          }
+        ]
+      };
+    }
+  } catch (_) {}
+
+  return null;
 }
 
 /* =========================================================================
@@ -175,7 +286,6 @@ async function extractTeraBox(
 ): Promise<MediaMetadata | null> {
   log('info', `Querying TeraBox high-speed cloud bypass gateway...`);
 
-  // Extract short key surl
   let surl = '';
   const surlMatch = url.match(/(?:surl=|\/s\/|1)([a-zA-Z0-9_-]+)/);
   if (surlMatch) {
@@ -183,11 +293,9 @@ async function extractTeraBox(
     if (!surl.startsWith('1')) surl = '1' + surl;
   }
 
-  // Multi-tier TeraBox API Resolvers
   const teraboxApis = [
     `https://terabox-api.syndr.workers.dev/?url=${encodeURIComponent(url)}`,
-    `https://ytbvideolyrics.com/api/terabox?url=${encodeURIComponent(url)}`,
-    `https://api.vortexdownloader.com/terabox?surl=${encodeURIComponent(surl)}`
+    `https://ytbvideolyrics.com/api/terabox?url=${encodeURIComponent(url)}`
   ];
 
   for (const api of teraboxApis) {
@@ -230,7 +338,6 @@ async function extractTeraBox(
     } catch (_) {}
   }
 
-  // Fallback metadata payload for direct stream worker
   const title = `TeraBox Cloud Stream [${surl || 'File'}]`;
   return {
     title,
@@ -268,12 +375,9 @@ async function extractStreamtape(
     if (res.ok) {
       const html = await res.text();
 
-      // Extract title
       const titleMatch = html.match(/<title>(.*?)<\/title>/i) || html.match(/id="videotitle">(.*?)</i);
       const title = titleMatch ? titleMatch[1].replace(' - Streamtape', '').trim() : 'Streamtape Video';
 
-      // Extract robotlink token
-      // e.g., document.getElementById('robotlink').innerHTML = '//streamtape.com/get_video?id=...&token=...';
       const linkMatch = html.match(/document\.getElementById\('robotlink'\)\.innerHTML\s*=\s*'([^']+)'/) ||
                          html.match(/id="robotlink"[^>]*>([^<]+)<\/div>/);
       
@@ -330,7 +434,6 @@ async function extractDoodStream(
       const titleMatch = html.match(/<title>(.*?)<\/title>/i);
       const title = titleMatch ? titleMatch[1].replace('DoodStream - ', '').trim() : 'DoodStream Video';
 
-      // Extract pass_md5 path
       const passMatch = html.match(/\/pass_md5\/[a-zA-Z0-9_-]+/);
       let directUrl: string | undefined;
 
@@ -342,7 +445,6 @@ async function extractDoodStream(
         });
         if (passRes.ok) {
           const streamPrefix = await passRes.text();
-          // DoodStream algorithm: prefix + random_chars + ?token=...&expiry=...
           const randomChars = Math.random().toString(36).substring(2, 12);
           const token = passMatch[0].split('/').pop();
           directUrl = `${streamPrefix.trim()}${randomChars}?token=${token}&expiry=${Date.now()}`;
@@ -397,7 +499,6 @@ async function extractMixDrop(
       const titleMatch = html.match(/<title>(.*?)<\/title>/i);
       const title = titleMatch ? titleMatch[1].replace('MixDrop - ', '').trim() : 'MixDrop Video';
 
-      // Look for MDCore.vsrc = "https://...";
       const vsrcMatch = unpacked.match(/MDCore\.vsrc\s*=\s*"([^"]+)"/) ||
                         html.match(/MDCore\.vsrc\s*=\s*"([^"]+)"/);
 
@@ -451,7 +552,6 @@ async function extractVOE(
     if (res.ok) {
       const html = await res.text();
 
-      // Look for sources object or base64 payload
       let directUrl: string | undefined;
       const hlsMatch = html.match(/'hls':\s*'([^']+)'/) || html.match(/"hls":\s*"([^"]+)"/);
       if (hlsMatch) {
@@ -492,7 +592,6 @@ async function extractVOE(
 
 /* =========================================================================
    6. GENERIC PACKED JS HOST EXTRACTOR
-   (FileMoon, StreamWish, Vidhide, FileLions, Upstream, VidGuard, DiskWala, etc.)
    ========================================================================= */
 async function extractGenericPackedVideoHost(
   url: string,
@@ -507,12 +606,9 @@ async function extractGenericPackedVideoHost(
       const html = await res.text();
       const unpacked = unpackJs(html);
 
-      // Extract title
       const titleMatch = html.match(/<title>(.*?)<\/title>/i) || html.match(/<h\d[^>]*>(.*?)<\/h\d>/i);
       const title = titleMatch ? titleMatch[1].replace(/(\s*[-|]\s*.*)$/, '').trim() : `${hostName} Media`;
 
-      // Look for sources / file in unpacked JS
-      // e.g. sources: [{file: "https://.../master.m3u8"}] or file: "https://..."
       const sourceMatch = unpacked.match(/sources:\s*\[\s*{\s*file:\s*"([^"]+)"/) ||
                           unpacked.match(/file:\s*"([^"]+\.(?:m3u8|mp4)[^"]*)"/) ||
                           html.match(/source\s+src="([^"]+\.(?:m3u8|mp4)[^"]*)"/);
