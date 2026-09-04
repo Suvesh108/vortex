@@ -21,16 +21,16 @@
 
 <hr />
 
-## 📱 Android App (v0.5.3)
+## 📱 Android App (v0.5.4)
 
-VortexDownloader is available as a standalone Android application with an entirely re-engineered **In-App Web Browser Suite** powered by `@capacitor/browser` (eliminating "Webpage Not Available" / `X-Frame-Options` errors), full media sniffer, recursive iframe aggregator crawler (e.g. `rou.video`), and 16-host universal engine!
+VortexDownloader is available as a standalone Android application with a streamlined in-app search engine browser (search any keyword or URL to open in built-in browser), recursive iframe aggregator crawler (e.g. `rou.video`), and 16-host universal media engine!
 
-- **Download APK (v0.5.3)**: [**VortexDownloader-v0.5.3.apk**](release/VortexDownloader-v0.5.3.apk)
-- **Version**: `0.5.3` (Release v0.5.3)
+- **Download APK (v0.5.4)**: [**VortexDownloader-v0.5.4.apk**](release/VortexDownloader-v0.5.4.apk)
+- **Version**: `0.5.4` (Release v0.5.4)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.5.3**:
-  - 🌐 **Entirely New In-App Web Browser System**: Powered by `@capacitor/browser` (Chrome Custom Tabs on Android), enabling zero-blocker, full-fidelity web browsing with logins, cookies, and search engine integration without `X-Frame-Options` or "Webpage Not Available" errors.
-  - 🎯 **Smart Media Sniffer Hub**: Categorized bookmarks hub for Video Streams (YouTube, TikTok, Vimeo, SoundCloud), Cloud Hosts (TeraBox, Streamtape, DoodStream, MixDrop, FileMoon, StreamWish), and Social Portals with 1-tap stream ingestion.
+- **What's New in v0.5.4**:
+  - 🔍 **Streamlined In-App Search Engine Browser**: Clean, focused search bar with search engine selection (Google, DuckDuckGo, Bing). Enter any keyword or URL (e.g. `rou.video`, YouTube, TeraBox) to launch directly inside the built-in browser.
+  - 🌐 **Zero "Webpage Not Available" Blockers**: Full web compatibility, video streaming, and logins powered by `@capacitor/browser`.
   - 🔄 **Recursive Iframe Aggregator Crawler**: Automatically crawls streaming portals and aggregators like `rou.video` to detect and extract inner video hosting embeds (FileMoon, Streamtape, DoodStream, etc.).
   - 🛡️ **Full Security Hardening**: SSRF protocol validator, path traversal sanitization, and disabled Android backup for vault protection.
   - 🔐 **Fixed Secret Private Vault**: Keypad PIN authentication, Change PIN option, Forgot PIN / Reset fail-safe, and auto-hide from public vault when protected.
