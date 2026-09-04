@@ -21,17 +21,19 @@
 
 <hr />
 
-## 📱 Android App (v0.5.1)
+## 📱 Android App (v0.5.2)
 
-VortexDownloader is available as a standalone Android application with fixed in-app web browser & sniffer, upgraded secret private vault with PIN management/reset, enhanced precision media trimmer studio, and 16-host universal media extraction suite!
+VortexDownloader is available as a standalone Android application with recursive iframe aggregator crawler (e.g. `rou.video` and embed portals), comprehensive SSRF & path traversal security hardening, fixed in-app web browser & sniffer, secret vault, and 16-host universal media engine!
 
-- **Download APK (v0.5.1)**: [**VortexDownloader-v0.5.1.apk**](release/VortexDownloader-v0.5.1.apk)
-- **Version**: `0.5.1` (Release v0.5.1)
+- **Download APK (v0.5.2)**: [**VortexDownloader-v0.5.2.apk**](release/VortexDownloader-v0.5.2.apk)
+- **Version**: `0.5.2` (Release v0.5.2)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.5.1**:
-  - 🌐 **Fixed In-App Web Browser**: Clean search query integration (DuckDuckGo / keywords), live sniffer status banner, fast bookmarks hub, and floating 1-tap extraction FAB.
+- **What's New in v0.5.2**:
+  - 🔄 **Recursive Iframe Aggregator Crawler**: Automatically crawls streaming portals and aggregators like `rou.video` to detect and extract inner video hosting embeds (FileMoon, Streamtape, DoodStream, etc.).
+  - 🛡️ **Full Security Hardening**: SSRF protocol validator (`http:`/`https:` only, blocking localhost/internal IP ranges), path traversal sanitization on output filenames, and `android:allowBackup="false"` to protect private vault tokens.
+  - 🌐 **Fixed In-App Web Browser**: Clean search query integration, live sniffer status banner, fast bookmarks hub, and floating 1-tap extraction FAB.
   - 🔐 **Fixed Secret Private Vault**: Keypad PIN authentication, Change PIN option, Forgot PIN / Reset fail-safe, and auto-hide from public vault when protected.
-  - 🎞️ **Fixed Media Trimmer Studio**: Resolved local device playback paths, millisecond precision step buttons (`-1s`, `+1s`, `-5s`, `+5s`, `Set to Current`), A-B loop preview, and audio/video lossless export.
+  - 🎞️ **Fixed Media Trimmer Studio**: Resolved local device playback paths, millisecond precision step buttons, A-B loop preview, and audio/video lossless export.
   - 🌐 **16-Host Universal Media Engine**: Dedicated scrapers, API resolvers, and stream decoders for:
     - 📦 **TeraBox** (terabox.com, teraboxapp.com, 1024tera.com, 4funbox, nephobox, etc.)
     - 💿 **DiskWala** (diskwala.com, diskwla.in)
