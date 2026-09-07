@@ -35,26 +35,32 @@ export default function TerminalLogs({ logs, onClear, visible, onToggle }: Termi
         </div>
 
         <div className="flex items-center space-x-2">
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.85 }}
             onClick={copyLogsToClipboard}
-            className="p-1 rounded text-gray-500 hover:text-white hover:bg-gray-800/80 transition-all"
+            className="p-1 rounded text-gray-500 hover:text-white hover:bg-gray-800/80 transition-colors cursor-pointer"
             title="Copy logs to clipboard"
           >
             <Copy className="w-3.5 h-3.5" />
-          </button>
-          <button 
+          </motion.button>
+          <motion.button 
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.85 }}
             onClick={onClear}
-            className="p-1 rounded text-gray-500 hover:text-red-400 hover:bg-gray-800/80 transition-all"
+            className="p-1 rounded text-gray-500 hover:text-red-400 hover:bg-gray-800/80 transition-colors cursor-pointer"
             title="Clear live session logs"
           >
             <Ban className="w-3.5 h-3.5" />
-          </button>
-          <button 
+          </motion.button>
+          <motion.button 
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
             onClick={onToggle}
-            className="text-[10px] uppercase font-bold text-action-red hover:text-red-300 transition-colors px-1"
+            className="text-[10px] uppercase font-bold text-action-red hover:text-red-300 transition-colors px-1 cursor-pointer"
           >
             {visible ? '[ Collapse ]' : '[ Expand Logs ]'}
-          </button>
+          </motion.button>
         </div>
       </div>
 

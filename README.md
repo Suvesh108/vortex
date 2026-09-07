@@ -21,14 +21,19 @@
 
 <hr />
 
-## 📱 Android App (v0.5.4)
+## 📱 Android App (v0.5.5)
 
-VortexDownloader is available as a standalone Android application with a streamlined in-app search engine browser (search any keyword or URL to open in built-in browser), recursive iframe aggregator crawler (e.g. `rou.video`), and 16-host universal media engine!
+VortexDownloader is available as a standalone Android application with a dedicated Mobile Layout, frosted bottom navigation bar, Turbo Speed Engine, in-app search engine browser, recursive iframe aggregator crawler (e.g. `rou.video`), and 16-host universal media engine!
 
-- **Download APK (v0.5.4)**: [**VortexDownloader-v0.5.4.apk**](release/VortexDownloader-v0.5.4.apk)
-- **Version**: `0.5.4` (Release v0.5.4)
+- **Download APK (v0.5.5)**: [**VortexDownloader-v0.5.5.apk**](release/VortexDownloader-v0.5.5.apk)
+- **Version**: `0.5.5` (Release v0.5.5)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.5.4**:
+- **What's New in v0.5.5**:
+  - 📱 **Dedicated Mobile Layout Architecture**: Complete mobile overhaul with edge-to-edge scrollable view, frosted bottom navigation bar (`Tasks`, `Vault`, `Trimmer`, `Settings`), and elevated floating `+ New Task` button.
+  - 🖥️ **Decoupled Desktop / Window Layout**: Clean Windows desktop layout with left navigation rail, centered search bar, and inset rounded canvas.
+  - ⚡ **Turbo Speed Engine (IDM & Aria2 Parity)**: Dynamic Work-Stealing Segment Halver eliminating the straggler problem, 16MB ring buffer asynchronous disk cache, and Gigabit TCP socket pooling.
+  - 🧩 **Modular Plugin & Extensibility Architecture**: Modular host/crawler plugins (`DirectCdn`, `GitHub`, `HuggingFace`, `MediaHosts`), Debrid accounts keychain, and anti-lock-in data sovereignty exporters (cURL `.sh`, Metalink 4.0 `.meta4`, aria2 `.txt`, JSON).
+  - 🪟 **Floating Settings Window & Update Checker**: In-app GitHub release update checker and redesigned About & Feature Packs management suite.
   - 🔍 **Streamlined In-App Search Engine Browser**: Clean, focused search bar with search engine selection (Google, DuckDuckGo, Bing). Enter any keyword or URL (e.g. `rou.video`, YouTube, TeraBox) to launch directly inside the built-in browser.
   - 🌐 **Zero "Webpage Not Available" Blockers**: Full web compatibility, video streaming, and logins powered by `@capacitor/browser`.
   - 🔄 **Recursive Iframe Aggregator Crawler**: Automatically crawls streaming portals and aggregators like `rou.video` to detect and extract inner video hosting embeds (FileMoon, Streamtape, DoodStream, etc.).

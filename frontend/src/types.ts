@@ -1,6 +1,7 @@
 import { FileCategory } from './detector';
 
 export type DownloadStatus = 'idle' | 'fetching' | 'ready' | 'downloading' | 'completed' | 'failed';
+export type ProtocolMode = 'auto' | 'stream' | 'chunk' | 'torrent';
 
 export interface MediaQuality {
   id: string;
@@ -54,4 +55,52 @@ export interface UserSettings {
   saveHistory: boolean;
   backendUrl?: string;
   youtubeCookie?: string;
+}
+
+export interface ChunkInfo {
+  index: number;
+  start: number;
+  end: number;
+  current: number;
+  total: number;
+  percent: number;
+  status: 'idle' | 'downloading' | 'completed' | 'error';
+}
+
+export interface ChunkDownloadProgress {
+  totalBytes: number;
+  downloadedBytes: number;
+  percent: number;
+  speed: string;
+  speedBytesPerSec: number;
+  eta: string;
+  chunks: ChunkInfo[];
+  status: 'downloading' | 'completed' | 'error';
+  error?: string;
+}
+
+export interface TorrentFileInfo {
+  name: string;
+  path: string;
+  length: number;
+  downloaded: number;
+  progress: number;
+}
+
+export interface TorrentItem {
+  infoHash: string;
+  name: string;
+  magnetURI: string;
+  totalBytes: number;
+  downloadedBytes: number;
+  uploadedBytes: number;
+  progress: number;
+  downloadSpeed: number;
+  uploadSpeed: number;
+  numPeers: number;
+  timeRemaining: number;
+  status: 'metadata' | 'downloading' | 'paused' | 'completed' | 'error';
+  files: TorrentFileInfo[];
+  downloadPath: string;
+  error?: string;
 }

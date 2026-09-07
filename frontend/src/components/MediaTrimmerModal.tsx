@@ -185,12 +185,15 @@ export default function MediaTrimmerModal({
               </div>
             </div>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.15, rotate: 90 }}
+              whileTap={{ scale: 0.85 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 15 }}
               onClick={onClose}
               className="p-1.5 rounded-lg bg-secondary-grey/40 hover:bg-secondary-grey text-gray-400 hover:text-white border border-gray-800 transition-colors cursor-pointer shrink-0"
             >
               <X className="w-4 h-4" />
-            </button>
+            </motion.button>
           </div>
 
           {/* Body */}
@@ -230,9 +233,13 @@ export default function MediaTrimmerModal({
                 onClick={togglePlay}
                 className={`absolute inset-0 bg-black/30 flex items-center justify-center cursor-pointer transition-opacity ${isPlaying ? 'opacity-0 hover:opacity-100' : 'opacity-100'}`}
               >
-                <div className="w-12 h-12 rounded-full bg-action-red/90 flex items-center justify-center text-white subtle-glow hover:scale-110 transition-transform">
+                <motion.div 
+                  whileHover={{ scale: 1.15 }}
+                  whileTap={{ scale: 0.88 }}
+                  className="w-12 h-12 rounded-full bg-action-red/90 flex items-center justify-center text-white subtle-glow"
+                >
                   {isPlaying ? <Pause className="w-5 h-5 fill-white" /> : <Play className="w-5 h-5 fill-white ml-0.5" />}
-                </div>
+                </motion.div>
               </button>
 
               {/* Timecode overlay */}
@@ -257,7 +264,9 @@ export default function MediaTrimmerModal({
               <div className="space-y-1">
                 <div className="flex justify-between text-[11px] font-mono text-gray-400">
                   <span>Start: {formatSeconds(startTime)}</span>
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => {
                       setStartTime(currentTime);
                       if (currentTime >= endTime) setEndTime(Math.min(duration, currentTime + 5));
@@ -265,7 +274,7 @@ export default function MediaTrimmerModal({
                     className="text-[10px] text-action-red hover:underline cursor-pointer"
                   >
                     Set to Current ({formatSeconds(currentTime)})
-                  </button>
+                  </motion.button>
                 </div>
                 <input
                   type="range"
@@ -285,14 +294,16 @@ export default function MediaTrimmerModal({
               <div className="space-y-1">
                 <div className="flex justify-between text-[11px] font-mono text-gray-400">
                   <span>End: {formatSeconds(endTime)}</span>
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={() => {
                       if (currentTime > startTime) setEndTime(currentTime);
                     }}
                     className="text-[10px] text-amber-400 hover:underline cursor-pointer"
                   >
                     Set to Current ({formatSeconds(currentTime)})
-                  </button>
+                  </motion.button>
                 </div>
                 <input
                   type="range"
@@ -311,13 +322,13 @@ export default function MediaTrimmerModal({
               {/* Step Adjustment Buttons */}
               <div className="flex items-center justify-between pt-1 border-t border-gray-800/60 text-[10px] font-mono">
                 <div className="flex items-center space-x-1">
-                  <button onClick={() => setStartTime(Math.max(0, startTime - 1))} className="px-2 py-0.5 rounded bg-black/60 hover:bg-white/10 text-gray-300">Start -1s</button>
-                  <button onClick={() => setStartTime(Math.min(endTime - 1, startTime + 1))} className="px-2 py-0.5 rounded bg-black/60 hover:bg-white/10 text-gray-300">Start +1s</button>
+                  <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={() => setStartTime(Math.max(0, startTime - 1))} className="px-2 py-0.5 rounded bg-black/60 hover:bg-white/10 text-gray-300 cursor-pointer">Start -1s</motion.button>
+                  <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={() => setStartTime(Math.min(endTime - 1, startTime + 1))} className="px-2 py-0.5 rounded bg-black/60 hover:bg-white/10 text-gray-300 cursor-pointer">Start +1s</motion.button>
                 </div>
 
                 <div className="flex items-center space-x-1">
-                  <button onClick={() => setEndTime(Math.max(startTime + 1, endTime - 1))} className="px-2 py-0.5 rounded bg-black/60 hover:bg-white/10 text-gray-300">End -1s</button>
-                  <button onClick={() => setEndTime(Math.min(duration, endTime + 1))} className="px-2 py-0.5 rounded bg-black/60 hover:bg-white/10 text-gray-300">End +1s</button>
+                  <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={() => setEndTime(Math.max(startTime + 1, endTime - 1))} className="px-2 py-0.5 rounded bg-black/60 hover:bg-white/10 text-gray-300 cursor-pointer">End -1s</motion.button>
+                  <motion.button whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} onClick={() => setEndTime(Math.min(duration, endTime + 1))} className="px-2 py-0.5 rounded bg-black/60 hover:bg-white/10 text-gray-300 cursor-pointer">End +1s</motion.button>
                 </div>
               </div>
 
@@ -332,7 +343,7 @@ export default function MediaTrimmerModal({
                   />
                   <span>Extract & Convert to Audio (.m4a / Ringtone)</span>
                 </label>
-                <Sparkles className="w-4 h-4 text-amber-400" />
+                <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
               </div>
             </div>
           </div>
@@ -343,7 +354,10 @@ export default function MediaTrimmerModal({
               Output: <strong className="text-white">{activeItem.title}.{convertToAudio ? 'm4a' : 'mp4'}</strong>
             </div>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05, y: -1 }}
+              whileTap={{ scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
               onClick={handleExportTrim}
               disabled={isProcessing || isDone}
               className="px-5 py-2 rounded-xl bg-action-red hover:bg-action-hover text-xs font-mono font-bold text-white shadow-md shadow-action-red/25 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
@@ -364,7 +378,7 @@ export default function MediaTrimmerModal({
                   <span>Export & Save</span>
                 </>
               )}
-            </button>
+            </motion.button>
           </div>
         </motion.div>
       </div>

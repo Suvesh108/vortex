@@ -109,12 +109,15 @@ export default function WebBrowserModal({
               </div>
             </div>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.15, rotate: 90 }}
+              whileTap={{ scale: 0.85 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 15 }}
               onClick={onClose}
               className="p-1.5 rounded-lg bg-secondary-grey/40 hover:bg-secondary-grey text-gray-400 hover:text-white border border-gray-800 transition-colors cursor-pointer shrink-0"
             >
               <X className="w-4 h-4" />
-            </button>
+            </motion.button>
           </div>
 
           {/* Search Form */}
@@ -129,20 +132,30 @@ export default function WebBrowserModal({
             <div className="flex items-center justify-between">
               <label className="text-xs font-mono text-gray-400">Search Engine:</label>
               <div className="flex items-center space-x-1.5 bg-neutral-900 border border-gray-800 rounded-xl p-1">
-                {(['google', 'duckduckgo', 'bing'] as const).map((eng) => (
-                  <button
-                    key={eng}
-                    type="button"
-                    onClick={() => setSearchEngine(eng)}
-                    className={`px-3 py-1 rounded-lg text-[11px] font-mono capitalize transition-all cursor-pointer ${
-                      searchEngine === eng
-                        ? 'bg-cyan-600 text-white font-bold shadow'
-                        : 'text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    {eng}
-                  </button>
-                ))}
+                {(['google', 'duckduckgo', 'bing'] as const).map((eng) => {
+                  const isSelected = searchEngine === eng;
+                  return (
+                    <motion.button
+                      key={eng}
+                      type="button"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setSearchEngine(eng)}
+                      className="relative px-3 py-1 rounded-lg text-[11px] font-mono capitalize transition-colors cursor-pointer text-gray-400 hover:text-white"
+                    >
+                      {isSelected && (
+                        <motion.div
+                          layoutId="browserEnginePill"
+                          className="absolute inset-0 bg-cyan-600 rounded-lg shadow"
+                          transition={{ type: 'spring', stiffness: 450, damping: 26 }}
+                        />
+                      )}
+                      <span className={`relative z-10 ${isSelected ? 'text-white font-bold' : ''}`}>
+                        {eng}
+                      </span>
+                    </motion.button>
+                  );
+                })}
               </div>
             </div>
 
@@ -161,23 +174,29 @@ export default function WebBrowserModal({
 
             {/* Action Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 type="submit"
-                className="py-3 px-4 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-mono font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/20 cursor-pointer transition-all active:scale-98"
+                className="py-3 px-4 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-mono font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-cyan-600/20 cursor-pointer"
               >
                 <Globe className="w-4 h-4" />
                 <span>Open in Inbuilt Browser</span>
                 <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+              </motion.button>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 type="button"
                 onClick={handleIngestToDownloader}
-                className="py-3 px-4 rounded-2xl bg-action-red hover:bg-action-hover text-white font-mono font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-action-red/20 cursor-pointer transition-all active:scale-98"
+                className="py-3 px-4 rounded-2xl bg-action-red hover:bg-action-hover text-white font-mono font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-action-red/20 cursor-pointer"
               >
                 <Download className="w-4 h-4" />
                 <span>Direct Ingest to Downloader</span>
-              </button>
+              </motion.button>
             </div>
           </form>
         </motion.div>

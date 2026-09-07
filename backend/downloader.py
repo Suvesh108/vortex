@@ -56,6 +56,16 @@ def format_speed(speed_bytes):
 def get_cookie_opts():
     cookie_opts = {}
     
+    # Base stealth headers to evade bot detection
+    cookie_opts['http_headers'] = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Sec-CH-UA': '"Chromium";v="134", "Not:A-Brand";v="24", "Google Chrome";v="134"',
+        'Sec-CH-UA-Mobile': '?0',
+        'Sec-CH-UA-Platform': '"Windows"',
+    }
+
     # 1. Custom cookies.txt path from env or local backend dir
     cookie_file = os.getenv('YTDLP_COOKIES_PATH', 'cookies.txt')
     if os.path.isfile(cookie_file):
@@ -71,10 +81,7 @@ def get_cookie_opts():
     # 3. Raw cookie string in env
     raw_cookie = os.getenv('YTDLP_RAW_COOKIE')
     if raw_cookie:
-        cookie_opts['http_headers'] = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
-            'Cookie': raw_cookie
-        }
+        cookie_opts['http_headers']['Cookie'] = raw_cookie
         
     return cookie_opts
 
@@ -216,15 +223,10 @@ def download_progress_hook(d):
     elif d['status'] == 'finished':
         print("[PROGRESS] 100% | Stitching and compiling streams...", flush=True)
 
-def download_media(url, format_id, output_path):
+def download_media(url, format_id, output_path, start_time=None, end_time=None):
     # Setup download options
-    # Output path is the exact target path (e.g., temp_downloads/job-id.mp4)
-    # We strip extension to let yt-dlp suffix it, and then rename it, or we use outtmpl exactly.
-    # To keep it simple, we download to directory and let yt-dlp append extension, then we find the resulting file.
-    
     base_dir = os.path.dirname(output_path)
     file_name_no_ext = os.path.basename(output_path)
-    # Remove extension from output_path as yt-dlp merges and renames
     outtmpl_path = os.path.join(base_dir, file_name_no_ext.split('.')[0] + '.%(ext)s')
 
     is_audio = format_id.startswith('bestaudio')
@@ -238,6 +240,17 @@ def download_media(url, format_id, output_path):
         **get_cookie_opts()
     }
     
+    # Clip trimming range support if provided
+    if start_time or end_time:
+        try:
+            s = float(start_time) if start_time else 0.0
+            e = float(end_time) if end_time and float(end_time) > s else None
+            ydl_opts['download_ranges'] = yt_dlp.utils.download_range_func(None, [(s, e)])
+            ydl_opts['force_keyframes_at_cuts'] = True
+            print(f"[STATUS] Applying stream clip bounds: {s}s -> {e if e else 'END'}s", flush=True)
+        except Exception as cut_err:
+            print(f"[STATUS] Clip range fallback: {cut_err}", flush=True)
+
     if is_audio:
         codec = 'm4a'
         quality = '320'
@@ -251,8 +264,6 @@ def download_media(url, format_id, output_path):
         })
     else:
         # If specific format is chosen, download that video and combine with best audio
-        # Example format_id: "137" (1080p video-only). We request format_id + bestaudio.
-        # This will download both and merge them with ffmpeg.
         if format_id != 'best':
             ydl_opts['format'] = f"{format_id}+bestaudio/best"
         else:
@@ -266,17 +277,14 @@ def download_media(url, format_id, output_path):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
             
-        # Find the downloaded file (it might have mp4 or mp3 extension depending on what postprocessor did)
-        expected_ext = 'mp3' if (is_audio and 'low' not in format_id) else ('m4a' if is_audio else 'mp4')
+        # Find the downloaded file
         base_name_no_ext = file_name_no_ext.split('.')[0]
         
         # Scan folder for files starting with base_name_no_ext
         for file in os.listdir(base_dir):
             if file.startswith(base_name_no_ext):
                 actual_path = os.path.join(base_dir, file)
-                # If the extension is not exactly what we requested, or if we want to rename it to exactly output_path:
                 if actual_path != output_path:
-                    # Rename/overwrite to output_path
                     if os.path.exists(output_path):
                         os.remove(output_path)
                     os.rename(actual_path, output_path)
@@ -299,12 +307,14 @@ if __name__ == "__main__":
         extract_info(url)
     elif cmd == "download":
         if len(sys.argv) < 5:
-            print("Usage: python downloader.py download [url] [format_id] [output_path]")
+            print("Usage: python downloader.py download [url] [format_id] [output_path] [start_time] [end_time]")
             sys.exit(1)
         url = sys.argv[2]
         format_id = sys.argv[3]
         output_path = sys.argv[4]
-        download_media(url, format_id, output_path)
+        start_time = sys.argv[5] if len(sys.argv) > 5 and sys.argv[5] != "none" else None
+        end_time = sys.argv[6] if len(sys.argv) > 6 and sys.argv[6] != "none" else None
+        download_media(url, format_id, output_path, start_time, end_time)
     else:
         print(f"Unknown command: {cmd}")
         sys.exit(1)

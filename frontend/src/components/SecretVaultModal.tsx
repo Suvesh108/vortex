@@ -170,7 +170,9 @@ export default function SecretVaultModal({
 
             <div className="flex items-center space-x-1">
               {isUnlocked && (
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.93 }}
                   onClick={() => {
                     setIsChangingPin(true);
                     setIsUnlocked(false);
@@ -181,15 +183,18 @@ export default function SecretVaultModal({
                 >
                   <KeyRound className="w-3.5 h-3.5" />
                   <span className="hidden xs:inline">Change PIN</span>
-                </button>
+                </motion.button>
               )}
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.15, rotate: 90 }}
+                whileTap={{ scale: 0.85 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 15 }}
                 onClick={onClose}
                 className="p-1.5 rounded-lg bg-secondary-grey/40 hover:bg-secondary-grey text-gray-400 hover:text-white border border-gray-800 transition-colors cursor-pointer shrink-0"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </motion.button>
             </div>
           </div>
 
@@ -197,9 +202,14 @@ export default function SecretVaultModal({
           {!isUnlocked ? (
             <div className="p-6 flex flex-col items-center justify-center space-y-5 flex-1">
               <div className="text-center space-y-1">
-                <div className="w-14 h-14 rounded-2xl bg-action-red/10 border border-action-red/20 flex items-center justify-center text-action-red mx-auto shadow-inner">
+                <motion.div 
+                  initial={{ scale: 0.8, rotate: -10 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 18 }}
+                  className="w-14 h-14 rounded-2xl bg-action-red/10 border border-action-red/20 flex items-center justify-center text-action-red mx-auto shadow-inner"
+                >
                   <Lock className="w-7 h-7" />
-                </div>
+                </motion.div>
                 <h4 className="font-hanken font-bold text-base text-white pt-2">
                   {isSettingPin ? 'Set 4-Digit Vault PIN' : isChangingPin ? 'Enter New 4-Digit PIN' : 'Enter Secret Vault PIN'}
                 </h4>
@@ -213,53 +223,76 @@ export default function SecretVaultModal({
               {/* PIN Bubbles */}
               <div className="flex space-x-3">
                 {[0, 1, 2, 3].map((idx) => (
-                  <div
+                  <motion.div
                     key={idx}
-                    className={`w-4 h-4 rounded-full border transition-all ${
+                    layout
+                    animate={{
+                      scale: pin.length > idx ? 1.15 : 1,
+                      backgroundColor: pin.length > idx ? '#ff3b30' : '#171717'
+                    }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+                    className={`w-4 h-4 rounded-full border transition-colors ${
                       pin.length > idx
-                        ? 'bg-action-red border-action-red scale-110 shadow-md shadow-action-red/40'
-                        : 'bg-neutral-900 border-gray-700'
+                        ? 'border-action-red shadow-md shadow-action-red/40'
+                        : 'border-gray-700'
                     }`}
                   />
                 ))}
               </div>
 
               {errorMessage && (
-                <div className="text-xs font-mono text-action-red bg-action-red/10 border border-action-red/20 px-3 py-1 rounded-lg">
+                <motion.div 
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-xs font-mono text-action-red bg-action-red/10 border border-action-red/20 px-3 py-1 rounded-lg"
+                >
                   {errorMessage}
-                </div>
+                </motion.div>
               )}
 
               {/* Keypad */}
               <div className="grid grid-cols-3 gap-3 w-full max-w-[240px]">
                 {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((num) => (
-                  <button
+                  <motion.button
                     key={num}
+                    whileHover={{ scale: 1.08 }}
+                    whileTap={{ scale: 0.9 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 20 }}
                     onClick={() => handleKeypadPress(num)}
-                    className="w-16 h-13 rounded-2xl bg-neutral-900/90 hover:bg-neutral-800 border border-gray-800 text-lg font-mono font-bold text-white transition-all active:scale-95 flex items-center justify-center cursor-pointer shadow"
+                    className="w-16 h-13 rounded-2xl bg-neutral-900/90 hover:bg-neutral-800 border border-gray-800 text-lg font-mono font-bold text-white flex items-center justify-center cursor-pointer shadow"
                   >
                     {num}
-                  </button>
+                  </motion.button>
                 ))}
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 20 }}
                   onClick={handleBiometricUnlock}
-                  className="w-16 h-13 rounded-2xl bg-secondary-grey/40 hover:bg-secondary-grey/80 border border-gray-800 text-emerald-400 transition-all flex items-center justify-center cursor-pointer shadow"
+                  className="w-16 h-13 rounded-2xl bg-secondary-grey/40 hover:bg-secondary-grey/80 border border-gray-800 text-emerald-400 flex items-center justify-center cursor-pointer shadow"
                   title="Biometric fingerprint unlock"
                 >
                   <Fingerprint className="w-6 h-6" />
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  key="0"
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 20 }}
                   onClick={() => handleKeypadPress('0')}
-                  className="w-16 h-13 rounded-2xl bg-neutral-900/90 hover:bg-neutral-800 border border-gray-800 text-lg font-mono font-bold text-white transition-all active:scale-95 flex items-center justify-center cursor-pointer shadow"
+                  className="w-16 h-13 rounded-2xl bg-neutral-900/90 hover:bg-neutral-800 border border-gray-800 text-lg font-mono font-bold text-white flex items-center justify-center cursor-pointer shadow"
                 >
                   0
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.08 }}
+                  whileTap={{ scale: 0.9 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 20 }}
                   onClick={() => setPin(prev => prev.slice(0, -1))}
-                  className="w-16 h-13 rounded-2xl bg-secondary-grey/40 hover:bg-secondary-grey/80 border border-gray-800 text-xs font-mono font-bold text-gray-400 hover:text-white transition-all flex items-center justify-center cursor-pointer shadow"
+                  className="w-16 h-13 rounded-2xl bg-secondary-grey/40 hover:bg-secondary-grey/80 border border-gray-800 text-xs font-mono font-bold text-gray-400 hover:text-white flex items-center justify-center cursor-pointer shadow"
                 >
                   DEL
-                </button>
+                </motion.button>
               </div>
 
               {/* Reset PIN Fail-safe */}
@@ -275,18 +308,22 @@ export default function SecretVaultModal({
                   ) : (
                     <div className="flex items-center space-x-2 bg-neutral-900 border border-gray-800 p-2 rounded-xl text-xs font-mono">
                       <span className="text-amber-400">Reset PIN?</span>
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={handleResetVault}
-                        className="px-2 py-0.5 rounded bg-action-red text-white font-bold"
+                        className="px-2 py-0.5 rounded bg-action-red text-white font-bold cursor-pointer"
                       >
                         Confirm Reset
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={() => setShowResetConfirm(false)}
-                        className="text-gray-400 hover:text-white"
+                        className="text-gray-400 hover:text-white cursor-pointer"
                       >
                         Cancel
-                      </button>
+                      </motion.button>
                     </div>
                   )}
                 </div>
@@ -300,92 +337,129 @@ export default function SecretVaultModal({
                   <strong className="text-white">{secretItems.length}</strong> private items secured
                 </span>
 
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.06, y: -1 }}
+                  whileTap={{ scale: 0.93 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                   onClick={() => setShowAddPicker(true)}
                   className="px-3 py-1.5 rounded-xl bg-action-red hover:bg-action-hover text-xs font-mono font-bold text-white flex items-center gap-1 shadow-md shadow-action-red/20 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Add File to Vault</span>
-                </button>
+                </motion.button>
               </div>
 
               {/* Add Picker Modal Overlay */}
-              {showAddPicker && (
-                <div className="p-3 bg-neutral-900 border border-gray-800 rounded-2xl space-y-2">
-                  <div className="flex items-center justify-between text-xs font-mono text-gray-300">
-                    <span>Select an item from history to encrypt:</span>
-                    <button onClick={() => setShowAddPicker(false)} className="text-gray-500 hover:text-white">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
-                    {allHistoryItems.length === 0 ? (
-                      <div className="text-xs font-mono text-gray-500 py-3 text-center">
-                        No downloads found in history yet.
-                      </div>
-                    ) : (
-                      allHistoryItems.map(i => (
-                        <div
-                          key={i.id}
-                          onClick={() => handleAddSecretItem(i)}
-                          className="p-2 rounded-lg bg-black/60 border border-gray-800/80 hover:bg-white/5 cursor-pointer flex items-center justify-between text-xs font-mono"
-                        >
-                          <span className="text-white truncate mr-2">{i.title}</span>
-                          <span className="text-action-red font-bold shrink-0">+ Protect</span>
+              <AnimatePresence>
+                {showAddPicker && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="p-3 bg-neutral-900 border border-gray-800 rounded-2xl space-y-2"
+                  >
+                    <div className="flex items-center justify-between text-xs font-mono text-gray-300">
+                      <span>Select an item from history to encrypt:</span>
+                      <motion.button 
+                        whileHover={{ scale: 1.15 }}
+                        whileTap={{ scale: 0.85 }}
+                        onClick={() => setShowAddPicker(false)} 
+                        className="text-gray-500 hover:text-white cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </motion.button>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                      {allHistoryItems.length === 0 ? (
+                        <div className="text-xs font-mono text-gray-500 py-3 text-center">
+                          No downloads found in history yet.
                         </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
+                      ) : (
+                        allHistoryItems.map(i => (
+                          <motion.div
+                            key={i.id}
+                            whileHover={{ scale: 1.01, x: 2 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => handleAddSecretItem(i)}
+                            className="p-2 rounded-lg bg-black/60 border border-gray-800/80 hover:bg-white/5 cursor-pointer flex items-center justify-between text-xs font-mono"
+                          >
+                            <span className="text-white truncate mr-2">{i.title}</span>
+                            <span className="text-action-red font-bold shrink-0">+ Protect</span>
+                          </motion.div>
+                        ))
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Secret Items List */}
               <div className="space-y-2 max-h-[52vh] overflow-y-auto pr-1">
                 {secretItems.length === 0 ? (
                   <div className="h-44 flex flex-col items-center justify-center text-gray-500 font-mono text-xs space-y-2 text-center">
-                    <FolderLock className="w-8 h-8 text-gray-600" />
+                    <FolderLock className="w-8 h-8 text-gray-600 animate-pulse" />
                     <span>Your Secret Vault is empty.<br />Click "+ Add File to Vault" to protect media.</span>
                   </div>
                 ) : (
-                  secretItems.map(item => (
-                    <div
-                      key={item.id}
-                      className="p-3 rounded-xl bg-neutral-900/80 border border-gray-800 flex items-center justify-between gap-2"
-                    >
-                      <div 
-                        onClick={() => {
-                          onPlayItem(item);
+                  <AnimatePresence mode="popLayout">
+                    {secretItems.map((item, index) => (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{
+                          type: 'spring',
+                          stiffness: 400,
+                          damping: 24,
+                          delay: Math.min(index * 0.02, 0.2)
                         }}
-                        className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
+                        whileHover={{ scale: 1.01, x: 2 }}
+                        key={item.id}
+                        className="p-3 rounded-xl bg-neutral-900/80 border border-gray-800 flex items-center justify-between gap-2"
                       >
-                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-black border border-gray-800 shrink-0">
-                          <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h5 className="font-hanken font-bold text-xs text-white truncate">{item.title}</h5>
-                          <span className="text-[10px] font-mono text-gray-400">{item.size} • {item.format}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-1 shrink-0">
-                        <button
+                        <div 
                           onClick={() => {
                             onPlayItem(item);
                           }}
-                          className="px-2.5 py-1 rounded-lg bg-secondary-grey/40 text-xs font-mono text-gray-300 hover:text-white"
+                          className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer group"
                         >
-                          Play
-                        </button>
-                        <button
-                          onClick={() => handleRemoveSecretItem(item.id)}
-                          className="p-1.5 rounded-lg bg-secondary-grey/40 hover:bg-action-red text-gray-400 hover:text-white"
-                          title="Remove from secret vault"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                          <motion.div 
+                            whileHover={{ scale: 1.08 }}
+                            className="w-10 h-10 rounded-lg overflow-hidden bg-black border border-gray-800 shrink-0"
+                          >
+                            <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          </motion.div>
+                          <div className="min-w-0 flex-1">
+                            <h5 className="font-hanken font-bold text-xs text-white truncate group-hover:text-action-red transition-colors">{item.title}</h5>
+                            <span className="text-[10px] font-mono text-gray-400">{item.size} • {item.format}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-1 shrink-0">
+                          <motion.button
+                            whileHover={{ scale: 1.08 }}
+                            whileTap={{ scale: 0.92 }}
+                            onClick={() => {
+                              onPlayItem(item);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-secondary-grey/40 text-xs font-mono text-gray-300 hover:text-white cursor-pointer"
+                          >
+                            Play
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.15 }}
+                            whileTap={{ scale: 0.85 }}
+                            onClick={() => handleRemoveSecretItem(item.id)}
+                            className="p-1.5 rounded-lg bg-secondary-grey/40 hover:bg-action-red text-gray-400 hover:text-white cursor-pointer transition-colors"
+                            title="Remove from secret vault"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </motion.button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 )}
               </div>
             </div>

@@ -80,13 +80,16 @@ export default function MediaViewerModal({ item, isOpen, onClose }: MediaViewerM
               </h3>
             </div>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.15, rotate: 90 }}
+              whileTap={{ scale: 0.85 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 15 }}
               onClick={onClose}
               className="p-1.5 rounded-lg bg-secondary-grey/40 hover:bg-secondary-grey text-gray-400 hover:text-white border border-gray-800 transition-colors cursor-pointer shrink-0"
               title="Close Player"
             >
               <X className="w-4 h-4" />
-            </button>
+            </motion.button>
           </div>
 
           {/* Main Viewer Body */}
@@ -329,52 +332,64 @@ function CustomVideoPlayer({ item }: { item: DownloadHistoryItem }) {
 
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-1 sm:space-x-2">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.85 }}
               onClick={() => skipSeconds(-10)}
               className="p-1.5 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white cursor-pointer"
               title="Rewind 10s"
             >
               <SkipBack className="w-4 h-4" />
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.85 }}
               onClick={togglePlay}
               className="p-2 rounded-lg bg-action-red hover:bg-action-hover text-white shadow-md shadow-action-red/20 cursor-pointer"
             >
               {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-white ml-0.5" />}
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.85 }}
               onClick={() => skipSeconds(10)}
               className="p-1.5 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white cursor-pointer"
               title="Forward 10s"
             >
               <SkipForward className="w-4 h-4" />
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.85 }}
               onClick={() => setIsMuted(!isMuted)}
               className="p-1.5 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white cursor-pointer"
             >
               {isMuted ? <VolumeX className="w-4 h-4 text-action-red" /> : <Volume2 className="w-4 h-4" />}
-            </button>
+            </motion.button>
           </div>
 
           <div className="flex items-center space-x-2">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.85 }}
               onClick={takeSnapshot}
               className="p-1.5 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white cursor-pointer"
               title="Capture frame screenshot"
             >
               <Camera className="w-4 h-4" />
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
               onClick={handleSpeedChange}
               className="px-2 py-1 rounded bg-secondary-grey/40 text-xs font-mono font-bold text-gray-300 hover:text-white border border-gray-800 cursor-pointer"
             >
               {playbackRate}x
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>
@@ -579,26 +594,32 @@ function CustomAudioPlayer({ item }: { item: DownloadHistoryItem }) {
         />
 
         <div className="flex items-center justify-between">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.85 }}
             onClick={() => setIsMuted(!isMuted)}
-            className="p-2 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white"
+            className="p-2 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white cursor-pointer"
           >
             {isMuted ? <VolumeX className="w-4 h-4 text-action-red" /> : <Volume2 className="w-4 h-4" />}
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.85 }}
             onClick={togglePlay}
-            className="p-3 rounded-full bg-action-red hover:bg-action-hover text-white shadow-lg shadow-action-red/20"
+            className="p-3 rounded-full bg-action-red hover:bg-action-hover text-white shadow-lg shadow-action-red/20 cursor-pointer"
           >
             {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 fill-white ml-0.5" />}
-          </button>
+          </motion.button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.15, rotate: -45 }}
+            whileTap={{ scale: 0.85 }}
             onClick={() => setProgress(0)}
-            className="p-2 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white"
+            className="p-2 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
-          </button>
+          </motion.button>
         </div>
       </div>
     </div>
@@ -740,15 +761,17 @@ function CustomSpreadsheetViewer({ item }: { item: DownloadHistoryItem }) {
       {/* Sheet Tabs */}
       <div className="flex items-center space-x-1 border-t border-gray-800/80 pt-1">
         {sheets.map((sheet) => (
-          <button
+          <motion.button
             key={sheet}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setActiveSheet(sheet)}
             className={`px-3 py-1 rounded-t text-xs font-mono cursor-pointer transition-colors ${
               activeSheet === sheet ? 'bg-green-950/40 text-green-400 border-t border-green-500 font-bold' : 'text-gray-500 hover:text-gray-300'
             }`}
           >
             {sheet}
-          </button>
+          </motion.button>
         ))}
       </div>
     </div>
@@ -803,41 +826,49 @@ function CustomPhotoViewer({ item }: { item: DownloadHistoryItem }) {
 
       {/* Photo Controls Bar */}
       <div className="flex flex-wrap items-center justify-center gap-2 bg-surface-card border border-gray-800 rounded-xl p-2">
-        <button
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.85 }}
           onClick={() => setZoom(prev => Math.max(0.5, prev - 0.2))}
-          className="p-2 rounded-lg bg-secondary-grey/40 hover:bg-secondary-grey text-gray-300 hover:text-white"
+          className="p-2 rounded-lg bg-secondary-grey/40 hover:bg-secondary-grey text-gray-300 hover:text-white cursor-pointer"
           title="Zoom Out"
         >
           <ZoomOut className="w-4 h-4" />
-        </button>
+        </motion.button>
         <span className="text-xs font-mono text-gray-300 px-2">{Math.round(zoom * 100)}%</span>
-        <button
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.85 }}
           onClick={() => setZoom(prev => Math.min(3, prev + 0.2))}
-          className="p-2 rounded-lg bg-secondary-grey/40 hover:bg-secondary-grey text-gray-300 hover:text-white"
+          className="p-2 rounded-lg bg-secondary-grey/40 hover:bg-secondary-grey text-gray-300 hover:text-white cursor-pointer"
           title="Zoom In"
         >
           <ZoomIn className="w-4 h-4" />
-        </button>
+        </motion.button>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.15, rotate: 90 }}
+          whileTap={{ scale: 0.85 }}
           onClick={() => setRotation(prev => (prev + 90) % 360)}
-          className="p-2 rounded-lg bg-secondary-grey/40 hover:bg-secondary-grey text-gray-300 hover:text-white"
+          className="p-2 rounded-lg bg-secondary-grey/40 hover:bg-secondary-grey text-gray-300 hover:text-white cursor-pointer"
           title="Rotate 90°"
         >
           <RotateCcw className="w-4 h-4" />
-        </button>
+        </motion.button>
 
         <div className="flex items-center space-x-1 pl-2 border-l border-gray-800">
           {(['normal', 'contrast', 'grayscale', 'invert'] as const).map((f) => (
-            <button
+            <motion.button
               key={f}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
               onClick={() => setFilter(f)}
-              className={`px-2 py-1 rounded text-[10px] font-mono capitalize ${
+              className={`px-2 py-1 rounded text-[10px] font-mono capitalize cursor-pointer transition-colors ${
                 filter === f ? 'bg-action-red text-white' : 'bg-secondary-grey/40 text-gray-400 hover:text-white'
               }`}
             >
               {f}
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
@@ -878,21 +909,25 @@ function CustomDocumentViewer({ item }: { item: DownloadHistoryItem }) {
       </div>
 
       <div className="flex items-center justify-between bg-surface-card border border-gray-800 p-2 rounded-xl">
-        <button
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.85 }}
           onClick={() => setPage(prev => Math.max(1, prev - 1))}
           disabled={page === 1}
-          className="p-2 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white disabled:opacity-40"
+          className="p-2 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white disabled:opacity-40 cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4" />
-        </button>
+        </motion.button>
         <span className="text-xs font-mono text-gray-400">Page {page} / {totalPages}</span>
-        <button
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.85 }}
           onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
           disabled={page === totalPages}
-          className="p-2 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white disabled:opacity-40"
+          className="p-2 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white disabled:opacity-40 cursor-pointer"
         >
           <ChevronRight className="w-4 h-4" />
-        </button>
+        </motion.button>
       </div>
     </div>
   );
@@ -932,21 +967,25 @@ function CustomPresentationViewer({ item }: { item: DownloadHistoryItem }) {
       </div>
 
       <div className="flex items-center justify-between bg-surface-card border border-gray-800 p-2 rounded-xl">
-        <button
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.85 }}
           onClick={() => setSlide(prev => Math.max(1, prev - 1))}
           disabled={slide === 1}
-          className="p-2 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white disabled:opacity-40"
+          className="p-2 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white disabled:opacity-40 cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4" />
-        </button>
+        </motion.button>
         <span className="text-xs font-mono text-gray-400">Slide {slide} / {totalSlides}</span>
-        <button
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.85 }}
           onClick={() => setSlide(prev => Math.min(totalSlides, prev + 1))}
           disabled={slide === totalSlides}
-          className="p-2 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white disabled:opacity-40"
+          className="p-2 rounded-lg bg-secondary-grey/40 text-gray-300 hover:text-white disabled:opacity-40 cursor-pointer"
         >
           <ChevronRight className="w-4 h-4" />
-        </button>
+        </motion.button>
       </div>
     </div>
   );
@@ -967,18 +1006,22 @@ function CustomEbookReader({ item }: { item: DownloadHistoryItem }) {
             <span className="text-xs font-mono font-bold uppercase">E-Book Reader (.epub)</span>
           </div>
           <div className="flex items-center gap-1">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
               onClick={() => setFontSize(prev => Math.max(11, prev - 1))}
-              className="px-2 py-0.5 rounded bg-secondary-grey/40 text-xs text-gray-300"
+              className="px-2 py-0.5 rounded bg-secondary-grey/40 text-xs text-gray-300 cursor-pointer"
             >
               A-
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
               onClick={() => setFontSize(prev => Math.min(20, prev + 1))}
-              className="px-2 py-0.5 rounded bg-secondary-grey/40 text-xs text-gray-300"
+              className="px-2 py-0.5 rounded bg-secondary-grey/40 text-xs text-gray-300 cursor-pointer"
             >
               A+
-            </button>
+            </motion.button>
           </div>
         </div>
 
@@ -1031,13 +1074,15 @@ MIME Standard: text/plain; charset=utf-8
           <FileText className="w-4 h-4 text-action-red" />
           <span className="text-xs font-mono font-bold uppercase">Plain Text Viewer (.txt)</span>
         </div>
-        <button
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.92 }}
           onClick={copyText}
           className="flex items-center gap-1 text-xs font-mono px-2 py-1 rounded bg-secondary-grey/40 text-gray-300 hover:text-white cursor-pointer"
         >
           {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
           <span>{copied ? 'Copied' : 'Copy Text'}</span>
-        </button>
+        </motion.button>
       </div>
 
       <pre className="bg-black/90 border border-gray-800 rounded-xl p-4 font-mono text-xs text-green-400 overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-xl max-h-[45vh]">

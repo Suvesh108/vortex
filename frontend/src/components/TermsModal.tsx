@@ -39,12 +39,15 @@ export default function TermsModal({ isOpen, onClose }: TermsModalProps) {
                   <p className="text-xs text-gray-400">Please read our legal boundaries carefully</p>
                 </div>
               </div>
-              <button 
+              <motion.button 
+                whileHover={{ scale: 1.15, rotate: 90 }}
+                whileTap={{ scale: 0.85 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 15 }}
                 onClick={onClose}
-                className="p-1 px-1.5 rounded-md hover:bg-gray-800 text-gray-500 hover:text-white transition-colors duration-200"
+                className="p-1 px-1.5 rounded-md hover:bg-gray-800 text-gray-500 hover:text-white transition-colors duration-200 cursor-pointer"
               >
                 <X className="w-5 h-5" />
-              </button>
+              </motion.button>
             </div>
 
             {/* Terms Body */}
@@ -111,13 +114,16 @@ export default function TermsModal({ isOpen, onClose }: TermsModalProps) {
 
             {/* Footer */}
             <div className="p-4 border-t border-gray-800 bg-secondary-grey/25 text-right">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05, y: -1 }}
+                whileTap={{ scale: 0.94 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 type="button"
                 onClick={onClose}
-                className="px-5 py-2 rounded text-xs font-bold font-hanken tracking-wide bg-action-red hover:bg-action-hover text-white transition-all duration-200"
+                className="px-5 py-2 rounded text-xs font-bold font-hanken tracking-wide bg-action-red hover:bg-action-hover text-white transition-colors cursor-pointer"
               >
                 I ACCEPT & UNDERSTAND
-              </button>
+              </motion.button>
             </div>
           </motion.div>
         </div>

@@ -142,12 +142,15 @@ export default function FileManagerModal({
               </span>
             </div>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.15, rotate: 90 }}
+              whileTap={{ scale: 0.85 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 15 }}
               onClick={onClose}
               className="p-1.5 rounded-lg bg-secondary-grey/40 hover:bg-secondary-grey text-gray-400 hover:text-white border border-gray-800 transition-colors cursor-pointer shrink-0"
             >
               <X className="w-4 h-4" />
-            </button>
+            </motion.button>
           </div>
 
           {/* Controls Bar: Search & Sort */}
@@ -159,7 +162,7 @@ export default function FileManagerModal({
                 placeholder="Search files by title..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-black/80 border border-gray-800 rounded-xl pl-9 pr-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-action-red"
+                className="w-full bg-black/80 border border-gray-800 rounded-xl pl-9 pr-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-action-red transition-colors"
               />
             </div>
 
@@ -177,7 +180,10 @@ export default function FileManagerModal({
                 </select>
               </div>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05, y: -1 }}
+                whileTap={{ scale: 0.93 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 onClick={selectAll}
                 className="px-3 py-1.5 rounded-xl bg-secondary-grey/40 hover:bg-secondary-grey text-xs font-mono text-gray-300 hover:text-white border border-gray-800 flex items-center gap-1.5 cursor-pointer shrink-0"
               >
@@ -187,128 +193,174 @@ export default function FileManagerModal({
                   <Square className="w-3.5 h-3.5" />
                 )}
                 <span>{selectedIds.length === sorted.length && sorted.length > 0 ? 'Deselect All' : 'Select All'}</span>
-              </button>
+              </motion.button>
             </div>
           </div>
 
           {/* Category Tabs */}
           <div className="px-3 sm:px-4 py-2 border-b border-gray-800/80 bg-neutral-dark flex items-center space-x-1 overflow-x-auto shrink-0">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setCategoryFilter(cat.id)}
-                className={`px-3 py-1 rounded-lg text-xs font-mono shrink-0 transition-colors cursor-pointer ${
-                  categoryFilter === cat.id
-                    ? 'bg-action-red text-white font-bold'
-                    : 'text-gray-400 hover:text-white hover:bg-secondary-grey/40'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
+            {categories.map((cat) => {
+              const isSelected = categoryFilter === cat.id;
+              return (
+                <motion.button
+                  key={cat.id}
+                  onClick={() => setCategoryFilter(cat.id)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="relative px-3 py-1 rounded-lg text-xs font-mono shrink-0 transition-colors cursor-pointer text-gray-400 hover:text-white"
+                >
+                  {isSelected && (
+                    <motion.div
+                      layoutId="fileCatIndicator"
+                      className="absolute inset-0 bg-action-red rounded-lg"
+                      transition={{ type: 'spring', stiffness: 450, damping: 26 }}
+                    />
+                  )}
+                  <span className={`relative z-10 ${isSelected ? 'text-white font-bold' : ''}`}>
+                    {cat.label}
+                  </span>
+                </motion.button>
+              );
+            })}
           </div>
 
           {/* File Grid / List */}
           <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2">
             {sorted.length === 0 ? (
-              <div className="h-48 flex flex-col items-center justify-center text-gray-500 font-mono text-xs space-y-2">
-                <FolderOpen className="w-8 h-8 stroke-1 text-gray-600" />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="h-48 flex flex-col items-center justify-center text-gray-500 font-mono text-xs space-y-2"
+              >
+                <FolderOpen className="w-8 h-8 stroke-1 text-gray-600 animate-bounce" />
                 <span>No files matched your filter criteria.</span>
-              </div>
+              </motion.div>
             ) : (
-              sorted.map((item) => {
-                const isSelected = selectedIds.includes(item.id);
-                return (
-                  <div
-                    key={item.id}
-                    className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-3 ${
-                      isSelected
-                        ? 'bg-action-red/10 border-action-red/50 shadow-sm shadow-action-red/10'
-                        : 'bg-neutral-900/60 border-gray-800/80 hover:bg-neutral-900'
-                    }`}
-                  >
-                    {/* Checkbox */}
-                    <button
-                      onClick={() => toggleSelect(item.id)}
-                      className="text-gray-400 hover:text-white cursor-pointer shrink-0"
+              <AnimatePresence mode="popLayout">
+                {sorted.map((item, index) => {
+                  const isSelected = selectedIds.includes(item.id);
+                  return (
+                    <motion.div
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 400,
+                        damping: 24,
+                        delay: Math.min(index * 0.02, 0.2)
+                      }}
+                      whileHover={{ scale: 1.01, x: 2 }}
+                      key={item.id}
+                      className={`p-3 rounded-xl border transition-colors flex items-center justify-between gap-3 ${
+                        isSelected
+                          ? 'bg-action-red/10 border-action-red/50 shadow-sm shadow-action-red/10'
+                          : 'bg-neutral-900/60 border-gray-800/80 hover:bg-neutral-900'
+                      }`}
                     >
-                      {isSelected ? (
-                        <CheckSquare className="w-5 h-5 text-action-red" />
-                      ) : (
-                        <Square className="w-5 h-5" />
-                      )}
-                    </button>
+                      {/* Checkbox */}
+                      <motion.button
+                        whileHover={{ scale: 1.25 }}
+                        whileTap={{ scale: 0.85 }}
+                        onClick={() => toggleSelect(item.id)}
+                        className="text-gray-400 hover:text-white cursor-pointer shrink-0"
+                      >
+                        {isSelected ? (
+                          <CheckSquare className="w-5 h-5 text-action-red" />
+                        ) : (
+                          <Square className="w-5 h-5" />
+                        )}
+                      </motion.button>
 
-                    {/* Thumbnail & Title */}
-                    <div 
-                      onClick={() => onPlayItem(item)}
-                      className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
-                    >
-                      <div className="relative w-12 h-12 rounded-lg bg-black overflow-hidden border border-gray-800 shrink-0 flex items-center justify-center">
-                        <img
-                          src={item.thumbnail}
-                          alt={item.title}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                          {getCategoryIcon(item.category)}
+                      {/* Thumbnail & Title */}
+                      <div 
+                        onClick={() => onPlayItem(item)}
+                        className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group"
+                      >
+                        <motion.div 
+                          whileHover={{ scale: 1.08 }}
+                          className="relative w-12 h-12 rounded-lg bg-black overflow-hidden border border-gray-800 shrink-0 flex items-center justify-center shadow"
+                        >
+                          <img
+                            src={item.thumbnail}
+                            alt={item.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          />
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                            {getCategoryIcon(item.category)}
+                          </div>
+                        </motion.div>
+
+                        <div className="min-w-0 flex-1">
+                          <h4 className="font-hanken font-bold text-xs sm:text-sm text-white truncate group-hover:text-action-red transition-colors">
+                            {item.title}
+                          </h4>
+                          <div className="flex items-center space-x-2 text-[10px] font-mono text-gray-400 mt-0.5">
+                            <span className="px-1.5 py-0.2 rounded bg-secondary-grey/60 text-gray-300">
+                              .{item.targetExtension || 'mp4'}
+                            </span>
+                            <span>{item.size}</span>
+                            <span>•</span>
+                            <span className="truncate">{item.timestamp}</span>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="min-w-0 flex-1">
-                        <h4 className="font-hanken font-bold text-xs sm:text-sm text-white truncate hover:text-action-red transition-colors">
-                          {item.title}
-                        </h4>
-                        <div className="flex items-center space-x-2 text-[10px] font-mono text-gray-400 mt-0.5">
-                          <span className="px-1.5 py-0.2 rounded bg-secondary-grey/60 text-gray-300">
-                            .{item.targetExtension || 'mp4'}
-                          </span>
-                          <span>{item.size}</span>
-                          <span>•</span>
-                          <span className="truncate">{item.timestamp}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Quick Play Button */}
-                    <button
-                      onClick={() => onPlayItem(item)}
-                      className="px-2.5 py-1 rounded-lg bg-secondary-grey/40 hover:bg-action-red text-gray-300 hover:text-white border border-gray-800 text-xs font-mono font-bold transition-all cursor-pointer shrink-0"
-                    >
-                      Open
-                    </button>
-                  </div>
-                );
-              })
+                      {/* Quick Play Button */}
+                      <motion.button
+                        whileHover={{ scale: 1.08, y: -1 }}
+                        whileTap={{ scale: 0.92 }}
+                        onClick={() => onPlayItem(item)}
+                        className="px-2.5 py-1 rounded-lg bg-secondary-grey/40 hover:bg-action-red text-gray-300 hover:text-white border border-gray-800 text-xs font-mono font-bold transition-colors cursor-pointer shrink-0"
+                      >
+                        Open
+                      </motion.button>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
             )}
           </div>
 
           {/* Batch Actions Footer */}
-          {selectedIds.length > 0 && (
-            <div className="p-3 sm:px-6 bg-neutral-dark border-t border-gray-800 flex items-center justify-between shrink-0">
-              <span className="text-xs font-mono text-gray-300">
-                <strong className="text-action-red">{selectedIds.length}</strong> files selected
-              </span>
+          <AnimatePresence>
+            {selectedIds.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 25 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 25 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 24 }}
+                className="p-3 sm:px-6 bg-neutral-dark border-t border-gray-800 flex items-center justify-between shrink-0"
+              >
+                <span className="text-xs font-mono text-gray-300">
+                  <strong className="text-action-red">{selectedIds.length}</strong> files selected
+                </span>
 
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={handleBatchShare}
-                  className="px-3 py-1.5 rounded-xl bg-secondary-grey/40 hover:bg-secondary-grey text-xs font-mono font-bold text-white border border-gray-800 flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>Share</span>
-                </button>
+                <div className="flex items-center space-x-2">
+                  <motion.button
+                    whileHover={{ scale: 1.06, y: -1 }}
+                    whileTap={{ scale: 0.93 }}
+                    onClick={handleBatchShare}
+                    className="px-3 py-1.5 rounded-xl bg-secondary-grey/40 hover:bg-secondary-grey text-xs font-mono font-bold text-white border border-gray-800 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    <span>Share</span>
+                  </motion.button>
 
-                <button
-                  onClick={handleBatchDelete}
-                  className="px-3 py-1.5 rounded-xl bg-action-red hover:bg-action-hover text-xs font-mono font-bold text-white shadow-md shadow-action-red/20 flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete ({selectedIds.length})</span>
-                </button>
-              </div>
-            </div>
-          )}
+                  <motion.button
+                    whileHover={{ scale: 1.06, y: -1 }}
+                    whileTap={{ scale: 0.93 }}
+                    onClick={handleBatchDelete}
+                    className="px-3 py-1.5 rounded-xl bg-action-red hover:bg-action-hover text-xs font-mono font-bold text-white shadow-md shadow-action-red/20 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete ({selectedIds.length})</span>
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       </div>
     </AnimatePresence>

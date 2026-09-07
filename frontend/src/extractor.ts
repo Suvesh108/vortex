@@ -1,4 +1,4 @@
-import { MediaMetadata, MediaQuality, DownloadLog } from './types';
+import { MediaMetadata, MediaQuality, DownloadLog, ChunkDownloadProgress } from './types';
 import { detectFileCategory, CATEGORY_SPECS, FileCategory } from './detector';
 import { extractHostingMedia, identifyHost } from './hosts';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -402,7 +402,8 @@ export async function downloadMediaDirect(
   selectedFormat: MediaQuality,
   customBackendUrl?: string,
   onProgress?: (progress: number, speed: string, eta: string) => void,
-  onLog?: (type: DownloadLog['type'], message: string) => void
+  onLog?: (type: DownloadLog['type'], message: string) => void,
+  clipRange?: { startTime?: number; endTime?: number }
 ): Promise<{ success: boolean; blobUrl?: string }> {
   const log = onLog || (() => {});
   const progressCb = onProgress || (() => {});
@@ -413,15 +414,22 @@ export async function downloadMediaDirect(
   if (backend) {
     try {
       log('info', `Dispatching download task to Vortex Backend: [${selectedFormat.format} - ${selectedFormat.resolution}]`);
+      const payload: any = {
+        url: metadata.originalUrl,
+        formatId: selectedFormat.id,
+        title: metadata.title,
+        format: selectedFormat.format
+      };
+      if (clipRange && (clipRange.startTime !== undefined || clipRange.endTime !== undefined)) {
+        payload.startTime = clipRange.startTime;
+        payload.endTime = clipRange.endTime;
+        log('info', `Applying pre-download clip slice: ${clipRange.startTime || 0}s -> ${clipRange.endTime || 'END'}s`);
+      }
+
       const res = await fetch(`${backend}/api/download`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: metadata.originalUrl,
-          formatId: selectedFormat.id,
-          title: metadata.title,
-          format: selectedFormat.format
-        })
+        body: JSON.stringify(payload)
       });
 
       if (res.ok) {
@@ -709,3 +717,240 @@ export async function getLocalFileUrl(filename: string): Promise<string | null> 
   }
   return null;
 }
+
+/**
+ * Probe URL to detect direct download vs stream vs torrent
+ */
+export async function probeUrl(
+  url: string,
+  backendUrl = ''
+): Promise<{ type: 'direct' | 'stream' | 'torrent'; supportsRanges: boolean; contentLength: number; isDirectFile: boolean }> {
+  if (url.startsWith('magnet:?')) {
+    return { type: 'torrent', supportsRanges: false, contentLength: 0, isDirectFile: false };
+  }
+
+  try {
+    const backend = backendUrl || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '');
+    const res = await fetch(`${backend}/api/probe?url=${encodeURIComponent(url)}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (_) {}
+
+  return { type: 'stream', supportsRanges: false, contentLength: 0, isDirectFile: false };
+}
+
+/**
+ * Start IDM-style parallel segmented chunk download
+ */
+export async function startSegmentedChunkDownload(
+  url: string,
+  title: string,
+  backendUrl = '',
+  onChunkProgress?: (progress: ChunkDownloadProgress) => void,
+  onLog?: (type: DownloadLog['type'], message: string) => void
+): Promise<{ success: boolean; blobUrl?: string; fileName?: string }> {
+  const log = onLog || (() => {});
+  const progressCb = onChunkProgress || (() => {});
+  const backend = backendUrl || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '');
+
+  log('info', `⚡ Initializing IDM multi-thread parallel chunking engine...`);
+
+  const res = await fetch(`${backend}/api/chunk-download`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, title, threads: 16 })
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to initialize chunk download on server');
+  }
+
+  const { jobId, fileName, isDirectSave } = await res.json();
+  log('success', `⚡ Turbo Multi-thread engine: 16 dynamic work-stealing pipes active for ${fileName}`);
+
+  return new Promise((resolve, reject) => {
+    let resolved = false;
+
+    const handleProgress = (pData: ChunkDownloadProgress) => {
+      progressCb(pData);
+      if (pData.status === 'completed' && !resolved) {
+        resolved = true;
+        cleanup();
+        log('success', `⚡ Multi-thread download completed with dynamic work-stealing!`);
+        if (isDirectSave) {
+          log('success', `📁 Direct Save: File written directly to disk. Zero loopback latency.`);
+          resolve({ success: true, fileName });
+        } else {
+          const downloadUrl = `${backend}/api/chunk-download/file?jobId=${jobId}`;
+          triggerBrowserDownload(downloadUrl, fileName);
+          resolve({ success: true, blobUrl: downloadUrl, fileName });
+        }
+      } else if (pData.status === 'error' && !resolved) {
+        resolved = true;
+        cleanup();
+        log('error', `Chunk stream error: ${pData.error || 'Connection interrupted'}`);
+        reject(new Error(pData.error || 'Chunk download failed'));
+      }
+    };
+
+    let eventSource: EventSource | null = null;
+    let pollInterval: any = null;
+
+    const cleanup = () => {
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+    };
+
+    // Try high-speed Server-Sent Events (SSE) first for 60fps push telemetry
+    try {
+      eventSource = new EventSource(`${backend}/api/chunk-download/events/${jobId}`);
+      eventSource.onmessage = (event) => {
+        try {
+          const pData = JSON.parse(event.data);
+          handleProgress(pData);
+        } catch (_) {}
+      };
+      eventSource.onerror = () => {
+        // Fallback to polling if SSE connection drops or is blocked
+        if (!resolved && !pollInterval) {
+          eventSource?.close();
+          eventSource = null;
+          startPolling();
+        }
+      };
+    } catch (_) {
+      startPolling();
+    }
+
+    function startPolling() {
+      if (pollInterval || resolved) return;
+      pollInterval = setInterval(async () => {
+        try {
+          const pRes = await fetch(`${backend}/api/chunk-download/progress?jobId=${jobId}`);
+          if (pRes.ok) {
+            const pData: ChunkDownloadProgress = await pRes.json();
+            handleProgress(pData);
+          }
+        } catch (err: any) {
+          if (!resolved) {
+            resolved = true;
+            cleanup();
+            reject(err);
+          }
+        }
+      }, 400);
+    }
+  });
+}
+
+/**
+ * Start FtpPack secure stream transfer
+ */
+export async function startFtpDownload(
+  url: string,
+  backendUrl = '',
+  onProgress?: (prog: { percent: number; speed: string; eta: string; bytesDownloaded: number; totalBytes: number }) => void,
+  onLog?: (type: DownloadLog['type'], message: string) => void
+): Promise<{ success: boolean; blobUrl?: string; fileName?: string }> {
+  const log = onLog || (() => {});
+  const progressCb = onProgress || (() => {});
+  const backend = backendUrl || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '');
+
+  log('info', `📡 Initializing FtpPack secure stream transfer for: ${url}`);
+
+  const res = await fetch(`${backend}/api/ftp/download`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to initialize FTP download on server');
+  }
+
+  const { jobId, fileName } = await res.json();
+  log('success', `Connected to remote FTP host. Streaming: ${fileName}`);
+
+  return new Promise((resolve, reject) => {
+    const poll = setInterval(async () => {
+      try {
+        const pRes = await fetch(`${backend}/api/ftp/progress?jobId=${jobId}`);
+        if (pRes.ok) {
+          const pData = await pRes.json();
+          progressCb({
+            percent: pData.percent || 0,
+            speed: pData.speed || '--',
+            eta: pData.eta || '--',
+            bytesDownloaded: pData.bytesDownloaded || 0,
+            totalBytes: pData.totalBytes || 0
+          });
+
+          if (pData.status === 'completed') {
+            clearInterval(poll);
+            log('success', `FTP download completed: ${fileName}`);
+            const downloadUrl = `${backend}/api/ftp/file?jobId=${jobId}`;
+            triggerBrowserDownload(downloadUrl, fileName);
+            resolve({ success: true, blobUrl: downloadUrl, fileName });
+          } else if (pData.status === 'error') {
+            clearInterval(poll);
+            log('error', `FTP stream error: ${pData.error || 'Connection broken'}`);
+            reject(new Error(pData.error || 'FTP download failed'));
+          }
+        }
+      } catch (err: any) {
+        clearInterval(poll);
+        reject(err);
+      }
+    }, 500);
+  });
+}
+
+/**
+ * Inspect GitHub repository release assets and archive links
+ */
+export async function inspectGitHubUrl(url: string, backendUrl = ''): Promise<any> {
+  const backend = backendUrl || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '');
+  const res = await fetch(`${backend}/api/github/inspect`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  });
+  if (!res.ok) throw new Error('Failed to inspect GitHub URL');
+  return res.json();
+}
+
+/**
+ * Inspect Hugging Face model repository files and weights
+ */
+export async function inspectHuggingFaceUrl(url: string, backendUrl = ''): Promise<any> {
+  const backend = backendUrl || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '');
+  const res = await fetch(`${backend}/api/huggingface/inspect`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  });
+  if (!res.ok) throw new Error('Failed to inspect Hugging Face repository');
+  return res.json();
+}
+
+/**
+ * Parse and validate eD2k link
+ */
+export async function inspectEd2kLink(url: string, backendUrl = ''): Promise<any> {
+  const backend = backendUrl || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '');
+  const res = await fetch(`${backend}/api/ed2k/inspect`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  });
+  if (!res.ok) throw new Error('Failed to inspect eD2k URI');
+  return res.json();
+}
+
