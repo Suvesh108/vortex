@@ -23,6 +23,7 @@ export default function App() {
   const [activeView, setActiveView] = useState<NavView>('tasks');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
+  const [addTaskInitialUrl, setAddTaskInitialUrl] = useState('');
 
   // Download state
   const [status, setStatus] = useState<DownloadStatus>('ready');
@@ -90,7 +91,7 @@ export default function App() {
       import('./plugins/InbuiltBrowser').then(({ InbuiltBrowser }) => {
         InbuiltBrowser.addListener('onDownloadRequested', (data) => {
           if (data && data.downloadUrl) {
-            setSearchQuery(data.downloadUrl);
+            setAddTaskInitialUrl(data.downloadUrl);
             setShowAddTaskModal(true);
             addLog('info', `Stream captured from Inbuilt Browser: ${data.downloadUrl.substring(0, 45)}...`);
           }
@@ -385,7 +386,7 @@ export default function App() {
     onPlayItem: (item: DownloadHistoryItem) => setViewingItem(item),
     onTrimItem: (item: DownloadHistoryItem) => setTrimmingItem(item),
     onDownloadUrl: (url: string) => {
-      setSearchQuery(url);
+      setAddTaskInitialUrl(url);
       setShowAddTaskModal(true);
     }
   };
@@ -402,10 +403,14 @@ export default function App() {
       {/* 4. ADD TASK MODAL (Matches Image 3) */}
       <AddTaskModal
         isOpen={showAddTaskModal}
-        onClose={() => setShowAddTaskModal(false)}
+        onClose={() => {
+          setShowAddTaskModal(false);
+          setAddTaskInitialUrl('');
+        }}
         onStartDownload={handleStartDownloadFromModal}
         backendUrl={settings.backendUrl}
         defaultThreads={settings.defaultThreads}
+        initialUrl={addTaskInitialUrl}
       />
 
       {/* 5. AUXILIARY MODALS */}

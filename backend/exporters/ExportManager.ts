@@ -17,7 +17,7 @@ export class ExportManager {
 
     return `<?xml version="1.0" encoding="UTF-8"?>
 <metalink xmlns="urn:ietf:params:xml:ns:metalink">
-  <generator>Vortex Downloader 0.5.7</generator>
+  <generator>Vortex Downloader 0.5.8</generator>
   <published>${new Date().toISOString()}</published>
   ${filesXml}
 </metalink>`;

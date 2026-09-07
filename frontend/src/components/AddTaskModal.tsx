@@ -31,6 +31,7 @@ interface AddTaskModalProps {
   }) => void;
   backendUrl?: string;
   defaultThreads?: number;
+  initialUrl?: string;
 }
 
 interface DetectedPackInfo {
@@ -74,15 +75,23 @@ export default function AddTaskModal({
   onClose,
   onStartDownload,
   backendUrl = '',
-  defaultThreads = 16
+  defaultThreads = 16,
+  initialUrl = ''
 }: AddTaskModalProps) {
-  const [linksText, setLinksText] = useState('');
+  const [linksText, setLinksText] = useState(initialUrl || '');
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [threads, setThreads] = useState(defaultThreads);
   const [downloadLocation, setDownloadLocation] = useState('C:/Users/Suvesh/Downloads');
   
   // Single link parsing state
   const [isParsing, setIsParsing] = useState(false);
+
+  // Sync initialUrl whenever modal opens or initialUrl changes
+  useEffect(() => {
+    if (isOpen && initialUrl) {
+      setLinksText(initialUrl);
+    }
+  }, [isOpen, initialUrl]);
   const [parsedMetadata, setParsedMetadata] = useState<MediaMetadata | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
   const [selectedFormat, setSelectedFormat] = useState<MediaQuality | null>(null);

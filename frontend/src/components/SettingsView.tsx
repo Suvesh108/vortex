@@ -38,7 +38,8 @@ import {
   Trash2
 } from 'lucide-react';
 import { UserSettings } from '../types';
-import { APP_VERSION, checkForAppUpdates, downloadUpdateFile, UpdateInfo } from '../updater';
+import { APP_VERSION, checkForAppUpdates, downloadUpdateFile, UpdateInfo, UpdateProgressData } from '../updater';
+import { Capacitor } from '@capacitor/core';
 
 interface SettingsViewProps {
   settings: UserSettings;
@@ -87,10 +88,46 @@ export default function SettingsView({
     }
   };
 
+  const isAndroidApp = Capacitor.isNativePlatform() || (typeof navigator !== 'undefined' && /android/i.test(navigator.userAgent));
+
+  const [updateDownloadState, setUpdateDownloadState] = useState<{
+    isDownloading: boolean;
+    percent: number;
+    downloadedMB?: string;
+    totalMB?: string;
+    speed?: string;
+    statusText: string;
+    error?: string | null;
+  }>({
+    isDownloading: false,
+    percent: 0,
+    statusText: ''
+  });
+
   const handleDownloadUpdate = async (url: string, filename?: string) => {
+    setUpdateDownloadState({
+      isDownloading: true,
+      percent: 0,
+      statusText: 'Connecting to update server...',
+      error: null
+    });
     try {
-      await downloadUpdateFile(url, filename);
+      await downloadUpdateFile(url, filename, (prog: UpdateProgressData) => {
+        setUpdateDownloadState({
+          isDownloading: prog.percent < 100,
+          percent: prog.percent,
+          downloadedMB: prog.downloadedMB,
+          totalMB: prog.totalMB,
+          speed: prog.speed,
+          statusText: prog.statusText
+        });
+      });
     } catch (err: any) {
+      setUpdateDownloadState(prev => ({
+        ...prev,
+        isDownloading: false,
+        error: err.message
+      }));
       alert(`Download error: ${err.message}`);
     }
   };
@@ -881,26 +918,42 @@ export default function SettingsView({
 
                             {/* Action Download Buttons */}
                             <div className="flex items-center gap-2 flex-wrap pt-1">
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => handleDownloadUpdate(updateInfo.exeDownloadUrl || updateInfo.releaseUrl, `VortexDownloader-${updateInfo.latestVersion}.exe`)}
-                                className="px-3.5 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer"
-                                title="Download Windows executable installer"
-                              >
-                                <Monitor className="w-3.5 h-3.5" />
-                                <span>{updateInfo.exeDownloadUrl ? 'Download Windows (.exe)' : 'Windows Release (.exe)'}</span>
-                              </motion.button>
+                              {/* ONLY show Windows (.exe) button on Windows Desktop / Web browsers - NEVER on Android APK */}
+                              {!isAndroidApp && (
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => handleDownloadUpdate(updateInfo.exeDownloadUrl || updateInfo.releaseUrl, `VortexDownloader-${updateInfo.latestVersion}.exe`)}
+                                  disabled={updateDownloadState.isDownloading}
+                                  className="px-3.5 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                  title="Download Windows executable installer"
+                                >
+                                  <Monitor className="w-3.5 h-3.5" />
+                                  <span>{updateInfo.exeDownloadUrl ? 'Download Windows (.exe)' : 'Windows Release (.exe)'}</span>
+                                </motion.button>
+                              )}
 
+                              {/* Android APK Button - Styled as Primary on Android */}
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => handleDownloadUpdate(updateInfo.apkDownloadUrl || updateInfo.releaseUrl, `VortexDownloader-${updateInfo.latestVersion}.apk`)}
-                                className="px-3.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer"
-                                title="Download Android APK package"
+                                disabled={updateDownloadState.isDownloading}
+                                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all ${
+                                  isAndroidApp
+                                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-black border border-emerald-300 shadow-lg shadow-emerald-500/25'
+                                    : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30'
+                                }`}
+                                title="Download and install Android APK update"
                               >
                                 <Smartphone className="w-3.5 h-3.5" />
-                                <span>{updateInfo.apkDownloadUrl ? 'Download Android (.apk)' : 'Android Release (.apk)'}</span>
+                                <span>
+                                  {updateDownloadState.isDownloading
+                                    ? `Downloading (${updateDownloadState.percent}%)`
+                                    : isAndroidApp
+                                      ? `⚡ Update Vortex (${updateInfo.latestVersion})`
+                                      : (updateInfo.apkDownloadUrl ? 'Download Android (.apk)' : 'Android Release (.apk)')}
+                                </span>
                               </motion.button>
 
                               <motion.a
@@ -916,6 +969,39 @@ export default function SettingsView({
                                 <ExternalLink className="w-3 h-3" />
                               </motion.a>
                             </div>
+
+                            {/* Live In-App Update Download Progress Bar */}
+                            {(updateDownloadState.isDownloading || updateDownloadState.percent > 0) && (
+                              <div className="bg-black/60 border border-emerald-500/30 rounded-xl p-3 space-y-2 mt-2 shadow-inner">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                                    {updateDownloadState.isDownloading && (
+                                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                    )}
+                                    {updateDownloadState.statusText || 'Downloading Update...'}
+                                  </span>
+                                  <span className="font-mono text-emerald-300 font-bold">
+                                    {updateDownloadState.percent}%
+                                  </span>
+                                </div>
+                                <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 transition-all duration-150"
+                                    style={{ width: `${updateDownloadState.percent}%` }}
+                                  />
+                                </div>
+                                <div className="flex items-center justify-between text-[10px] text-gray-400 font-mono">
+                                  <span>
+                                    {updateDownloadState.downloadedMB
+                                      ? `${updateDownloadState.downloadedMB} MB ${updateDownloadState.totalMB ? `/ ${updateDownloadState.totalMB} MB` : ''}`
+                                      : 'Transferring file...'}
+                                  </span>
+                                  {updateDownloadState.speed && (
+                                    <span className="text-cyan-300">{updateDownloadState.speed}</span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </motion.div>
                         )}
                       </div>

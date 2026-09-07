@@ -132,6 +132,25 @@ public class InbuiltBrowserActivity extends Activity {
             return false;
         });
 
+        // Dedicated "⚡ Add" Button in top bar to immediately queue current URL / media
+        Button addBtn = new Button(this);
+        addBtn.setText("⚡ Add");
+        addBtn.setTextColor(Color.WHITE);
+        addBtn.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+        addBtn.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
+        GradientDrawable addBg = new GradientDrawable();
+        addBg.setColor(Color.parseColor("#0284c7"));
+        addBg.setCornerRadius(dpToPx(12));
+        addBtn.setBackground(addBg);
+        addBtn.setPadding(dpToPx(10), 0, dpToPx(10), 0);
+        LinearLayout.LayoutParams addParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                dpToPx(34)
+        );
+        addParams.setMargins(dpToPx(2), 0, dpToPx(4), 0);
+        addBtn.setOnClickListener(v -> handleDownloadCurrent());
+        topBar.addView(addBtn, addParams);
+
         // Close / Exit Button
         Button closeBtn = createNavButton("✕", Color.parseColor("#ef4444"));
         closeBtn.setOnClickListener(v -> finish());
@@ -157,9 +176,9 @@ public class InbuiltBrowserActivity extends Activity {
         mainLayout.addView(webView, webParams);
         root.addView(mainLayout);
 
-        // 4. Floating Action Button: "⚡ Download with Vortex"
+        // 4. Floating Action Button: "⚡ Add to Vortex"
         downloadFab = new Button(this);
-        downloadFab.setText("⚡ Download Media");
+        downloadFab.setText("⚡ Add to Vortex");
         downloadFab.setTextColor(Color.BLACK);
         downloadFab.setTypeface(Typeface.SANS_SERIF, Typeface.BOLD);
         downloadFab.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
@@ -236,17 +255,41 @@ public class InbuiltBrowserActivity extends Activity {
             }
         });
 
+        // Long click to capture any link, image, or media stream
+        webView.setOnLongClickListener(v -> {
+            WebView.HitTestResult result = webView.getHitTestResult();
+            if (result != null) {
+                int type = result.getType();
+                if (type == WebView.HitTestResult.SRC_ANCHOR_TYPE ||
+                    type == WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE ||
+                    type == WebView.HitTestResult.IMAGE_TYPE) {
+                    String extra = result.getExtra();
+                    if (!TextUtils.isEmpty(extra) && (extra.startsWith("http://") || extra.startsWith("https://") || extra.startsWith("magnet:?"))) {
+                        Toast.makeText(InbuiltBrowserActivity.this, "Adding link to Vortex...", Toast.LENGTH_SHORT).show();
+                        returnDownloadToVortex(extra);
+                        return true;
+                    }
+                }
+            }
+            return false;
+        });
+
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String u = request.getUrl().toString();
-                if (u.startsWith("http://") || u.startsWith("https://")) {
-                    return false; // let webview load it internally
-                }
-                // Check magnet / ftp / ed2k links -> send directly to Vortex Downloader!
-                if (u.startsWith("magnet:?") || u.startsWith("ftp://") || u.startsWith("ed2k://")) {
+                String lower = u.toLowerCase();
+                if (lower.startsWith("magnet:?") || lower.startsWith("ftp://") || lower.startsWith("ed2k://")) {
                     returnDownloadToVortex(u);
                     return true;
+                }
+                if (isDownloadableFile(lower)) {
+                    Toast.makeText(InbuiltBrowserActivity.this, "Adding download to Vortex...", Toast.LENGTH_SHORT).show();
+                    returnDownloadToVortex(u);
+                    return true;
+                }
+                if (u.startsWith("http://") || u.startsWith("https://")) {
+                    return false; // let webview load it internally
                 }
                 return false;
             }
@@ -329,12 +372,32 @@ public class InbuiltBrowserActivity extends Activity {
     }
 
     private void handleDownloadCurrent() {
-        String urlToDownload = !TextUtils.isEmpty(detectedMediaUrl) ? detectedMediaUrl : currentLoadedUrl;
-        if (TextUtils.isEmpty(urlToDownload)) {
-            Toast.makeText(this, "No active page or media stream found", Toast.LENGTH_SHORT).show();
+        String urlToDownload = null;
+        if (!TextUtils.isEmpty(detectedMediaUrl)) {
+            urlToDownload = detectedMediaUrl;
+        } else if (webView != null && !TextUtils.isEmpty(webView.getUrl()) && !webView.getUrl().equals("about:blank")) {
+            urlToDownload = webView.getUrl();
+        } else if (!TextUtils.isEmpty(currentLoadedUrl) && !currentLoadedUrl.equals("about:blank")) {
+            urlToDownload = currentLoadedUrl;
+        } else if (urlInput != null && !TextUtils.isEmpty(urlInput.getText())) {
+            urlToDownload = urlInput.getText().toString().trim();
+        }
+
+        if (TextUtils.isEmpty(urlToDownload) || urlToDownload.equals("about:blank")) {
+            Toast.makeText(this, "No active link or media found to add", Toast.LENGTH_SHORT).show();
             return;
         }
         returnDownloadToVortex(urlToDownload);
+    }
+
+    private boolean isDownloadableFile(String url) {
+        String clean = url.split("\\?")[0];
+        return clean.endsWith(".apk") || clean.endsWith(".zip") || clean.endsWith(".rar") ||
+               clean.endsWith(".7z") || clean.endsWith(".tar") || clean.endsWith(".gz") ||
+               clean.endsWith(".iso") || clean.endsWith(".exe") || clean.endsWith(".msi") ||
+               clean.endsWith(".mp4") || clean.endsWith(".mkv") || clean.endsWith(".avi") ||
+               clean.endsWith(".mov") || clean.endsWith(".mp3") || clean.endsWith(".flac") ||
+               clean.endsWith(".wav") || clean.endsWith(".m3u8") || clean.endsWith(".pdf");
     }
 
     private void returnDownloadToVortex(String url) {
