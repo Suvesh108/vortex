@@ -481,8 +481,7 @@ async function executeDirectBinaryDownload(
   log: (type: DownloadLog['type'], message: string) => void
 ): Promise<{ success: boolean; blobUrl?: string }> {
   log('info', `Resolving binary stream for [${metadata.title}]...`);
-  progressCb(5, '1.5 MB/s', 'Resolving...');
-  sendDownloadProgressNotification(metadata.title, 5, '1.5 MB/s');
+  progressCb(0, 'Connecting...', '--');
 
   const streamUrl = await resolveDownloadStreamUrl(
     metadata.originalUrl,
@@ -503,38 +502,9 @@ async function executeDirectBinaryDownload(
   const filename = `${cleanTitle}.${targetExt}`;
 
   if (streamUrl) {
-    log('info', `Streaming full binary payload and converting to .${targetExt}...`);
-    progressCb(20, '4.8 MB/s', 'Starting stream');
-    sendDownloadProgressNotification(metadata.title, 20, '4.8 MB/s');
+    log('info', `Streaming binary payload: [${filename}]...`);
 
-    // On Capacitor Native Android: Use Filesystem.downloadFile for full-speed stream write directly to disk
-    if (Capacitor.isNativePlatform()) {
-      try {
-        log('info', `Allocating destination: Internal Storage > Download > VortexDownloader > ${filename}`);
-        progressCb(45, '11.2 MB/s', '3s');
-        sendDownloadProgressNotification(metadata.title, 45, '11.2 MB/s');
-        
-        const downloadRes = await Filesystem.downloadFile({
-          url: streamUrl,
-          path: `Download/VortexDownloader/${filename}`,
-          directory: Directory.ExternalStorage,
-          progress: true,
-          recursive: true
-        });
-
-        progressCb(85, '14.5 MB/s', '1s');
-        sendDownloadProgressNotification(metadata.title, 85, '14.5 MB/s');
-
-        log('success', `⚡ Complete! Converted & saved to: Internal Storage > Download > VortexDownloader > ${filename}`);
-        progressCb(100, '0.0 MB/s', '0s');
-        sendDownloadCompleteNotification(metadata.title, `.${targetExt}`);
-        return { success: true, blobUrl: downloadRes.path };
-      } catch (err: any) {
-        log('warning', `Native downloadFile attempt (${err.message}). Streaming through binary fetch pipeline...`);
-      }
-    }
-
-    // Binary fetch streaming pipeline (works in Web & Native WebView)
+    // True real-time binary streaming pipeline (Android Native WebView & Web)
     try {
       const response = await fetch(streamUrl);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -543,6 +513,9 @@ async function executeDirectBinaryDownload(
       const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
       let loadedBytes = 0;
       const startTime = Date.now();
+      let lastCalcTime = Date.now();
+      let lastCalcBytes = 0;
+      let currentSpeed = 'Starting...';
       let lastNotifPercent = 0;
 
       const reader = response.body?.getReader();
@@ -555,21 +528,31 @@ async function executeDirectBinaryDownload(
           if (value) {
             chunks.push(value);
             loadedBytes += value.length;
-            const elapsed = (Date.now() - startTime) / 1000;
-            const speedBytes = elapsed > 0 ? loadedBytes / elapsed : 0;
+
+            const now = Date.now();
+            const timeDiff = (now - lastCalcTime) / 1000;
+            if (timeDiff >= 0.25) {
+              const diffBytes = loadedBytes - lastCalcBytes;
+              const spd = diffBytes / timeDiff / (1024 * 1024);
+              currentSpeed = `${spd.toFixed(1)} MB/s`;
+              lastCalcTime = now;
+              lastCalcBytes = loadedBytes;
+            }
+
+            const totalElapsed = (now - startTime) / 1000;
+            const avgSpeedBytes = totalElapsed > 0 ? loadedBytes / totalElapsed : 0;
             const percent = totalBytes > 0 
               ? Math.min(99, Math.floor((loadedBytes / totalBytes) * 100)) 
-              : Math.min(95, Math.floor(loadedBytes / (1024 * 1024 * 25) * 100));
-            const etaSec = totalBytes > 0 && speedBytes > 0 
-              ? Math.max(1, Math.round((totalBytes - loadedBytes) / speedBytes)) 
-              : 2;
+              : Math.min(95, Math.floor(loadedBytes / (1024 * 1024 * 20) * 100));
+            const etaSec = totalBytes > 0 && avgSpeedBytes > 0 
+              ? Math.max(1, Math.round((totalBytes - loadedBytes) / avgSpeedBytes)) 
+              : 1;
 
-            const speedFormatted = `${(speedBytes / (1024 * 1024)).toFixed(1)} MB/s`;
-            progressCb(percent, speedFormatted, `${etaSec}s`);
+            progressCb(percent, currentSpeed, `${etaSec}s`);
 
-            if (percent - lastNotifPercent >= 20) {
+            if (percent - lastNotifPercent >= 10) {
               lastNotifPercent = percent;
-              sendDownloadProgressNotification(metadata.title, percent, speedFormatted);
+              sendDownloadProgressNotification(metadata.title, percent, currentSpeed);
             }
           }
         }

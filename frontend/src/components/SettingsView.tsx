@@ -916,59 +916,93 @@ export default function SettingsView({
                               </div>
                             )}
 
-                            {/* Action Download Buttons */}
-                            <div className="flex items-center gap-2 flex-wrap pt-1">
-                              {/* ONLY show Windows (.exe) button on Windows Desktop / Web browsers - NEVER on Android APK */}
-                              {!isAndroidApp && (
+                            {/* Action Download Buttons: ONLY show when updateInfo.hasUpdate === true */}
+                            {updateInfo.hasUpdate ? (
+                              <div className="flex items-center gap-2 flex-wrap pt-1">
+                                {/* ONLY show Windows (.exe) button on Windows Desktop / Web browsers - NEVER on Android APK */}
+                                {!isAndroidApp && (
+                                  <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => handleDownloadUpdate(updateInfo.exeDownloadUrl || updateInfo.releaseUrl, `VortexDownloader-${updateInfo.latestVersion}.exe`)}
+                                    disabled={updateDownloadState.isDownloading}
+                                    className="px-3.5 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                    title="Download Windows executable installer"
+                                  >
+                                    <Monitor className="w-3.5 h-3.5" />
+                                    <span>{updateInfo.exeDownloadUrl ? 'Download Windows (.exe)' : 'Windows Release (.exe)'}</span>
+                                  </motion.button>
+                                )}
+
+                                {/* Android APK Button - Styled as Primary on Android */}
                                 <motion.button
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
-                                  onClick={() => handleDownloadUpdate(updateInfo.exeDownloadUrl || updateInfo.releaseUrl, `VortexDownloader-${updateInfo.latestVersion}.exe`)}
+                                  onClick={() => handleDownloadUpdate(updateInfo.apkDownloadUrl || updateInfo.releaseUrl, `VortexDownloader-${updateInfo.latestVersion}.apk`)}
                                   disabled={updateDownloadState.isDownloading}
-                                  className="px-3.5 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                                  title="Download Windows executable installer"
+                                  className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all ${
+                                    isAndroidApp
+                                      ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-black border border-emerald-300 shadow-lg shadow-emerald-500/25'
+                                      : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30'
+                                  }`}
+                                  title="Download and install Android APK update"
                                 >
-                                  <Monitor className="w-3.5 h-3.5" />
-                                  <span>{updateInfo.exeDownloadUrl ? 'Download Windows (.exe)' : 'Windows Release (.exe)'}</span>
+                                  <Smartphone className="w-3.5 h-3.5" />
+                                  <span>
+                                    {updateDownloadState.isDownloading
+                                      ? `Downloading (${updateDownloadState.percent}%)`
+                                      : isAndroidApp
+                                        ? `⚡ Update Vortex (${updateInfo.latestVersion})`
+                                        : (updateInfo.apkDownloadUrl ? 'Download Android (.apk)' : 'Android Release (.apk)')}
+                                  </span>
                                 </motion.button>
-                              )}
 
-                              {/* Android APK Button - Styled as Primary on Android */}
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => handleDownloadUpdate(updateInfo.apkDownloadUrl || updateInfo.releaseUrl, `VortexDownloader-${updateInfo.latestVersion}.apk`)}
-                                disabled={updateDownloadState.isDownloading}
-                                className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all ${
-                                  isAndroidApp
-                                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-black border border-emerald-300 shadow-lg shadow-emerald-500/25'
-                                    : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30'
-                                }`}
-                                title="Download and install Android APK update"
-                              >
-                                <Smartphone className="w-3.5 h-3.5" />
-                                <span>
-                                  {updateDownloadState.isDownloading
-                                    ? `Downloading (${updateDownloadState.percent}%)`
-                                    : isAndroidApp
-                                      ? `⚡ Update Vortex (${updateInfo.latestVersion})`
-                                      : (updateInfo.apkDownloadUrl ? 'Download Android (.apk)' : 'Android Release (.apk)')}
-                                </span>
-                              </motion.button>
-
-                              <motion.a
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                href={updateInfo.releaseUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="px-3.5 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-gray-300 hover:text-white border border-white/[0.08] text-xs font-mono flex items-center gap-1.5 cursor-pointer ml-auto"
-                              >
-                                <Github className="w-3.5 h-3.5" />
-                                <span>GitHub Release</span>
-                                <ExternalLink className="w-3 h-3" />
-                              </motion.a>
-                            </div>
+                                <motion.a
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  href={updateInfo.releaseUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-3.5 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-gray-300 hover:text-white border border-white/[0.08] text-xs font-mono flex items-center gap-1.5 cursor-pointer ml-auto"
+                                >
+                                  <Github className="w-3.5 h-3.5" />
+                                  <span>GitHub Release</span>
+                                  <ExternalLink className="w-3 h-3" />
+                                </motion.a>
+                              </div>
+                            ) : (
+                              /* Up-To-Date confirmation banner: Never shows false 'Update Vortex' button */
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-white/[0.06]">
+                                <div className="flex items-center gap-2 text-xs text-emerald-400 font-medium">
+                                  <Check className="w-4 h-4 text-emerald-400 shrink-0" strokeWidth={2.5} />
+                                  <span>You are on the latest version ({updateInfo.currentVersion}). No update required.</span>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <motion.button
+                                    whileHover={{ scale: 1.04 }}
+                                    whileTap={{ scale: 0.96 }}
+                                    onClick={() => handleDownloadUpdate(updateInfo.apkDownloadUrl || updateInfo.releaseUrl, `VortexDownloader-${updateInfo.currentVersion}.apk`)}
+                                    disabled={updateDownloadState.isDownloading}
+                                    className="px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-gray-400 hover:text-gray-200 border border-white/[0.06] text-[11px] font-mono flex items-center gap-1 cursor-pointer"
+                                    title="Re-download current APK package"
+                                  >
+                                    <Smartphone className="w-3 h-3" />
+                                    <span>Re-download APK</span>
+                                  </motion.button>
+                                  <motion.a
+                                    whileHover={{ scale: 1.04 }}
+                                    whileTap={{ scale: 0.96 }}
+                                    href={updateInfo.releaseUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-gray-400 hover:text-gray-200 border border-white/[0.06] text-[11px] font-mono flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <Github className="w-3 h-3" />
+                                    <span>Releases</span>
+                                  </motion.a>
+                                </div>
+                              </div>
+                            )}
 
                             {/* Live In-App Update Download Progress Bar */}
                             {(updateDownloadState.isDownloading || updateDownloadState.percent > 0) && (

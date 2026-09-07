@@ -21,29 +21,19 @@
 
 <hr />
 
-## 📱 Android App (v0.5.8)
+## 📱 Android App (v0.5.9)
 
 VortexDownloader is available as a standalone Android application with a **Native Sandboxed Inbuilt Browser** (isolated private browsing like Brave/Chrome, no personal Google/Gmail account leakage), 1-tap direct stream sniffer & download interceptor, browser logo button directly on the right side of the search bar, dedicated Mobile Layout, frosted bottom navigation bar, Turbo Speed Engine, recursive iframe aggregator crawler (e.g. `rou.video`), and 16-host universal media engine!
 
-- **Download APK (v0.5.8)**: [**VortexDownloader-v0.5.8.apk**](release/VortexDownloader-v0.5.8.apk)
-- **Version**: `0.5.8` (Release v0.5.8)
+- **Download APK (v0.5.9)**: [**VortexDownloader-v0.5.9.apk**](release/VortexDownloader-v0.5.9.apk)
+- **Version**: `0.5.9` (Release v0.5.9)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.5.8**:
-  - 📥 **Seamless Inbuilt Browser Task Ingestion**: Resolved task addition from the inbuilt browser. Added a top-bar **"⚡ Add"** button, floating **"⚡ Add to Vortex"** FAB, long-press link sniffer, and direct wire-up into `AddTaskModal` with automatic pack detection and URL parsing.
-  - 📱 **Android-Specific Update UI**: Completely removed Windows `.exe` release button on Android APK, replacing it with a prominent, glowing `⚡ Update Vortex (APK)` action.
-  - 📊 **Real-Time Update Download Progress Bar**: Added live background download streaming with animated progress track, percentage (`0% -> 100%`), downloaded/total MB counter, network speed gauge (`MB/s`), and automatic PackageInstaller launch via `FileProvider`.
-  - 🌐 **Native Sandboxed Inbuilt Browser**: Completely isolated private browsing sandbox with zero personal Gmail or Google account auto-sync.
-  - ⚡ **Full Download Interception**: Any download link clicked inside the inbuilt browser is automatically intercepted and handed over directly to Vortex Downloader.
-  - 🖥️ **Decoupled Desktop / Window Layout**: Clean Windows desktop layout with left navigation rail, centered search bar, and inset rounded canvas.
-  - ⚡ **Turbo Speed Engine (IDM & Aria2 Parity)**: Dynamic Work-Stealing Segment Halver eliminating the straggler problem, 16MB ring buffer asynchronous disk cache, and Gigabit TCP socket pooling.
-  - 🧩 **Modular Plugin & Extensibility Architecture**: Modular host/crawler plugins (`DirectCdn`, `GitHub`, `HuggingFace`, `MediaHosts`), Debrid accounts keychain, and anti-lock-in data sovereignty exporters (cURL `.sh`, Metalink 4.0 `.meta4`, aria2 `.txt`, JSON).
-  - 🪟 **Floating Settings Window & Update Checker**: In-app GitHub release update checker and redesigned About & Feature Packs management suite.
-  - 🔍 **Streamlined In-App Search Engine Browser**: Clean, focused search bar with search engine selection (Google, DuckDuckGo, Bing). Enter any keyword or URL (e.g. `rou.video`, YouTube, TeraBox) to launch directly inside the built-in browser.
-  - 🌐 **Zero "Webpage Not Available" Blockers**: Full web compatibility, video streaming, and logins powered by `@capacitor/browser`.
-  - 🔄 **Recursive Iframe Aggregator Crawler**: Automatically crawls streaming portals and aggregators like `rou.video` to detect and extract inner video hosting embeds (FileMoon, Streamtape, DoodStream, etc.).
-  - 🛡️ **Full Security Hardening**: SSRF protocol validator, path traversal sanitization, and disabled Android backup for vault protection.
-  - 🔐 **Fixed Secret Private Vault**: Keypad PIN authentication, Change PIN option, Forgot PIN / Reset fail-safe, and auto-hide from public vault when protected.
-  - 🎞️ **Fixed Media Trimmer Studio**: Resolved local device playback paths, millisecond precision step buttons, A-B loop preview, and audio/video lossless export.
+- **What's New in v0.5.9**:
+  - 🔄 **Fixed Update Checker Logic**: Fixed inaccurate update prompt in Settings. The updater now strictly respects semver comparisons; when running the latest version, it displays a clear confirmation that Vortex is up to date (`v0.5.9`) instead of prompting an unnecessary update.
+  - 📈 **Fixed Download Progress Stuck at 45%**: Completely eliminated the issue where downloads would stall at 45%. Replaced blocking calls with a real-time `ReadableStream` chunked pipeline that streams live bytes, real-time speed (`MB/s`), and accurate ETA calculations continuously from `0% -> 100%`.
+  - 📥 **Seamless Inbuilt Browser Task Ingestion**: Top-bar **"⚡ Add"** button, floating **"⚡ Add to Vortex"** FAB, long-press link sniffer, and direct wire-up into `AddTaskModal` with automatic pack detection and URL parsing.
+  - 📱 **Android-Specific Update UI**: Clean Android update experience with live streaming progress and automatic APK install prompts.
+  - 🌐 **Native Sandboxed Inbuilt Browser**: Isolated private browsing sandbox with zero personal Google/Gmail account leakage.
   - 🌐 **16-Host Universal Media Engine**: Dedicated scrapers, API resolvers, and stream decoders for:
     - 📦 **TeraBox** (terabox.com, teraboxapp.com, 1024tera.com, 4funbox, nephobox, etc.)
     - 💿 **DiskWala** (diskwala.com, diskwla.in)

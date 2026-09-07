@@ -1,7 +1,7 @@
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { registerPlugin, Capacitor } from '@capacitor/core';
 
-export const APP_VERSION = 'v0.5.8';
+export const APP_VERSION = 'v0.5.9';
 
 export interface UpdateProgressData {
   percent: number;
@@ -44,17 +44,20 @@ export interface UpdateInfo {
 }
 
 function parseSemver(v: string): number[] {
-  const clean = v.replace(/^v/i, '').trim();
+  const clean = v.replace(/^v/i, '').split('-')[0].trim();
   return clean.split('.').map(p => parseInt(p, 10) || 0);
 }
 
 function isNewerVersion(latest: string, current: string): boolean {
-  const [lMajor = 0, lMinor = 0, lPatch = 0] = parseSemver(latest);
-  const [cMajor = 0, cMinor = 0, cPatch = 0] = parseSemver(current);
-
-  if (lMajor > cMajor) return true;
-  if (lMajor === cMajor && lMinor > cMinor) return true;
-  if (lMajor === cMajor && lMinor === cMinor && lPatch > cPatch) return true;
+  const l = parseSemver(latest);
+  const c = parseSemver(current);
+  const maxLen = Math.max(l.length, c.length);
+  for (let i = 0; i < maxLen; i++) {
+    const lPart = l[i] !== undefined ? l[i] : 0;
+    const cPart = c[i] !== undefined ? c[i] : 0;
+    if (lPart > cPart) return true;
+    if (lPart < cPart) return false;
+  }
   return false;
 }
 
