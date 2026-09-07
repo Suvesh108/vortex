@@ -21,14 +21,17 @@
 
 <hr />
 
-## 📱 Android App (v0.5.5)
+## 📱 Android App (v0.5.6)
 
-VortexDownloader is available as a standalone Android application with a dedicated Mobile Layout, frosted bottom navigation bar, Turbo Speed Engine, in-app search engine browser, recursive iframe aggregator crawler (e.g. `rou.video`), and 16-host universal media engine!
+VortexDownloader is available as a standalone Android application with an Inbuilt Web Browser directly accessible on the right side of the top search bar, dedicated Mobile Layout, frosted bottom navigation bar, Turbo Speed Engine, recursive iframe aggregator crawler (e.g. `rou.video`), and 16-host universal media engine!
 
-- **Download APK (v0.5.5)**: [**VortexDownloader-v0.5.5.apk**](release/VortexDownloader-v0.5.5.apk)
-- **Version**: `0.5.5` (Release v0.5.5)
+- **Download APK (v0.5.6)**: [**VortexDownloader-v0.5.6.apk**](release/VortexDownloader-v0.5.6.apk)
+- **Version**: `0.5.6` (Release v0.5.6)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.5.5**:
+- **What's New in v0.5.6**:
+  - 🌐 **Inbuilt Browser Logo on Search Bar**: Dedicated browser logo button positioned right on the right side of the mobile search bar for instant 1-tap web browsing, link sniffing, and stream ingestion.
+  - ⚡ **Auto-Query Ingest & Pre-fill**: Any search term or URL entered in the top search bar automatically syncs to the browser engine.
+  - 🚀 **Quick Portals Hub**: 1-tap quick launches for Google, YouTube, TeraBox, rou.video, DiskWala, and DoodStream.
   - 📱 **Dedicated Mobile Layout Architecture**: Complete mobile overhaul with edge-to-edge scrollable view, frosted bottom navigation bar (`Tasks`, `Vault`, `Trimmer`, `Settings`), and elevated floating `+ New Task` button.
   - 🖥️ **Decoupled Desktop / Window Layout**: Clean Windows desktop layout with left navigation rail, centered search bar, and inset rounded canvas.
   - ⚡ **Turbo Speed Engine (IDM & Aria2 Parity)**: Dynamic Work-Stealing Segment Halver eliminating the straggler problem, 16MB ring buffer asynchronous disk cache, and Gigabit TCP socket pooling.

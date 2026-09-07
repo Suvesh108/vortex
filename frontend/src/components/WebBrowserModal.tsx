@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
@@ -7,7 +7,8 @@ import {
   Download,
   ExternalLink,
   Zap,
-  ArrowRight
+  ArrowRight,
+  Compass
 } from 'lucide-react';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
@@ -17,17 +18,34 @@ interface WebBrowserModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDownloadUrl: (url: string) => void;
+  initialQuery?: string;
 }
 
 export default function WebBrowserModal({
   isOpen,
   onClose,
-  onDownloadUrl
+  onDownloadUrl,
+  initialQuery = ''
 }: WebBrowserModalProps) {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery);
   const [searchEngine, setSearchEngine] = useState<'google' | 'duckduckgo' | 'bing'>('google');
 
+  useEffect(() => {
+    if (isOpen && initialQuery) {
+      setQuery(initialQuery);
+    }
+  }, [isOpen, initialQuery]);
+
   if (!isOpen) return null;
+
+  const quickPortals = [
+    { name: 'Google', url: 'https://www.google.com', badge: 'Search' },
+    { name: 'YouTube', url: 'https://www.youtube.com', badge: 'Media' },
+    { name: 'TeraBox', url: 'https://www.terabox.com', badge: 'Cloud' },
+    { name: 'rou.video', url: 'https://rou.video', badge: 'Aggregator' },
+    { name: 'DiskWala', url: 'https://diskwala.com', badge: 'Storage' },
+    { name: 'DoodStream', url: 'https://doodstream.com', badge: 'Stream' }
+  ];
 
   const constructTargetUrl = (input: string): string => {
     const trimmed = input.trim();
@@ -54,15 +72,15 @@ export default function WebBrowserModal({
     }
   };
 
-  const handleOpenInBrowser = async () => {
-    const targetUrl = constructTargetUrl(query);
+  const handleOpenInBrowser = async (customUrl?: string) => {
+    const targetUrl = customUrl || constructTargetUrl(query);
 
     try {
       if (Capacitor.isNativePlatform()) {
         await Browser.open({
           url: targetUrl,
           windowName: '_blank',
-          toolbarColor: '#0c0c0e',
+          toolbarColor: '#121214',
           presentationStyle: 'fullscreen'
         });
       } else {
@@ -170,6 +188,31 @@ export default function WebBrowserModal({
                 placeholder="Search web or enter URL (e.g., rou.video, terabox, youtube)..."
                 className="w-full bg-neutral-900 border border-gray-800 rounded-2xl pl-10 pr-4 py-3 text-xs font-mono text-white placeholder:text-gray-600 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
               />
+            </div>
+
+            {/* Quick Portals & Media Hubs */}
+            <div className="space-y-1.5 pt-0.5">
+              <span className="text-[11px] font-mono text-gray-400 block">Quick Portals:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {quickPortals.map((portal) => (
+                  <motion.button
+                    key={portal.name}
+                    type="button"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      setQuery(portal.url);
+                      handleOpenInBrowser(portal.url);
+                    }}
+                    className="px-2.5 py-1 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-gray-800 hover:border-cyan-500/50 text-[11px] font-mono text-gray-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <span>{portal.name}</span>
+                    <span className="text-[9px] px-1 py-0.2 bg-white/[0.06] rounded text-cyan-400">
+                      {portal.badge}
+                    </span>
+                  </motion.button>
+                ))}
+              </div>
             </div>
 
             {/* Action Buttons */}

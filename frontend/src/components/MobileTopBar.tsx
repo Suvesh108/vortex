@@ -1,17 +1,19 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Search, X } from 'lucide-react';
+import { Search, X, Globe } from 'lucide-react';
 
 interface MobileTopBarProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   activeView: string;
+  onOpenBrowser?: () => void;
 }
 
 export default function MobileTopBar({
   searchQuery,
   onSearchChange,
-  activeView
+  activeView,
+  onOpenBrowser
 }: MobileTopBarProps) {
   const placeholder = activeView === 'settings' ? 'Search Settings...' : 'Search Downloads...';
 
@@ -32,9 +34,9 @@ export default function MobileTopBar({
         </span>
       </motion.div>
 
-      {/* Dynamic Mobile Search Input */}
-      <div className="flex-1 max-w-xs ml-1">
-        <div className="relative flex items-center">
+      {/* Dynamic Mobile Search Input & Inbuilt Browser Logo Button */}
+      <div className="flex-1 max-w-xs ml-1 flex items-center gap-1.5">
+        <div className="relative flex-1 flex items-center">
           <input
             type="text"
             placeholder={placeholder}
@@ -52,6 +54,20 @@ export default function MobileTopBar({
             </button>
           )}
         </div>
+
+        {/* Inbuilt Browser Logo Button on Right Side of Search Bar */}
+        {onOpenBrowser && (
+          <motion.button
+            whileHover={{ scale: 1.10 }}
+            whileTap={{ scale: 0.88 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+            onClick={onOpenBrowser}
+            className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#3ea6ff]/20 to-sky-400/25 hover:from-[#3ea6ff]/35 hover:to-sky-400/40 border border-[#3ea6ff]/40 flex items-center justify-center text-[#3ea6ff] hover:text-white shadow-md shadow-[#3ea6ff]/20 cursor-pointer shrink-0"
+            title="Inbuilt Web Browser & Sniffer"
+          >
+            <Globe className="w-4 h-4 stroke-[2.2]" />
+          </motion.button>
+        )}
       </div>
     </header>
   );

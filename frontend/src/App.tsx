@@ -443,6 +443,7 @@ export default function App() {
 
       <WebBrowserModal
         isOpen={showBrowser}
+        initialQuery={searchQuery}
         onClose={() => setShowBrowser(false)}
         onDownloadUrl={(url) => {
           setShowBrowser(false);

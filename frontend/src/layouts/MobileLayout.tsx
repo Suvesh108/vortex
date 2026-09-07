@@ -37,11 +37,12 @@ export default function MobileLayout({
 }: LayoutProps) {
   return (
     <div className="h-screen w-screen bg-[#1c1c1f] text-[#f0edf1] font-sans flex flex-col overflow-hidden select-none">
-      {/* 1. Dedicated Mobile Top Header */}
+      {/* 1. Dedicated Mobile Top Header with Inbuilt Browser Logo */}
       <MobileTopBar
         searchQuery={searchQuery}
         onSearchChange={onSearchChange}
         activeView={activeView}
+        onOpenBrowser={onOpenBrowser}
       />
 
       {/* 2. Full-Width Scrollable Content Area */}
