@@ -1,21 +1,41 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { Search, X, Globe } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { InbuiltBrowser } from '../plugins/InbuiltBrowser';
 
 interface MobileTopBarProps {
   searchQuery: string;
   onSearchChange: (q: string) => void;
   activeView: string;
   onOpenBrowser?: () => void;
+  onDownloadUrl?: (url: string) => void;
 }
 
 export default function MobileTopBar({
   searchQuery,
   onSearchChange,
   activeView,
-  onOpenBrowser
+  onOpenBrowser,
+  onDownloadUrl
 }: MobileTopBarProps) {
   const placeholder = activeView === 'settings' ? 'Search Settings...' : 'Search Downloads...';
+
+  const handleLaunchBrowser = async () => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const queryOrUrl = searchQuery.trim() || 'https://duckduckgo.com';
+        const res = await InbuiltBrowser.open({ url: queryOrUrl });
+        if (res && res.downloadUrl && onDownloadUrl) {
+          onDownloadUrl(res.downloadUrl);
+        }
+      } catch (err) {
+        onOpenBrowser?.();
+      }
+    } else {
+      onOpenBrowser?.();
+    }
+  };
 
   return (
     <header className="h-13 bg-[#1c1c1f]/95 backdrop-blur-md flex items-center justify-between px-3 select-none shrink-0 text-gray-200 border-b border-white/[0.06] gap-2 z-30">
@@ -56,18 +76,16 @@ export default function MobileTopBar({
         </div>
 
         {/* Inbuilt Browser Logo Button on Right Side of Search Bar */}
-        {onOpenBrowser && (
-          <motion.button
-            whileHover={{ scale: 1.10 }}
-            whileTap={{ scale: 0.88 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 20 }}
-            onClick={onOpenBrowser}
-            className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#3ea6ff]/20 to-sky-400/25 hover:from-[#3ea6ff]/35 hover:to-sky-400/40 border border-[#3ea6ff]/40 flex items-center justify-center text-[#3ea6ff] hover:text-white shadow-md shadow-[#3ea6ff]/20 cursor-pointer shrink-0"
-            title="Inbuilt Web Browser & Sniffer"
-          >
-            <Globe className="w-4 h-4 stroke-[2.2]" />
-          </motion.button>
-        )}
+        <motion.button
+          whileHover={{ scale: 1.10 }}
+          whileTap={{ scale: 0.88 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+          onClick={handleLaunchBrowser}
+          className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#3ea6ff]/20 to-sky-400/25 hover:from-[#3ea6ff]/35 hover:to-sky-400/40 border border-[#3ea6ff]/40 flex items-center justify-center text-[#3ea6ff] hover:text-white shadow-md shadow-[#3ea6ff]/20 cursor-pointer shrink-0"
+          title="Inbuilt Private Web Browser & Sniffer"
+        >
+          <Globe className="w-4 h-4 stroke-[2.2]" />
+        </motion.button>
       </div>
     </header>
   );

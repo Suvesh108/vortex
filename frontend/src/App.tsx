@@ -84,6 +84,19 @@ export default function App() {
         setSettings(prev => ({ ...prev, ...JSON.parse(savedSettings) }));
       } catch (_) {}
     }
+
+    // Listen for downloads captured from the Inbuilt Browser
+    try {
+      import('./plugins/InbuiltBrowser').then(({ InbuiltBrowser }) => {
+        InbuiltBrowser.addListener('onDownloadRequested', (data) => {
+          if (data && data.downloadUrl) {
+            setSearchQuery(data.downloadUrl);
+            setShowAddTaskModal(true);
+            addLog('info', `Stream captured from Inbuilt Browser: ${data.downloadUrl.substring(0, 45)}...`);
+          }
+        });
+      }).catch(() => {});
+    } catch (_) {}
   }, []);
 
   const handleUpdateSettings = (newSettings: UserSettings) => {
@@ -370,7 +383,11 @@ export default function App() {
     onUpdateSettings: handleUpdateSettings,
     onRemoveHistoryItem: handleRemoveHistoryItem,
     onPlayItem: (item: DownloadHistoryItem) => setViewingItem(item),
-    onTrimItem: (item: DownloadHistoryItem) => setTrimmingItem(item)
+    onTrimItem: (item: DownloadHistoryItem) => setTrimmingItem(item),
+    onDownloadUrl: (url: string) => {
+      setSearchQuery(url);
+      setShowAddTaskModal(true);
+    }
   };
 
   return (

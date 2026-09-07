@@ -21,18 +21,19 @@
 
 <hr />
 
-## 📱 Android App (v0.5.6)
+## 📱 Android App (v0.5.7)
 
-VortexDownloader is available as a standalone Android application with an Inbuilt Web Browser directly accessible on the right side of the top search bar, dedicated Mobile Layout, frosted bottom navigation bar, Turbo Speed Engine, recursive iframe aggregator crawler (e.g. `rou.video`), and 16-host universal media engine!
+VortexDownloader is available as a standalone Android application with a **Native Sandboxed Inbuilt Browser** (isolated private browsing like Brave/Chrome, no personal Google/Gmail account leakage), 1-tap direct stream sniffer & download interceptor, browser logo button directly on the right side of the search bar, dedicated Mobile Layout, frosted bottom navigation bar, Turbo Speed Engine, recursive iframe aggregator crawler (e.g. `rou.video`), and 16-host universal media engine!
 
-- **Download APK (v0.5.6)**: [**VortexDownloader-v0.5.6.apk**](release/VortexDownloader-v0.5.6.apk)
-- **Version**: `0.5.6` (Release v0.5.6)
+- **Download APK (v0.5.7)**: [**VortexDownloader-v0.5.7.apk**](release/VortexDownloader-v0.5.7.apk)
+- **Version**: `0.5.7` (Release v0.5.7)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.5.6**:
-  - 🌐 **Inbuilt Browser Logo on Search Bar**: Dedicated browser logo button positioned right on the right side of the mobile search bar for instant 1-tap web browsing, link sniffing, and stream ingestion.
-  - ⚡ **Auto-Query Ingest & Pre-fill**: Any search term or URL entered in the top search bar automatically syncs to the browser engine.
-  - 🚀 **Quick Portals Hub**: 1-tap quick launches for Google, YouTube, TeraBox, rou.video, DiskWala, and DoodStream.
-  - 📱 **Dedicated Mobile Layout Architecture**: Complete mobile overhaul with edge-to-edge scrollable view, frosted bottom navigation bar (`Tasks`, `Vault`, `Trimmer`, `Settings`), and elevated floating `+ New Task` button.
+- **What's New in v0.5.7**:
+  - 🌐 **Native Sandboxed Inbuilt Browser**: Replaced system Chrome Custom Tabs with a dedicated, isolated native Android WebView browser. Completely private browsing sandbox with zero personal Gmail or Google account auto-sync.
+  - ⚡ **Full Download Interception**: Any download link clicked inside the inbuilt browser is automatically intercepted and handed over directly to Vortex Downloader.
+  - 🎥 **Real-Time Stream Sniffer & "⚡ Download with Vortex" FAB**: Live sniffing of embedded video streams (`.m3u8`, `.mp4`, `<video>`) across websites with a floating 1-tap download button.
+  - 🔍 **Integrated Browser Navigation Bar**: Full address bar supporting direct URLs and instant DuckDuckGo search queries, Back, Forward, Refresh, and Close controls.
+  - 📱 **Inbuilt Browser Logo on Search Bar**: Dedicated browser logo button positioned right on the right side of the mobile search bar for instant 1-tap access.
   - 🖥️ **Decoupled Desktop / Window Layout**: Clean Windows desktop layout with left navigation rail, centered search bar, and inset rounded canvas.
   - ⚡ **Turbo Speed Engine (IDM & Aria2 Parity)**: Dynamic Work-Stealing Segment Halver eliminating the straggler problem, 16MB ring buffer asynchronous disk cache, and Gigabit TCP socket pooling.
   - 🧩 **Modular Plugin & Extensibility Architecture**: Modular host/crawler plugins (`DirectCdn`, `GitHub`, `HuggingFace`, `MediaHosts`), Debrid accounts keychain, and anti-lock-in data sovereignty exporters (cURL `.sh`, Metalink 4.0 `.meta4`, aria2 `.txt`, JSON).

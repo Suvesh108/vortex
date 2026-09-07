@@ -33,7 +33,8 @@ export default function MobileLayout({
   onUpdateSettings,
   onRemoveHistoryItem,
   onPlayItem,
-  onTrimItem
+  onTrimItem,
+  onDownloadUrl
 }: LayoutProps) {
   return (
     <div className="h-screen w-screen bg-[#1c1c1f] text-[#f0edf1] font-sans flex flex-col overflow-hidden select-none">
@@ -43,6 +44,7 @@ export default function MobileLayout({
         onSearchChange={onSearchChange}
         activeView={activeView}
         onOpenBrowser={onOpenBrowser}
+        onDownloadUrl={onDownloadUrl}
       />
 
       {/* 2. Full-Width Scrollable Content Area */}

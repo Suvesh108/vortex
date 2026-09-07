@@ -26,6 +26,7 @@ export interface LayoutProps {
   onRemoveHistoryItem: (id: string) => void;
   onPlayItem: (item: DownloadHistoryItem) => void;
   onTrimItem: (item: DownloadHistoryItem) => void;
+  onDownloadUrl?: (url: string) => void;
 }
 
 /**
