@@ -62,6 +62,11 @@ export default function MobileTopBar({
             placeholder={placeholder}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleLaunchBrowser();
+              }
+            }}
             className="w-full bg-[#26262a] border border-white/[0.08] focus:border-[#4cc2ff] focus:ring-1 focus:ring-[#4cc2ff]/30 rounded-xl pl-8 pr-7 py-1 text-xs text-gray-100 placeholder-gray-400 outline-none h-8 font-sans"
           />
           <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 pointer-events-none" />

@@ -3,8 +3,7 @@ import { motion } from 'motion/react';
 import { 
   Plus, 
   Settings, 
-  Shield,
-  Globe
+  Shield
 } from 'lucide-react';
 import { NavView } from './SidebarNav';
 
@@ -12,7 +11,6 @@ interface MobileBottomNavProps {
   activeView: NavView;
   onSelectView: (view: NavView) => void;
   onOpenNewTask: () => void;
-  onOpenBrowser: () => void;
   onOpenSettings: () => void;
   isSettingsOpen?: boolean;
 }
@@ -21,19 +19,18 @@ export default function MobileBottomNav({
   activeView,
   onSelectView,
   onOpenNewTask,
-  onOpenBrowser,
   onOpenSettings,
   isSettingsOpen = false
 }: MobileBottomNavProps) {
   const springTransition = { type: 'spring' as const, stiffness: 400, damping: 22 };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#18181b]/95 backdrop-blur-xl border-t border-white/[0.08] flex items-center justify-around px-2 py-1 h-15 select-none shadow-2xl pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#18181b]/95 backdrop-blur-xl border-t border-white/[0.08] grid grid-cols-4 items-center px-2 py-1 h-15 select-none shadow-2xl pb-[max(0.25rem,env(safe-area-inset-bottom))]">
       {/* 1. Mobile Tasks */}
       <motion.button
         whileTap={{ scale: 0.90 }}
         onClick={() => onSelectView('tasks')}
-        className={`flex-1 flex flex-col items-center justify-center py-1 relative cursor-pointer ${
+        className={`flex flex-col items-center justify-center py-1 relative cursor-pointer ${
           activeView === 'tasks' ? 'text-[#3ea6ff]' : 'text-gray-400 hover:text-white'
         }`}
       >
@@ -56,7 +53,7 @@ export default function MobileBottomNav({
       <motion.button
         whileTap={{ scale: 0.90 }}
         onClick={() => onSelectView('vault')}
-        className={`flex-1 flex flex-col items-center justify-center py-1 relative cursor-pointer ${
+        className={`flex flex-col items-center justify-center py-1 relative cursor-pointer ${
           activeView === 'vault' ? 'text-[#3ea6ff]' : 'text-gray-400 hover:text-white'
         }`}
       >
@@ -71,35 +68,26 @@ export default function MobileBottomNav({
         <span className="text-[10px] font-medium mt-0.5">Vault</span>
       </motion.button>
 
-      {/* 3. Mobile Center Elevated Hero "+ New Task" Button */}
-      <div className="flex-1 flex justify-center -mt-5">
+      {/* 3. Mobile New Task Action Button */}
+      <div className="flex flex-col items-center justify-center -mt-2">
         <motion.button
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.88 }}
           transition={springTransition}
           onClick={onOpenNewTask}
-          className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#3ea6ff] to-sky-400 text-black shadow-lg shadow-[#3ea6ff]/40 flex items-center justify-center border-2 border-[#18181b] cursor-pointer"
+          className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#3ea6ff] to-sky-400 text-black shadow-lg shadow-[#3ea6ff]/40 flex items-center justify-center border-2 border-[#18181b] cursor-pointer"
           title="New Download Task"
         >
-          <Plus className="w-6 h-6 stroke-[3]" />
+          <Plus className="w-5 h-5 stroke-[2.8]" />
         </motion.button>
+        <span className="text-[10px] font-medium mt-0.5 text-gray-400">New</span>
       </div>
 
-      {/* 4. Mobile Browser & Sniffer */}
-      <motion.button
-        whileTap={{ scale: 0.90 }}
-        onClick={onOpenBrowser}
-        className="flex-1 flex flex-col items-center justify-center py-1 relative cursor-pointer text-gray-400 hover:text-emerald-400"
-      >
-        <Globe className="w-5 h-5" />
-        <span className="text-[10px] font-medium mt-0.5">Browser</span>
-      </motion.button>
-
-      {/* 5. Mobile Settings */}
+      {/* 4. Mobile Settings */}
       <motion.button
         whileTap={{ scale: 0.90 }}
         onClick={onOpenSettings}
-        className={`flex-1 flex flex-col items-center justify-center py-1 relative cursor-pointer ${
+        className={`flex flex-col items-center justify-center py-1 relative cursor-pointer ${
           isSettingsOpen || activeView === 'settings' ? 'text-[#3ea6ff]' : 'text-gray-400 hover:text-white'
         }`}
       >
