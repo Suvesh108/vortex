@@ -120,6 +120,7 @@ export default function MobileLayout({
         activeView={activeView}
         onSelectView={onSelectView}
         onOpenNewTask={onOpenNewTask}
+        onOpenBrowser={onOpenBrowser}
         onOpenSettings={onOpenSettings}
         isSettingsOpen={isSettingsOpen}
       />

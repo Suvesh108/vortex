@@ -121,10 +121,10 @@ export default function TaskListDashboard({
 
   return (
     <div className="space-y-3 w-full">
-      {/* Exact Toolbar with Spring Micro-Interactions & Mobile Responsiveness */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-1 px-0.5 select-none text-xs">
-        {/* Left Toolbar Group with Horizontal Scrolling on Mobile */}
-        <div className="flex items-center space-x-1.5 overflow-x-auto scrollbar-none pb-0.5 w-full sm:w-auto shrink-0">
+      {/* Responsive Toolbar with Zero Side-Scroll */}
+      <div className="flex items-center justify-between gap-1.5 py-1 px-0.5 select-none text-xs w-full">
+        {/* Left Toolbar Group: Filter Pills + Start / Pause */}
+        <div className="flex items-center gap-1.5 min-w-0">
           {/* Segmented Filter Pills */}
           <div className="flex items-center bg-[#202022] border border-white/[0.06] rounded-xl p-0.5 space-x-0.5 relative shrink-0">
             {/* Home / All Tab */}
@@ -197,10 +197,11 @@ export default function TaskListDashboard({
             whileTap={{ scale: 0.92 }}
             transition={springQuick}
             onClick={onStartAll}
-            className="h-8 px-2.5 sm:px-3 rounded-lg bg-[#2f2f33] hover:bg-[#38383e] border border-white/[0.06] text-xs font-sans text-gray-200 hover:text-white transition-colors flex items-center space-x-1.5 cursor-pointer shadow-md shrink-0"
+            className="h-8 px-2 sm:px-3 rounded-lg bg-[#2f2f33] hover:bg-[#38383e] border border-white/[0.06] text-xs font-sans text-gray-200 hover:text-white transition-colors flex items-center space-x-1.5 cursor-pointer shadow-md shrink-0"
+            title="Start All Downloads"
           >
             <Play className="w-3.5 h-3.5 text-emerald-400 fill-current shrink-0" />
-            <span className="whitespace-nowrap">Start All</span>
+            <span className="hidden sm:inline whitespace-nowrap">Start All</span>
           </motion.button>
 
           {/* Pause All Button */}
@@ -209,18 +210,19 @@ export default function TaskListDashboard({
             whileTap={{ scale: 0.92 }}
             transition={springQuick}
             onClick={onPauseAll}
-            className="h-8 px-2.5 sm:px-3 rounded-lg bg-[#2f2f33] hover:bg-[#38383e] border border-white/[0.06] text-xs font-sans text-gray-200 hover:text-white transition-colors flex items-center space-x-1.5 cursor-pointer shadow-md shrink-0"
+            className="h-8 px-2 sm:px-3 rounded-lg bg-[#2f2f33] hover:bg-[#38383e] border border-white/[0.06] text-xs font-sans text-gray-200 hover:text-white transition-colors flex items-center space-x-1.5 cursor-pointer shadow-md shrink-0"
+            title="Pause All Downloads"
           >
             <Pause className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span className="whitespace-nowrap">Pause All</span>
+            <span className="hidden sm:inline whitespace-nowrap">Pause All</span>
           </motion.button>
 
-          {/* Auxiliary Square Buttons */}
+          {/* Auxiliary Square Buttons (Desktop only to prevent mobile side-scroll) */}
           <motion.button
             whileHover={{ scale: 1.1, y: -1 }}
             whileTap={{ scale: 0.90 }}
             transition={springQuick}
-            className="w-8 h-8 rounded-lg bg-[#2f2f33] hover:bg-[#38383e] border border-white/[0.06] flex items-center justify-center text-gray-300 hover:text-white transition-colors cursor-pointer shadow-md shrink-0"
+            className="hidden md:flex w-8 h-8 rounded-lg bg-[#2f2f33] hover:bg-[#38383e] border border-white/[0.06] items-center justify-center text-gray-300 hover:text-white transition-colors cursor-pointer shadow-md shrink-0"
             title="Selection Focus"
           >
             <Maximize2 className="w-3.5 h-3.5" />
@@ -230,7 +232,7 @@ export default function TaskListDashboard({
             whileHover={{ scale: 1.1, y: -1 }}
             whileTap={{ scale: 0.90 }}
             transition={springQuick}
-            className="w-8 h-8 rounded-lg bg-[#2f2f33] hover:bg-[#38383e] border border-white/[0.06] flex items-center justify-center text-gray-300 hover:text-white transition-colors cursor-pointer shadow-md shrink-0"
+            className="hidden md:flex w-8 h-8 rounded-lg bg-[#2f2f33] hover:bg-[#38383e] border border-white/[0.06] items-center justify-center text-gray-300 hover:text-white transition-colors cursor-pointer shadow-md shrink-0"
             title="Schedule"
           >
             <Calendar className="w-3.5 h-3.5" />
@@ -240,17 +242,17 @@ export default function TaskListDashboard({
             whileHover={{ scale: 1.1, y: -1 }}
             whileTap={{ scale: 0.90 }}
             transition={springQuick}
-            className="w-8 h-8 rounded-lg bg-[#2f2f33] hover:bg-[#38383e] border border-white/[0.06] flex items-center justify-center text-gray-300 hover:text-white transition-colors cursor-pointer shadow-md shrink-0"
+            className="hidden md:flex w-8 h-8 rounded-lg bg-[#2f2f33] hover:bg-[#38383e] border border-white/[0.06] items-center justify-center text-gray-300 hover:text-white transition-colors cursor-pointer shadow-md shrink-0"
             title="Speed Limit"
           >
             <Gauge className="w-3.5 h-3.5" />
           </motion.button>
 
-          {/* Speed Indicator */}
+          {/* Speed Indicator (Desktop & Tablet) */}
           <motion.div 
             animate={{ scale: globalSpeed !== '0.00 B/s' ? [1, 1.05, 1] : 1 }}
             transition={{ repeat: Infinity, duration: 2 }}
-            className="flex items-center space-x-1.5 text-xs font-sans text-gray-300 pl-1 shrink-0 whitespace-nowrap"
+            className="hidden lg:flex items-center space-x-1.5 text-xs font-sans text-gray-300 pl-1 shrink-0 whitespace-nowrap"
           >
             <Gauge className="w-3.5 h-3.5 text-[#4cc2ff] shrink-0" />
             <span className="font-mono text-[#4cc2ff] font-bold">{globalSpeed}</span>
@@ -258,7 +260,7 @@ export default function TaskListDashboard({
         </div>
 
         {/* Right Toolbar Group */}
-        <div className="flex items-center justify-end space-x-1.5 shrink-0 self-end sm:self-auto">
+        <div className="flex items-center justify-end space-x-1.5 shrink-0">
           {/* View Mode Dropdown Button */}
           <motion.button
             whileHover={{ scale: 1.05 }}

@@ -888,7 +888,7 @@ export default function SettingsView({
                                 <div>
                                   <span className="font-bold text-white text-xs">
                                     {updateInfo.hasUpdate
-                                      ? `Update Available: ${updateInfo.latestVersion} (${updateInfo.releaseName})`
+                                      ? `Update Available: ${updateInfo.latestVersion}`
                                       : `You're running the latest version!`}
                                   </span>
                                   <span className="block text-[10px] text-gray-400 font-mono">
@@ -898,7 +898,7 @@ export default function SettingsView({
                               </div>
 
                               {lastCheckedTime && (
-                                <span className="text-[10px] text-gray-500 font-mono">
+                                <span className="text-[10px] text-gray-500 font-mono self-start sm:self-auto">
                                   Checked at {lastCheckedTime}
                                 </span>
                               )}
@@ -906,27 +906,62 @@ export default function SettingsView({
 
                             {/* Release Notes Preview */}
                             {updateInfo.releaseNotes && (
-                              <div className="bg-black/40 border border-white/[0.06] rounded-xl p-3 text-[11px] text-gray-300 font-sans max-h-32 overflow-y-auto space-y-1">
-                                <span className="text-[10px] uppercase font-mono font-bold text-gray-400 block">
+                              <div className="bg-black/40 border border-white/[0.08] rounded-xl p-3 text-[11px] text-gray-300 font-sans max-h-40 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-white/10">
+                                <span className="text-[10px] uppercase font-mono font-bold text-emerald-400 tracking-wider block">
                                   What's New in {updateInfo.latestVersion}:
                                 </span>
-                                <p className="whitespace-pre-wrap leading-relaxed text-gray-300">
-                                  {updateInfo.releaseNotes}
-                                </p>
+                                <div className="space-y-1.5 leading-relaxed text-gray-300">
+                                  {updateInfo.releaseNotes
+                                    .split('\n')
+                                    .filter(l => {
+                                      const t = l.trim();
+                                      return t.length > 0 && !t.startsWith('## 📱 VortexDownloader') && !t.includes('(Direct Install)');
+                                    })
+                                    .map((line, lIdx) => {
+                                      const trimmed = line.trim();
+                                      if (trimmed.startsWith('- ') || trimmed.startsWith('* ') || trimmed.startsWith('• ')) {
+                                        const raw = trimmed.substring(2);
+                                        const parts = raw.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+                                        return (
+                                          <div key={lIdx} className="flex items-start gap-2 pl-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
+                                            <span className="flex-1 text-[11px]">
+                                              {parts.map((p, pIdx) => {
+                                                if (p.startsWith('**') && p.endsWith('**')) {
+                                                  return <strong key={pIdx} className="font-semibold text-white">{p.slice(2, -2)}</strong>;
+                                                }
+                                                if (p.startsWith('`') && p.endsWith('`')) {
+                                                  return <code key={pIdx} className="px-1 py-0.5 rounded bg-white/[0.08] font-mono text-[10px] text-emerald-300">{p.slice(1, -1)}</code>;
+                                                }
+                                                return p;
+                                              })}
+                                            </span>
+                                          </div>
+                                        );
+                                      } else if (trimmed.startsWith('### ') || trimmed.startsWith('## ') || trimmed.startsWith('✨')) {
+                                        return (
+                                          <div key={lIdx} className="font-bold text-white text-xs pt-1 flex items-center gap-1.5 text-emerald-300">
+                                            <span>{trimmed.replace(/^#+\s*/, '').replace(/\*\*/g, '')}</span>
+                                          </div>
+                                        );
+                                      }
+                                      return <p key={lIdx} className="text-gray-300 text-[11px]">{trimmed.replace(/\*\*/g, '')}</p>;
+                                    })}
+                                </div>
                               </div>
                             )}
 
                             {/* Action Download Buttons: ONLY show when updateInfo.hasUpdate === true */}
                             {updateInfo.hasUpdate ? (
-                              <div className="flex items-center gap-2 flex-wrap pt-1">
+                              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
                                 {/* ONLY show Windows (.exe) button on Windows Desktop / Web browsers - NEVER on Android APK */}
                                 {!isAndroidApp && (
                                   <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
+                                    whileHover={{ scale: 1.03 }}
+                                    whileTap={{ scale: 0.97 }}
                                     onClick={() => handleDownloadUpdate(updateInfo.exeDownloadUrl || updateInfo.releaseUrl, `VortexDownloader-${updateInfo.latestVersion}.exe`)}
                                     disabled={updateDownloadState.isDownloading}
-                                    className="px-3.5 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                    className="px-3.5 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 text-xs font-mono font-bold flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                                     title="Download Windows executable installer"
                                   >
                                     <Monitor className="w-3.5 h-3.5" />
@@ -936,18 +971,18 @@ export default function SettingsView({
 
                                 {/* Android APK Button - Styled as Primary on Android */}
                                 <motion.button
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
+                                  whileHover={{ scale: 1.03 }}
+                                  whileTap={{ scale: 0.97 }}
                                   onClick={() => handleDownloadUpdate(updateInfo.apkDownloadUrl || updateInfo.releaseUrl, `VortexDownloader-${updateInfo.latestVersion}.apk`)}
                                   disabled={updateDownloadState.isDownloading}
-                                  className={`px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all ${
+                                  className={`flex-1 py-2.5 px-4 rounded-xl text-xs font-sans font-bold flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 transition-all ${
                                     isAndroidApp
                                       ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-black border border-emerald-300 shadow-lg shadow-emerald-500/25'
                                       : 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30'
                                   }`}
                                   title="Download and install Android APK update"
                                 >
-                                  <Smartphone className="w-3.5 h-3.5" />
+                                  <Smartphone className="w-4 h-4" />
                                   <span>
                                     {updateDownloadState.isDownloading
                                       ? `Downloading (${updateDownloadState.percent}%)`
@@ -958,16 +993,16 @@ export default function SettingsView({
                                 </motion.button>
 
                                 <motion.a
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
+                                  whileHover={{ scale: 1.03 }}
+                                  whileTap={{ scale: 0.97 }}
                                   href={updateInfo.releaseUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="px-3.5 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-gray-300 hover:text-white border border-white/[0.08] text-xs font-mono flex items-center gap-1.5 cursor-pointer ml-auto"
+                                  className="py-2.5 px-3.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-gray-300 hover:text-white border border-white/[0.08] text-xs font-sans flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
                                 >
                                   <Github className="w-3.5 h-3.5" />
                                   <span>GitHub Release</span>
-                                  <ExternalLink className="w-3 h-3" />
+                                  <ExternalLink className="w-3 h-3 text-gray-400" />
                                 </motion.a>
                               </div>
                             ) : (

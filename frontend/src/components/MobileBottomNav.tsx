@@ -3,7 +3,8 @@ import { motion } from 'motion/react';
 import { 
   Plus, 
   Settings, 
-  Shield 
+  Shield,
+  Globe
 } from 'lucide-react';
 import { NavView } from './SidebarNav';
 
@@ -11,6 +12,7 @@ interface MobileBottomNavProps {
   activeView: NavView;
   onSelectView: (view: NavView) => void;
   onOpenNewTask: () => void;
+  onOpenBrowser: () => void;
   onOpenSettings: () => void;
   isSettingsOpen?: boolean;
 }
@@ -19,14 +21,15 @@ export default function MobileBottomNav({
   activeView,
   onSelectView,
   onOpenNewTask,
+  onOpenBrowser,
   onOpenSettings,
   isSettingsOpen = false
 }: MobileBottomNavProps) {
   const springTransition = { type: 'spring' as const, stiffness: 400, damping: 22 };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#18181b]/95 backdrop-blur-xl border-t border-white/[0.08] flex items-center justify-around px-2 py-1 h-15 select-none shadow-2xl">
-      {/* Mobile Tasks */}
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#18181b]/95 backdrop-blur-xl border-t border-white/[0.08] flex items-center justify-around px-2 py-1 h-15 select-none shadow-2xl pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+      {/* 1. Mobile Tasks */}
       <motion.button
         whileTap={{ scale: 0.90 }}
         onClick={() => onSelectView('tasks')}
@@ -49,7 +52,7 @@ export default function MobileBottomNav({
         <span className="text-[10px] font-medium mt-0.5">Tasks</span>
       </motion.button>
 
-      {/* Mobile Vault */}
+      {/* 2. Mobile Vault */}
       <motion.button
         whileTap={{ scale: 0.90 }}
         onClick={() => onSelectView('vault')}
@@ -68,7 +71,7 @@ export default function MobileBottomNav({
         <span className="text-[10px] font-medium mt-0.5">Vault</span>
       </motion.button>
 
-      {/* Mobile Center Elevated Hero "+ New Task" Button */}
+      {/* 3. Mobile Center Elevated Hero "+ New Task" Button */}
       <div className="flex-1 flex justify-center -mt-5">
         <motion.button
           whileHover={{ scale: 1.08 }}
@@ -82,7 +85,17 @@ export default function MobileBottomNav({
         </motion.button>
       </div>
 
-      {/* Mobile Settings */}
+      {/* 4. Mobile Browser & Sniffer */}
+      <motion.button
+        whileTap={{ scale: 0.90 }}
+        onClick={onOpenBrowser}
+        className="flex-1 flex flex-col items-center justify-center py-1 relative cursor-pointer text-gray-400 hover:text-emerald-400"
+      >
+        <Globe className="w-5 h-5" />
+        <span className="text-[10px] font-medium mt-0.5">Browser</span>
+      </motion.button>
+
+      {/* 5. Mobile Settings */}
       <motion.button
         whileTap={{ scale: 0.90 }}
         onClick={onOpenSettings}

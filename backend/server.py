@@ -116,7 +116,7 @@ def add_job_log(job: Dict[str, Any], log_type: str, message: str):
 # 0. Health check
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "service": "VortexDownloader Universal Engine v0.6.2 (Python Core)"}
+    return {"status": "ok", "service": "VortexDownloader Universal Engine v0.6.3 (Python Core)"}
 
 # 1. Probe URL
 @app.get("/api/probe")
