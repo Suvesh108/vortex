@@ -210,14 +210,35 @@ def extract_info(url):
     except Exception as e:
         print(json.dumps({"error": str(e)}))
 
+_stream_progress_state = {'last_percent': 0.0}
+
 def download_progress_hook(d):
     if d['status'] == 'downloading':
         total = d.get('total_bytes') or d.get('total_bytes_estimate') or 0
         downloaded = d.get('downloaded_bytes') or 0
         
-        percent = 0
+        raw_percent = 0.0
         if total > 0:
-            percent = (downloaded / total) * 100
+            raw_percent = (downloaded / total) * 100.0
+            
+        # Detect if this is video-only or audio-only in a multi-stream download
+        info = d.get('info_dict') or {}
+        vcodec = info.get('vcodec')
+        acodec = info.get('acodec')
+        
+        if vcodec and vcodec != 'none' and acodec == 'none':
+            # Video stream: 0% to 88% of total package
+            effective_percent = min(88.0, raw_percent * 0.88)
+        elif acodec and acodec != 'none' and (not vcodec or vcodec == 'none'):
+            # Audio stream: 88% to 99% of total package
+            effective_percent = min(99.0, 88.0 + (raw_percent * 0.11))
+        else:
+            effective_percent = min(99.0, raw_percent)
+            
+        if effective_percent > _stream_progress_state['last_percent']:
+            _stream_progress_state['last_percent'] = effective_percent
+        else:
+            effective_percent = _stream_progress_state['last_percent']
             
         speed = d.get('speed')
         speed_str = format_speed(speed)
@@ -225,10 +246,10 @@ def download_progress_hook(d):
         eta = d.get('eta')
         eta_str = f"{eta}s" if eta else "Unknown"
         
-        # Output clean parsing markers for server.ts
-        print(f"[PROGRESS] {percent:.1f}% | SPEED: {speed_str} | ETA: {eta_str}", flush=True)
+        # Output clean parsing markers for server
+        print(f"[PROGRESS] {effective_percent:.1f}% | SPEED: {speed_str} | ETA: {eta_str}", flush=True)
     elif d['status'] == 'finished':
-        print("[PROGRESS] 100% | Stitching and compiling streams...", flush=True)
+        print("[PROGRESS] 99.0% | Stitching and compiling streams...", flush=True)
 
 def ensure_mp4_compatibility(file_path):
     """Ensures MP4 has H.264/AAC and +faststart so any native media player plays it smoothly without jitter."""
@@ -275,12 +296,21 @@ def download_media(url, format_id, output_path):
     format_id_str = str(format_id).strip()
     is_audio = any(a in format_id_str.lower() for a in ['audio', 'mp3', 'm4a', 'aac']) or output_path.lower().endswith(('.mp3', '.m4a'))
     
+    global _stream_progress_state
+    _stream_progress_state['last_percent'] = 0.0
+
     ydl_opts = {
         'progress_hooks': [download_progress_hook],
         'outtmpl': outtmpl_path,
         'quiet': True,
         'no_warnings': True,
         'noplaylist': True,
+        'concurrent_fragment_downloads': 16,
+        'buffersize': 1024 * 1024 * 16,
+        'http_chunk_size': 10485760,
+        'continuedl': True,
+        'retries': 10,
+        'fragment_retries': 10,
         **get_cookie_opts()
     }
 

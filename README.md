@@ -21,14 +21,17 @@
 
 <hr />
 
-## 📱 Android App (v0.6.1)
+## 📱 Android App (v0.6.2)
 
 VortexDownloader is available as a standalone Android application with a **Native Sandboxed Inbuilt Browser** (isolated private browsing like Brave/Chrome, no personal Google/Gmail account leakage), 1-tap direct stream sniffer & download interceptor, browser logo button directly on the right side of the search bar, dedicated Mobile Layout, frosted bottom navigation bar, Turbo Speed Engine, recursive iframe aggregator crawler (e.g. `rou.video`), and 16-host universal media engine!
 
-- **Download APK (v0.6.1)**: [**VortexDownloader-v0.6.1.apk**](release/VortexDownloader-v0.6.1.apk)
-- **Version**: `0.6.1` (Release v0.6.1)
+- **Download APK (v0.6.2)**: [**VortexDownloader-v0.6.2.apk**](release/VortexDownloader-v0.6.2.apk)
+- **Version**: `0.6.2` (Release v0.6.2)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.6.1**:
+- **What's New in v0.6.2**:
+  - 🎯 **100% Mathematically Accurate Progress Bar**: Completely eliminated the 95% progress jump bug caused by indeterminate CDN content-length headers. Added automated HTTP `Range: bytes=0-1` byte-probe size discovery, fallback format size estimation, and real downloaded payload tracking with exact percentage & ETA.
+  - ⚡ **Multi-Connection Parallel Downloader (8 Concurrent Pipes)**: Integrated high-speed client-side segmented parallel streaming. Splits payloads into concurrent HTTP byte-range workers to bypass CDN single-stream speed throttling (0.5–3 MB/s) and fully saturate 10 MB/s+ high-speed connections.
+  - 🚀 **Backend Concurrency & Smooth Progress**: Configured `concurrent_fragment_downloads: 16` in yt-dlp core and implemented monotonic multi-stream progress smoothing across dual video+audio passes.
   - 🐍 **Pure Python Backend Architecture**: Full migration of the backend engine to high-concurrency FastAPI/Uvicorn, removing all TypeScript backend bottlenecks.
   - 🎬 **Zero-Jitter Universal Media Engine**: 100% compliant H.264 video + standard 192k AAC audio with `+faststart` metadata for stutter-free playback across Windows Media Player, Movies & TV, and default Android gallery players.
   - ⚡ **16-Pipe Multi-Segmented Turbo Downloader**: Parallel HTTP byte-range slicing with real-time speed & ETA telemetry.

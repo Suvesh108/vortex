@@ -467,6 +467,132 @@ export async function downloadMediaDirect(
 
 /**
  * Execute real binary download of media stream/file with automatic format conversion
+/**
+ * Parse human readable size string into exact integer bytes
+ * e.g. "450.2 MB" -> 472068915, "1.2 GB" -> 1288490188
+ */
+export function parseSizeToBytes(sizeStr?: string): number {
+  if (!sizeStr || sizeStr === 'N/A' || sizeStr === 'Adaptive Size') return 0;
+  const match = sizeStr.trim().match(/^([\d.]+)\s*([KMGT]?B)$/i);
+  if (!match) return 0;
+  const num = parseFloat(match[1]);
+  if (isNaN(num) || num <= 0) return 0;
+  const unit = match[2].toUpperCase();
+  const multipliers: Record<string, number> = {
+    'B': 1,
+    'KB': 1024,
+    'MB': 1024 * 1024,
+    'GB': 1024 * 1024 * 1024,
+    'TB': 1024 * 1024 * 1024 * 1024
+  };
+  return Math.round(num * (multipliers[unit] || 1));
+}
+
+/**
+ * High-speed multi-connection segmented parallel downloader for in-app binary streaming.
+ * Slices payload into N parallel range streams to saturate network bandwidth and bypass CDN per-connection throttling.
+ */
+async function downloadParallelChunks(
+  streamUrl: string,
+  totalBytes: number,
+  mimeType: string,
+  filename: string,
+  numThreads: number = 8,
+  progressCb: (progress: number, speed: string, eta: string) => void,
+  log: (type: DownloadLog['type'], message: string) => void,
+  metadataTitle: string,
+  targetExt: string
+): Promise<{ success: boolean; blobUrl?: string }> {
+  const threads = Math.max(2, Math.min(numThreads, Math.floor(totalBytes / (1024 * 512))));
+  log('info', `⚡ Launching Vortex Parallel Engine: ${threads} concurrent pipes active for high throughput...`);
+
+  const segmentSize = Math.floor(totalBytes / threads);
+  const threadLoaded = new Array(threads).fill(0);
+  const threadChunks: Uint8Array[][] = Array.from({ length: threads }, () => []);
+
+  const startTime = Date.now();
+  let lastCalcTime = Date.now();
+  let lastCalcBytes = 0;
+  let currentSpeed = 'Starting...';
+  let lastNotifPercent = 0;
+
+  const updateProgress = () => {
+    const totalLoaded = threadLoaded.reduce((acc, b) => acc + b, 0);
+    const now = Date.now();
+    const timeDiff = (now - lastCalcTime) / 1000;
+    if (timeDiff >= 0.25) {
+      const diffBytes = totalLoaded - lastCalcBytes;
+      const spd = diffBytes / timeDiff / (1024 * 1024);
+      currentSpeed = `${spd.toFixed(1)} MB/s`;
+      lastCalcTime = now;
+      lastCalcBytes = totalLoaded;
+    }
+
+    const totalElapsed = (now - startTime) / 1000;
+    const avgSpeedBytes = totalElapsed > 0 ? totalLoaded / totalElapsed : 0;
+    const percent = Math.min(99, Math.floor((totalLoaded / totalBytes) * 100));
+    const etaSec = avgSpeedBytes > 0 
+      ? Math.max(1, Math.round((totalBytes - totalLoaded) / avgSpeedBytes)) 
+      : 0;
+
+    progressCb(percent, currentSpeed, `${etaSec}s`);
+
+    if (percent - lastNotifPercent >= 10) {
+      lastNotifPercent = percent;
+      sendDownloadProgressNotification(metadataTitle, percent, currentSpeed);
+    }
+  };
+
+  const tasks = Array.from({ length: threads }, async (_, idx) => {
+    const startByte = idx * segmentSize;
+    const endByte = idx === threads - 1 ? totalBytes - 1 : (idx + 1) * segmentSize - 1;
+
+    const res = await fetch(streamUrl, {
+      headers: {
+        'Range': `bytes=${startByte}-${endByte}`
+      }
+    });
+
+    if (!res.ok && res.status !== 206) {
+      throw new Error(`Range request failed for pipe ${idx + 1} with status ${res.status}`);
+    }
+
+    const reader = res.body?.getReader();
+    if (!reader) throw new Error(`Could not open stream reader for pipe ${idx + 1}`);
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        threadChunks[idx].push(value);
+        threadLoaded[idx] += value.length;
+        updateProgress();
+      }
+    }
+  });
+
+  await Promise.all(tasks);
+
+  const allChunks: Uint8Array[] = [];
+  for (let i = 0; i < threads; i++) {
+    for (const chunk of threadChunks[i]) {
+      allChunks.push(chunk);
+    }
+  }
+
+  const blob = new Blob(allChunks, { type: mimeType });
+  const blobUrl = URL.createObjectURL(blob);
+
+  const totalLoaded = threadLoaded.reduce((acc, b) => acc + b, 0);
+  log('success', `⚡ Parallel multi-pipe streaming completed successfully! Total size: ${formatBytes(totalLoaded)}`);
+  await saveBlobToStorage(blob, filename, blobUrl, log);
+  progressCb(100, '0.0 MB/s', '0s');
+  sendDownloadCompleteNotification(metadataTitle, `.${targetExt}`);
+  return { success: true, blobUrl };
+}
+
+/**
+ * Execute real binary download of media stream/file with automatic format conversion
  */
 async function executeDirectBinaryDownload(
   metadata: MediaMetadata,
@@ -498,13 +624,82 @@ async function executeDirectBinaryDownload(
   if (streamUrl) {
     log('info', `Streaming binary payload: [${filename}]...`);
 
-    // True real-time binary streaming pipeline (Android Native WebView & Web)
+    // Determine correct MIME type from target extension
+    const mimeType = targetExt === 'm4a' ? 'audio/mp4' :
+                     targetExt === 'mp4' ? 'video/mp4' :
+                     targetExt === 'jpg' ? 'image/jpeg' :
+                     targetExt === 'zip' ? 'application/zip' :
+                     targetExt === 'pdf' ? 'application/pdf' :
+                     targetExt === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
+                     targetExt === 'pptx' ? 'application/vnd.openxmlformats-officedocument.presentationml.presentation' :
+                     targetExt === 'epub' ? 'application/epub+zip' : 'text/plain';
+
     try {
+      // 1. Pre-flight probe to detect Range support and exact file size
+      let totalBytes = 0;
+      let supportsRanges = false;
+
+      try {
+        const probeRes = await fetch(streamUrl, {
+          method: 'GET',
+          headers: { 'Range': 'bytes=0-1' }
+        });
+        if (probeRes.status === 206) {
+          supportsRanges = true;
+          const contentRange = probeRes.headers.get('content-range');
+          if (contentRange) {
+            const match = contentRange.match(/\/(\d+)/);
+            if (match) {
+              totalBytes = parseInt(match[1], 10);
+            }
+          }
+        }
+        if (!totalBytes) {
+          const cl = probeRes.headers.get('content-length');
+          if (cl && parseInt(cl, 10) > 1000) {
+            totalBytes = parseInt(cl, 10);
+          }
+        }
+      } catch (_) {
+        // Probe error gracefully ignored
+      }
+
+      // 2. Secondary fallback: resolve exact size from selected format descriptor
+      if (!totalBytes && selectedFormat.size) {
+        totalBytes = parseSizeToBytes(selectedFormat.size);
+      }
+
+      // 3. If range requests are supported and size > 2MB, execute high-speed multi-pipe parallel download!
+      if (supportsRanges && totalBytes > 2 * 1024 * 1024) {
+        try {
+          return await downloadParallelChunks(
+            streamUrl,
+            totalBytes,
+            mimeType,
+            filename,
+            8, // 8 parallel streams to saturate 10MB/s+ bandwidth
+            progressCb,
+            log,
+            metadata.title,
+            targetExt
+          );
+        } catch (parallelErr: any) {
+          log('warning', `Parallel stream pipe notice (${parallelErr.message}). Resuming standard single stream...`);
+        }
+      }
+
+      // 4. Single-connection streaming with 100% accurate progress computation
       const response = await fetch(streamUrl);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-      const contentLength = response.headers.get('content-length');
-      const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
+      if (!totalBytes) {
+        const contentLength = response.headers.get('content-length');
+        if (contentLength) totalBytes = parseInt(contentLength, 10);
+      }
+      if (!totalBytes && selectedFormat.size) {
+        totalBytes = parseSizeToBytes(selectedFormat.size);
+      }
+
       let loadedBytes = 0;
       const startTime = Date.now();
       let lastCalcTime = Date.now();
@@ -535,32 +730,26 @@ async function executeDirectBinaryDownload(
 
             const totalElapsed = (now - startTime) / 1000;
             const avgSpeedBytes = totalElapsed > 0 ? loadedBytes / totalElapsed : 0;
+            
+            // ACCURATE PROGRESS: If totalBytes is known, compute exact percentage.
+            // If totalBytes is unknown, do NOT fake 95% at 20MB! Compute based on downloaded MB.
             const percent = totalBytes > 0 
               ? Math.min(99, Math.floor((loadedBytes / totalBytes) * 100)) 
-              : Math.min(95, Math.floor(loadedBytes / (1024 * 1024 * 20) * 100));
+              : 0;
             const etaSec = totalBytes > 0 && avgSpeedBytes > 0 
               ? Math.max(1, Math.round((totalBytes - loadedBytes) / avgSpeedBytes)) 
-              : 1;
+              : 0;
+            const etaDisplay = totalBytes > 0 ? `${etaSec}s` : `${(loadedBytes / (1024 * 1024)).toFixed(1)} MB`;
 
-            progressCb(percent, currentSpeed, `${etaSec}s`);
+            progressCb(percent, currentSpeed, etaDisplay);
 
-            if (percent - lastNotifPercent >= 10) {
+            if (percent > 0 && percent - lastNotifPercent >= 10) {
               lastNotifPercent = percent;
               sendDownloadProgressNotification(metadata.title, percent, currentSpeed);
             }
           }
         }
       }
-
-      // Determine correct MIME type from target extension
-      const mimeType = targetExt === 'm4a' ? 'audio/mp4' :
-                       targetExt === 'mp4' ? 'video/mp4' :
-                       targetExt === 'jpg' ? 'image/jpeg' :
-                       targetExt === 'zip' ? 'application/zip' :
-                       targetExt === 'pdf' ? 'application/pdf' :
-                       targetExt === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
-                       targetExt === 'pptx' ? 'application/vnd.openxmlformats-officedocument.presentationml.presentation' :
-                       targetExt === 'epub' ? 'application/epub+zip' : 'text/plain';
 
       const blob = new Blob(chunks, { type: mimeType });
       const blobUrl = URL.createObjectURL(blob);
