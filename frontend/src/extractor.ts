@@ -402,8 +402,7 @@ export async function downloadMediaDirect(
   selectedFormat: MediaQuality,
   customBackendUrl?: string,
   onProgress?: (progress: number, speed: string, eta: string) => void,
-  onLog?: (type: DownloadLog['type'], message: string) => void,
-  clipRange?: { startTime?: number; endTime?: number }
+  onLog?: (type: DownloadLog['type'], message: string) => void
 ): Promise<{ success: boolean; blobUrl?: string }> {
   const log = onLog || (() => {});
   const progressCb = onProgress || (() => {});
@@ -420,11 +419,6 @@ export async function downloadMediaDirect(
         title: metadata.title,
         format: selectedFormat.format
       };
-      if (clipRange && (clipRange.startTime !== undefined || clipRange.endTime !== undefined)) {
-        payload.startTime = clipRange.startTime;
-        payload.endTime = clipRange.endTime;
-        log('info', `Applying pre-download clip slice: ${clipRange.startTime || 0}s -> ${clipRange.endTime || 'END'}s`);
-      }
 
       const res = await fetch(`${backend}/api/download`, {
         method: 'POST',

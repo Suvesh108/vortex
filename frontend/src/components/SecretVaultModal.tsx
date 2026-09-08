@@ -14,7 +14,8 @@ import {
   KeyRound,
   RotateCcw,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  ExternalLink
 } from 'lucide-react';
 import { DownloadHistoryItem } from '../types';
 
@@ -22,7 +23,6 @@ interface SecretVaultModalProps {
   isOpen: boolean;
   onClose: () => void;
   allHistoryItems: DownloadHistoryItem[];
-  onPlayItem: (item: DownloadHistoryItem) => void;
   onHideFromPublicHistory?: (id: string) => void;
 }
 
@@ -30,7 +30,6 @@ export default function SecretVaultModal({
   isOpen,
   onClose,
   allHistoryItems,
-  onPlayItem,
   onHideFromPublicHistory
 }: SecretVaultModalProps) {
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -419,10 +418,7 @@ export default function SecretVaultModal({
                         className="p-3 rounded-xl bg-neutral-900/80 border border-gray-800 flex items-center justify-between gap-2"
                       >
                         <div 
-                          onClick={() => {
-                            onPlayItem(item);
-                          }}
-                          className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer group"
+                          className="flex items-center gap-2.5 min-w-0 flex-1"
                         >
                           <motion.div 
                             whileHover={{ scale: 1.08 }}
@@ -431,22 +427,23 @@ export default function SecretVaultModal({
                             <img src={item.thumbnail} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                           </motion.div>
                           <div className="min-w-0 flex-1">
-                            <h5 className="font-hanken font-bold text-xs text-white truncate group-hover:text-action-red transition-colors">{item.title}</h5>
+                            <h5 className="font-hanken font-bold text-xs text-white truncate">{item.title}</h5>
                             <span className="text-[10px] font-mono text-gray-400">{item.size} • {item.format}</span>
                           </div>
                         </div>
 
                         <div className="flex items-center space-x-1 shrink-0">
-                          <motion.button
+                          <motion.a
                             whileHover={{ scale: 1.08 }}
                             whileTap={{ scale: 0.92 }}
-                            onClick={() => {
-                              onPlayItem(item);
-                            }}
-                            className="px-2.5 py-1 rounded-lg bg-secondary-grey/40 text-xs font-mono text-gray-300 hover:text-white cursor-pointer"
+                            href={item.originalUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg bg-secondary-grey/40 hover:bg-sky-500/20 text-gray-400 hover:text-sky-400 cursor-pointer transition-colors"
+                            title="Open original link"
                           >
-                            Play
-                          </motion.button>
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </motion.a>
                           <motion.button
                             whileHover={{ scale: 1.15 }}
                             whileTap={{ scale: 0.85 }}

@@ -7,9 +7,7 @@ import {
   Play, 
   Pause, 
   ExternalLink, 
-  Folder, 
   X, 
-  Scissors, 
   FileAudio, 
   FileArchive, 
   File, 
@@ -37,10 +35,7 @@ interface TaskListDashboardProps {
     targetExtension?: string;
   } | null;
   searchQuery: string;
-  onPlayItem: (item: DownloadHistoryItem) => void;
-  onTrimItem: (item: DownloadHistoryItem) => void;
   onRemoveItem: (id: string) => void;
-  onOpenStorage: (item: DownloadHistoryItem) => void;
   onStartAll?: () => void;
   onPauseAll?: () => void;
   onOpenNewTask?: () => void;
@@ -51,10 +46,7 @@ export default function TaskListDashboard({
   items,
   currentDownloading,
   searchQuery,
-  onPlayItem,
-  onTrimItem,
   onRemoveItem,
-  onOpenStorage,
   onStartAll,
   onPauseAll,
   onOpenNewTask,
@@ -423,29 +415,6 @@ export default function TaskListDashboard({
 
                 {/* Right Action Icons with Bouncy Hover */}
                 <div className="flex items-center space-x-1 sm:space-x-1.5 shrink-0">
-                  {/* Play Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.2, rotate: 5 }}
-                    whileTap={{ scale: 0.85 }}
-                    transition={springQuick}
-                    onClick={() => onPlayItem(item)}
-                    className="p-1.5 sm:p-2 rounded-lg bg-[#3d3d42] hover:bg-[#4cc2ff] text-gray-300 hover:text-black transition-colors cursor-pointer shadow-sm"
-                    title="Play"
-                  >
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                  </motion.button>
-
-                  {/* Trim Studio Button - hidden on small mobile, visible on sm+ */}
-                  <motion.button
-                    whileHover={{ scale: 1.2, rotate: -8 }}
-                    whileTap={{ scale: 0.85 }}
-                    transition={springQuick}
-                    onClick={() => onTrimItem(item)}
-                    className="hidden sm:inline-flex p-2 rounded-lg bg-[#3d3d42] hover:bg-[#ff7900] text-gray-300 hover:text-black transition-colors cursor-pointer shadow-sm"
-                    title="Trim in Studio"
-                  >
-                    <Scissors className="w-3.5 h-3.5" />
-                  </motion.button>
 
                   {/* Open URL Button - hidden on small mobile, visible on sm+ */}
                   <motion.a
@@ -460,18 +429,6 @@ export default function TaskListDashboard({
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                   </motion.a>
-
-                  {/* Reveal in Storage Folder Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.2, rotate: -5 }}
-                    whileTap={{ scale: 0.85 }}
-                    transition={springQuick}
-                    onClick={() => onOpenStorage(item)}
-                    className="p-1.5 sm:p-2 rounded-lg bg-[#3d3d42] hover:bg-amber-400 text-gray-300 hover:text-black transition-colors cursor-pointer shadow-sm"
-                    title="Show in File Manager"
-                  >
-                    <Folder className="w-3.5 h-3.5" />
-                  </motion.button>
 
                   {/* Delete Task Button */}
                   <motion.button

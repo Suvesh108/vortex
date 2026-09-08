@@ -21,16 +21,18 @@
 
 <hr />
 
-## 📱 Android App (v0.5.9)
+## 📱 Android App (v0.6.1)
 
 VortexDownloader is available as a standalone Android application with a **Native Sandboxed Inbuilt Browser** (isolated private browsing like Brave/Chrome, no personal Google/Gmail account leakage), 1-tap direct stream sniffer & download interceptor, browser logo button directly on the right side of the search bar, dedicated Mobile Layout, frosted bottom navigation bar, Turbo Speed Engine, recursive iframe aggregator crawler (e.g. `rou.video`), and 16-host universal media engine!
 
-- **Download APK (v0.5.9)**: [**VortexDownloader-v0.5.9.apk**](release/VortexDownloader-v0.5.9.apk)
-- **Version**: `0.5.9` (Release v0.5.9)
+- **Download APK (v0.6.1)**: [**VortexDownloader-v0.6.1.apk**](release/VortexDownloader-v0.6.1.apk)
+- **Version**: `0.6.1` (Release v0.6.1)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.5.9**:
-  - 🔄 **Fixed Update Checker Logic**: Fixed inaccurate update prompt in Settings. The updater now strictly respects semver comparisons; when running the latest version, it displays a clear confirmation that Vortex is up to date (`v0.5.9`) instead of prompting an unnecessary update.
-  - 📈 **Fixed Download Progress Stuck at 45%**: Completely eliminated the issue where downloads would stall at 45%. Replaced blocking calls with a real-time `ReadableStream` chunked pipeline that streams live bytes, real-time speed (`MB/s`), and accurate ETA calculations continuously from `0% -> 100%`.
+- **What's New in v0.6.1**:
+  - 🐍 **Pure Python Backend Architecture**: Full migration of the backend engine to high-concurrency FastAPI/Uvicorn, removing all TypeScript backend bottlenecks.
+  - 🎬 **Zero-Jitter Universal Media Engine**: 100% compliant H.264 video + standard 192k AAC audio with `+faststart` metadata for stutter-free playback across Windows Media Player, Movies & TV, and default Android gallery players.
+  - ⚡ **16-Pipe Multi-Segmented Turbo Downloader**: Parallel HTTP byte-range slicing with real-time speed & ETA telemetry.
+  - 📦 **All 9 Feature Packs Verified**: Complete support for HttpPack, FFmpegPack, BitTorrentPack, ED2kPack, FtpPack, GitHubPack, HuggingFacePack, M3U8Pack, and YouTubePack.
   - 📥 **Seamless Inbuilt Browser Task Ingestion**: Top-bar **"⚡ Add"** button, floating **"⚡ Add to Vortex"** FAB, long-press link sniffer, and direct wire-up into `AddTaskModal` with automatic pack detection and URL parsing.
   - 📱 **Android-Specific Update UI**: Clean Android update experience with live streaming progress and automatic APK install prompts.
   - 🌐 **Native Sandboxed Inbuilt Browser**: Isolated private browsing sandbox with zero personal Google/Gmail account leakage.
@@ -52,7 +54,7 @@ VortexDownloader is available as a standalone Android application with a **Nativ
     - 🎭 **VOE** (voe.sx, voe-network.net, voeunblk.com)
     - 📺 **StreamSB** (streamsb.net, sbchill.com, sbfull.com, sbfast.com, sbembed.com)
   - 🔓 **Packed JS Deobfuscator Engine (`unpackJs`)**: Automatically unrolls Dean Edwards' packed javascript `eval(function(p,a,c,k,e,d)...)` blocks across hosting sites.
-  - 📂 **Full In-App Suite**: File Manager, Media Trimmer, PIN/Biometric Secret Vault, Web Browser with 1-Tap Sniffer, and Background MediaSession Controls.
+  - 📂 **Full In-App Suite**: PIN/Biometric Secret Vault, Web Browser with 1-Tap Sniffer, and Background MediaSession Controls.
 
 ### Building Android APK Locally
 ```bash

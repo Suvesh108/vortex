@@ -3,8 +3,7 @@ import { motion } from 'motion/react';
 import { 
   Plus, 
   Settings, 
-  Shield, 
-  Scissors 
+  Shield 
 } from 'lucide-react';
 import { NavView } from './SidebarNav';
 
@@ -12,7 +11,6 @@ interface MobileBottomNavProps {
   activeView: NavView;
   onSelectView: (view: NavView) => void;
   onOpenNewTask: () => void;
-  onOpenTrimmer: () => void;
   onOpenSettings: () => void;
   isSettingsOpen?: boolean;
 }
@@ -21,7 +19,6 @@ export default function MobileBottomNav({
   activeView,
   onSelectView,
   onOpenNewTask,
-  onOpenTrimmer,
   onOpenSettings,
   isSettingsOpen = false
 }: MobileBottomNavProps) {
@@ -84,16 +81,6 @@ export default function MobileBottomNav({
           <Plus className="w-6 h-6 stroke-[3]" />
         </motion.button>
       </div>
-
-      {/* Mobile Trimmer */}
-      <motion.button
-        whileTap={{ scale: 0.90 }}
-        onClick={onOpenTrimmer}
-        className="flex-1 flex flex-col items-center justify-center py-1 text-gray-400 hover:text-pink-400 cursor-pointer"
-      >
-        <Scissors className="w-5 h-5" />
-        <span className="text-[10px] font-medium mt-0.5">Trimmer</span>
-      </motion.button>
 
       {/* Mobile Settings */}
       <motion.button

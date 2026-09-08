@@ -13,8 +13,6 @@ export interface LayoutProps {
   onSelectView: (view: NavView) => void;
   onOpenNewTask: () => void;
   onOpenBrowser: () => void;
-  onOpenFileManager: () => void;
-  onOpenTrimmer: () => void;
   onOpenSettings: () => void;
   onOpenAria2Modal: () => void;
   onOpenSecretVault: () => void;
@@ -24,8 +22,6 @@ export interface LayoutProps {
   settings: UserSettings;
   onUpdateSettings: (newSettings: UserSettings) => void;
   onRemoveHistoryItem: (id: string) => void;
-  onPlayItem: (item: DownloadHistoryItem) => void;
-  onTrimItem: (item: DownloadHistoryItem) => void;
   onDownloadUrl?: (url: string) => void;
 }
 
@@ -44,8 +40,6 @@ export default function DesktopLayout({
   onSelectView,
   onOpenNewTask,
   onOpenBrowser,
-  onOpenFileManager,
-  onOpenTrimmer,
   onOpenSettings,
   onOpenAria2Modal,
   onOpenSecretVault,
@@ -54,9 +48,7 @@ export default function DesktopLayout({
   currentDownloading,
   settings,
   onUpdateSettings,
-  onRemoveHistoryItem,
-  onPlayItem,
-  onTrimItem
+  onRemoveHistoryItem
 }: LayoutProps) {
   return (
     <div className="h-screen w-screen bg-[#202020] text-[#f0edf1] font-sans flex flex-col overflow-hidden select-none">
@@ -74,8 +66,6 @@ export default function DesktopLayout({
           onSelectView={onSelectView}
           onOpenNewTask={onOpenNewTask}
           onOpenBrowser={onOpenBrowser}
-          onOpenFileManager={onOpenFileManager}
-          onOpenTrimmer={onOpenTrimmer}
           onOpenSettings={onOpenSettings}
           isSettingsOpen={isSettingsOpen}
           downloadingCount={currentDownloading ? 1 : 0}
@@ -98,10 +88,7 @@ export default function DesktopLayout({
                   items={history}
                   currentDownloading={currentDownloading}
                   searchQuery={searchQuery}
-                  onPlayItem={onPlayItem}
-                  onTrimItem={onTrimItem}
                   onRemoveItem={onRemoveHistoryItem}
-                  onOpenStorage={onOpenFileManager}
                   onStartAll={() => {}}
                   onPauseAll={() => {}}
                   onOpenNewTask={onOpenNewTask}

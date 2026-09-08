@@ -11,8 +11,6 @@ import {
   Check, 
   RefreshCw, 
   Database,
-  CheckCircle2,
-  Play,
   Eye
 } from 'lucide-react';
 import { DownloadHistoryItem } from '../types';
@@ -23,7 +21,6 @@ interface HistoryListProps {
   onClearAll: () => void;
   onReDownload: (item: DownloadHistoryItem) => void;
   onLoadUrl?: (url: string) => void;
-  onPlayItem?: (item: DownloadHistoryItem) => void;
 }
 
 export default function HistoryList({ 
@@ -31,8 +28,7 @@ export default function HistoryList({
   onRemoveItem, 
   onClearAll, 
   onReDownload, 
-  onLoadUrl,
-  onPlayItem 
+  onLoadUrl
 }: HistoryListProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
@@ -126,34 +122,22 @@ export default function HistoryList({
               className="bg-surface-card border border-gray-800 hover:border-gray-700 p-3.5 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group transition-colors duration-200 hover:bg-[#1a1b22]"
             >
               <div className="flex items-start sm:items-center space-x-3.5 min-w-0 flex-1">
-                {/* Thumbnail Image with Play overlay */}
-                <motion.div 
-                  whileHover={{ scale: 1.05 }}
-                  onClick={() => onPlayItem && onPlayItem(item)}
-                  className="w-20 h-14 rounded-lg overflow-hidden relative bg-black border border-gray-800 shrink-0 cursor-pointer group/thumb"
-                >
+                {/* Thumbnail Image */}
+                <div className="w-20 h-14 rounded-lg overflow-hidden relative bg-black border border-gray-800 shrink-0">
                   <img
                     src={item.thumbnail}
                     alt={item.title}
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover transition-transform duration-300"
+                    className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-black/30 group-hover/thumb:bg-black/10 flex items-center justify-center transition-colors">
-                    <div className="w-6 h-6 rounded-full bg-action-red/90 flex items-center justify-center text-white subtle-glow group-hover/thumb:scale-110 transition-transform">
-                      <Play className="w-3 h-3 fill-white ml-0.5" />
-                    </div>
-                  </div>
                   <div className="absolute top-1 left-1 bg-black/85 px-1.5 py-0.2 rounded text-[8px] font-mono text-action-red font-bold uppercase">
                     {item.category || item.format}
                   </div>
-                </motion.div>
+                </div>
 
                 <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex items-center gap-2">
-                    <h4 
-                      onClick={() => onPlayItem && onPlayItem(item)}
-                      className="text-xs font-bold text-gray-200 truncate group-hover:text-white transition-colors cursor-pointer"
-                    >
+                    <h4 className="text-xs font-bold text-gray-200 truncate group-hover:text-white transition-colors">
                       {item.title}
                     </h4>
                     {item.targetExtension && (
@@ -201,20 +185,6 @@ export default function HistoryList({
 
               {/* Action buttons */}
               <div className="flex items-center space-x-2 shrink-0 self-end sm:self-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-800/60 w-full sm:w-auto justify-end">
-                {/* IN-APP DIRECT VIEWER / PLAYER BUTTON */}
-                {onPlayItem && (
-                  <motion.button
-                    whileHover={{ scale: 1.06, y: -1 }}
-                    whileTap={{ scale: 0.93 }}
-                    onClick={() => onPlayItem(item)}
-                    className="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-black transition-all flex items-center space-x-1 text-xs font-bold font-mono cursor-pointer"
-                    title="Play or view directly in app"
-                  >
-                    <Play className="w-3 h-3 fill-emerald-400" />
-                    <span className="text-[10px] uppercase font-mono">PLAY / VIEW</span>
-                  </motion.button>
-                )}
-
                 {onLoadUrl && (
                   <motion.button
                     whileHover={{ scale: 1.06, y: -1 }}
@@ -264,10 +234,6 @@ export default function HistoryList({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/30 border border-emerald-800/30 px-2 py-0.5 rounded flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" />
-            In-App Player Ready
-          </span>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

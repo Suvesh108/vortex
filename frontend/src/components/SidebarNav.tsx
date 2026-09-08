@@ -1,13 +1,10 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { 
-  Inbox, 
   Plus, 
   Settings, 
   Shield, 
-  Scissors, 
-  Globe, 
-  FolderOpen 
+  Globe 
 } from 'lucide-react';
 
 export type NavView = 'tasks' | 'settings' | 'vault' | 'swarm';
@@ -17,8 +14,6 @@ interface SidebarNavProps {
   onSelectView: (view: NavView) => void;
   onOpenNewTask: () => void;
   onOpenBrowser: () => void;
-  onOpenFileManager: () => void;
-  onOpenTrimmer: () => void;
   onOpenSettings: () => void;
   isSettingsOpen?: boolean;
   downloadingCount?: number;
@@ -29,8 +24,6 @@ export default function SidebarNav({
   onSelectView,
   onOpenNewTask,
   onOpenBrowser,
-  onOpenFileManager,
-  onOpenTrimmer,
   onOpenSettings,
   isSettingsOpen = false,
   downloadingCount = 0
@@ -119,24 +112,6 @@ export default function SidebarNav({
             <span className="text-[11px] font-sans tracking-tight">Vault</span>
           </motion.button>
 
-          {/* Trimmer Button */}
-          <motion.button
-            whileHover={{ scale: 1.06, y: -2 }}
-            whileTap={{ scale: 0.92 }}
-            transition={springTransition}
-            onClick={onOpenTrimmer}
-            className="w-16 h-16 aspect-square shrink-0 rounded-xl flex flex-col items-center justify-center space-y-0.5 text-gray-400 hover:text-pink-400 hover:bg-pink-500/10 transition-colors cursor-pointer outline-none focus:outline-none select-none group"
-            title="Trimmer Studio"
-          >
-            <motion.div
-              whileHover={{ rotate: [0, -15, 15, 0] }}
-              transition={{ duration: 0.3 }}
-            >
-              <Scissors className="w-6 h-6 stroke-[2] group-hover:text-pink-400 transition-colors" />
-            </motion.div>
-            <span className="text-[11px] font-sans tracking-tight group-hover:text-white transition-colors">Trimmer</span>
-          </motion.button>
-
           {/* Browser Button */}
           <motion.button
             whileHover={{ scale: 1.06, y: -2 }}
@@ -153,24 +128,6 @@ export default function SidebarNav({
               <Globe className="w-6 h-6 stroke-[2] group-hover:text-emerald-400 transition-colors" />
             </motion.div>
             <span className="text-[11px] font-sans tracking-tight group-hover:text-white transition-colors">Browser</span>
-          </motion.button>
-
-          {/* Storage Files Button */}
-          <motion.button
-            whileHover={{ scale: 1.06, y: -2 }}
-            whileTap={{ scale: 0.92 }}
-            transition={springTransition}
-            onClick={onOpenFileManager}
-            className="w-16 h-16 aspect-square shrink-0 rounded-xl flex flex-col items-center justify-center space-y-0.5 text-gray-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer outline-none focus:outline-none select-none group"
-            title="Storage File Manager"
-          >
-            <motion.div
-              whileHover={{ scale: 1.15, y: -1 }}
-              transition={{ type: 'spring', stiffness: 400 }}
-            >
-              <FolderOpen className="w-6 h-6 stroke-[2] group-hover:text-amber-400 transition-colors" />
-            </motion.div>
-            <span className="text-[11px] font-sans tracking-tight group-hover:text-white transition-colors">Files</span>
           </motion.button>
         </div>
 

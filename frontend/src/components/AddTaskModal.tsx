@@ -9,7 +9,6 @@ import {
   FileText, 
   UploadCloud, 
   Clock, 
-  Scissors, 
   Play,
   FileVideo,
   FileAudio,
@@ -27,7 +26,6 @@ interface AddTaskModalProps {
     metadata?: MediaMetadata;
     selectedFormat?: MediaQuality;
     threads: number;
-    clipRange?: { startTime: number; endTime: number };
   }) => void;
   backendUrl?: string;
   defaultThreads?: number;
@@ -95,11 +93,6 @@ export default function AddTaskModal({
   const [parsedMetadata, setParsedMetadata] = useState<MediaMetadata | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
   const [selectedFormat, setSelectedFormat] = useState<MediaQuality | null>(null);
-
-  // Pre-download clip slicing
-  const [enableClip, setEnableClip] = useState(false);
-  const [clipStart, setClipStart] = useState(0);
-  const [clipEnd, setClipEnd] = useState(60);
 
   const firstUrl = linksText.trim().split('\n')[0]?.trim() || '';
   const detectedPack = getDetectedPack(firstUrl);
@@ -190,13 +183,6 @@ export default function AddTaskModal({
           if (data.formats && data.formats.length > 0) {
             setSelectedFormat(data.formats[0]);
           }
-          if (data.duration && data.duration.includes(':')) {
-            const parts = data.duration.split(':').map(Number);
-            let s = 0;
-            if (parts.length === 2) s = parts[0] * 60 + parts[1];
-            else if (parts.length === 3) s = parts[0] * 3600 + parts[1] * 60 + parts[2];
-            setClipEnd(s > 0 ? s : 60);
-          }
         })
         .catch((err) => {
           setParseError(err.message || 'Could not parse link');
@@ -219,8 +205,7 @@ export default function AddTaskModal({
       urls: lines,
       metadata: parsedMetadata || undefined,
       selectedFormat: selectedFormat || undefined,
-      threads,
-      clipRange: enableClip && clipEnd > clipStart ? { startTime: clipStart, endTime: clipEnd } : undefined
+      threads
     });
 
     onClose();
@@ -232,7 +217,6 @@ export default function AddTaskModal({
     setParsedMetadata(null);
     setParseError(null);
     setSelectedFormat(null);
-    setEnableClip(false);
   };
 
   return (
@@ -387,22 +371,6 @@ export default function AddTaskModal({
                       })}
                     </div>
                   )}
-
-                  {/* Optional Clip Slicer */}
-                  <div className="pt-1 border-t border-white/[0.06]">
-                    <label className="flex items-center space-x-2 text-[11px] font-sans text-gray-300 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={enableClip}
-                        onChange={(e) => setEnableClip(e.target.checked)}
-                        className="rounded accent-sky-400"
-                      />
-                      <span className="flex items-center gap-1">
-                        <Scissors className="w-3 h-3 text-sky-400" />
-                        Clip timestamps: {clipStart}s to {clipEnd}s
-                      </span>
-                    </label>
-                  </div>
                 </div>
               )}
             </div>

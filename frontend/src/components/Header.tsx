@@ -1,13 +1,12 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Zap, Database, Settings, Globe, FolderOpen, Shield, Radio, Network } from 'lucide-react';
+import { Zap, Database, Settings, Globe, Shield, Radio, Network } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: 'downloader' | 'vault';
   onSelectTab: (tab: 'downloader' | 'vault') => void;
   onOpenSettings: () => void;
   onOpenBrowser: () => void;
-  onOpenFileManager: () => void;
   onOpenSecretVault: () => void;
   onOpenTorrent?: () => void;
   onOpenAria2?: () => void;
@@ -19,7 +18,6 @@ export default function Header({
   onSelectTab,
   onOpenSettings,
   onOpenBrowser,
-  onOpenFileManager,
   onOpenSecretVault,
   onOpenTorrent,
   onOpenAria2,
@@ -140,18 +138,6 @@ export default function Header({
         >
           <Globe className="w-4 h-4" />
         </motion.button>
-
-        {/* File Manager */}
-        <motion.button
-          whileHover={{ scale: 1.1, y: -1 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onOpenFileManager}
-          className="p-2 rounded-xl bg-white/[0.04] hover:bg-amber-500/20 border border-white/[0.08] hover:border-amber-500/40 text-gray-400 hover:text-amber-400 transition-colors cursor-pointer hidden sm:flex items-center justify-center"
-          title="Storage File Manager"
-        >
-          <FolderOpen className="w-4 h-4" />
-        </motion.button>
-
         {/* Secret Vault */}
         <motion.button
           whileHover={{ scale: 1.1, y: -1 }}

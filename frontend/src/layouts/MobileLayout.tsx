@@ -21,8 +21,6 @@ export default function MobileLayout({
   onSelectView,
   onOpenNewTask,
   onOpenBrowser,
-  onOpenFileManager,
-  onOpenTrimmer,
   onOpenSettings,
   onOpenAria2Modal,
   onOpenSecretVault,
@@ -32,8 +30,6 @@ export default function MobileLayout({
   settings,
   onUpdateSettings,
   onRemoveHistoryItem,
-  onPlayItem,
-  onTrimItem,
   onDownloadUrl
 }: LayoutProps) {
   return (
@@ -64,10 +60,7 @@ export default function MobileLayout({
                 items={history}
                 currentDownloading={currentDownloading}
                 searchQuery={searchQuery}
-                onPlayItem={onPlayItem}
-                onTrimItem={onTrimItem}
                 onRemoveItem={onRemoveHistoryItem}
-                onOpenStorage={onOpenFileManager}
                 onStartAll={() => {}}
                 onPauseAll={() => {}}
                 onOpenNewTask={onOpenNewTask}
@@ -127,7 +120,6 @@ export default function MobileLayout({
         activeView={activeView}
         onSelectView={onSelectView}
         onOpenNewTask={onOpenNewTask}
-        onOpenTrimmer={onOpenTrimmer}
         onOpenSettings={onOpenSettings}
         isSettingsOpen={isSettingsOpen}
       />

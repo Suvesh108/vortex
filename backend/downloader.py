@@ -117,46 +117,54 @@ def extract_info(url):
             formats_list = info.get('formats', [])
             parsed_formats = []
             
-            # For YouTube, high quality videos are adaptive (video-only).
-            # We want to offer standard predefined video qualities and merge them with audio on download.
-            # Let's filter out interesting formats:
-            # We want a few standard video resolutions if they exist: 1080p, 720p, 480p, 360p, and a separate Audio-only option.
-            
-            # Let's look for video formats and construct merged representations.
-            seen_resolutions = set()
-            
-            # yt-dlp format sorting
-            # We want to show options to the user:
-            # 1. MP4 Video (1080p, 720p, 480p, 360p) - these might need stitching with audio.
-            # 2. MP3 Audio (320kbps, 128kbps) - extracted from audio stream.
-            
-            # Let's check what video resolutions are available
+            # Filter video formats
             video_formats = [f for f in formats_list if f.get('vcodec') != 'none' and f.get('height')]
             
-            # Sort video formats by height descending
-            video_formats.sort(key=lambda x: x.get('height', 0), reverse=True)
+            # Sort video formats prioritizing:
+            # 1. Height descending (higher resolution first)
+            # 2. H.264 / AVC codec (universal compatibility in built-in players)
+            # 3. Total bitrate (tbr)
+            def video_sort_key(f):
+                h = f.get('height') or 0
+                vcodec = (f.get('vcodec') or '').lower()
+                is_h264 = 1 if (vcodec.startswith(('avc1', 'h264', 'mp4v')) or 'h264' in vcodec) else 0
+                tbr = f.get('tbr') or 0
+                return (h, is_h264, tbr)
+
+            video_formats.sort(key=video_sort_key, reverse=True)
             
+            seen_resolutions = set()
             for f in video_formats:
                 height = f.get('height')
                 if not height:
                     continue
                 
-                res_label = f"{height}p"
-                # Standardize resolution tags:
+                # Group by standard resolutions
                 if height >= 2160:
                     res_label = "4K UHD (2160p)"
+                    res_bucket = 2160
                 elif height >= 1440:
                     res_label = "1440p QHD"
+                    res_bucket = 1440
                 elif height >= 1080:
                     res_label = "1080p FHD"
+                    res_bucket = 1080
                 elif height >= 720:
                     res_label = "720p HD"
+                    res_bucket = 720
+                elif height >= 480:
+                    res_label = "480p SD"
+                    res_bucket = 480
+                elif height >= 360:
+                    res_label = "360p"
+                    res_bucket = 360
                 else:
                     res_label = f"{height}p"
+                    res_bucket = height
                     
-                if height in seen_resolutions:
+                if res_bucket in seen_resolutions:
                     continue
-                seen_resolutions.add(height)
+                seen_resolutions.add(res_bucket)
                 
                 # Estimate size if not present (video size + approximate audio size 128kbps)
                 vsize = f.get('filesize') or f.get('filesize_approx')
@@ -164,32 +172,31 @@ def extract_info(url):
                 total_size = vsize + asize if vsize else None
                 
                 parsed_formats.append({
-                    "id": f.get('format_id'),
+                    "id": str(f.get('format_id')),
                     "format": "MP4",
                     "resolution": res_label,
                     "size": format_size(total_size) if total_size else "Adaptive Size",
                     "bitrate": f"{int(f.get('tbr', 0))} kbps" if f.get('tbr') else "Variable"
                 })
                 
-            # Add an MP3 Audio format option if audio is available
+            # Add audio formats (AAC / MP3)
             audio_formats = [f for f in formats_list if f.get('acodec') != 'none' and f.get('vcodec') == 'none']
             if audio_formats or formats_list:
                 parsed_formats.append({
                     "id": "bestaudio",
                     "format": "MP3",
-                    "resolution": "Audio 320kbps",
+                    "resolution": "Audio 320kbps (MP3)",
                     "size": format_size(320 * 1024 * (info.get('duration', 0) or 0) / 8) if info.get('duration') else "Adaptive Size",
                     "bitrate": "320 kbps"
                 })
                 parsed_formats.append({
-                    "id": "bestaudio-low",
+                    "id": "bestaudio-m4a",
                     "format": "M4A",
-                    "resolution": "Audio 128kbps",
-                    "size": format_size(128 * 1024 * (info.get('duration', 0) or 0) / 8) if info.get('duration') else "Adaptive Size",
-                    "bitrate": "128 kbps"
+                    "resolution": "Audio 192kbps (AAC/M4A)",
+                    "size": format_size(192 * 1024 * (info.get('duration', 0) or 0) / 8) if info.get('duration') else "Adaptive Size",
+                    "bitrate": "192 kbps"
                 })
                 
-            # limit formatting response
             result = {
                 "title": title,
                 "duration": duration,
@@ -223,13 +230,50 @@ def download_progress_hook(d):
     elif d['status'] == 'finished':
         print("[PROGRESS] 100% | Stitching and compiling streams...", flush=True)
 
-def download_media(url, format_id, output_path, start_time=None, end_time=None):
+def ensure_mp4_compatibility(file_path):
+    """Ensures MP4 has H.264/AAC and +faststart so any native media player plays it smoothly without jitter."""
+    if not file_path.lower().endswith('.mp4') or not os.path.isfile(file_path):
+        return
+    try:
+        import subprocess
+        probe_cmd = ['ffprobe', '-v', 'error', '-show_entries', 'stream=codec_name,codec_type', '-of', 'json', file_path]
+        p = subprocess.run(probe_cmd, capture_output=True, text=True)
+        if p.returncode == 0:
+            data = json.loads(p.stdout)
+            streams = data.get('streams', [])
+            needs_audio_fix = False
+            for s in streams:
+                if s.get('codec_type') == 'audio' and s.get('codec_name') in ['opus', 'vorbis', 'flac']:
+                    needs_audio_fix = True
+            
+            if needs_audio_fix:
+                print("[STATUS] Transcoding incompatible audio stream to standard AAC...", flush=True)
+                tmp_path = file_path + ".fixed.mp4"
+                ffmpeg_cmd = [
+                    'ffmpeg', '-y', '-i', file_path,
+                    '-c:v', 'copy',
+                    '-c:a', 'aac', '-b:a', '192k',
+                    '-movflags', '+faststart',
+                    tmp_path
+                ]
+                fix_res = subprocess.run(ffmpeg_cmd, capture_output=True)
+                if fix_res.returncode == 0 and os.path.exists(tmp_path):
+                    os.replace(tmp_path, file_path)
+                    print("[STATUS] Audio normalized to AAC successfully.", flush=True)
+                elif os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+    except Exception as e:
+        print(f"[WARNING] Compatibility check warning: {e}", flush=True)
+
+def download_media(url, format_id, output_path):
     # Setup download options
+    output_path = os.path.abspath(output_path)
     base_dir = os.path.dirname(output_path)
     file_name_no_ext = os.path.basename(output_path)
     outtmpl_path = os.path.join(base_dir, file_name_no_ext.split('.')[0] + '.%(ext)s')
 
-    is_audio = format_id.startswith('bestaudio')
+    format_id_str = str(format_id).strip()
+    is_audio = any(a in format_id_str.lower() for a in ['audio', 'mp3', 'm4a', 'aac']) or output_path.lower().endswith(('.mp3', '.m4a'))
     
     ydl_opts = {
         'progress_hooks': [download_progress_hook],
@@ -239,20 +283,9 @@ def download_media(url, format_id, output_path, start_time=None, end_time=None):
         'noplaylist': True,
         **get_cookie_opts()
     }
-    
-    # Clip trimming range support if provided
-    if start_time or end_time:
-        try:
-            s = float(start_time) if start_time else 0.0
-            e = float(end_time) if end_time and float(end_time) > s else None
-            ydl_opts['download_ranges'] = yt_dlp.utils.download_range_func(None, [(s, e)])
-            ydl_opts['force_keyframes_at_cuts'] = True
-            print(f"[STATUS] Applying stream clip bounds: {s}s -> {e if e else 'END'}s", flush=True)
-        except Exception as cut_err:
-            print(f"[STATUS] Clip range fallback: {cut_err}", flush=True)
 
     if is_audio:
-        codec = 'm4a'
+        codec = 'm4a' if ('m4a' in format_id_str.lower() or 'aac' in format_id_str.lower() or output_path.lower().endswith('.m4a')) else 'mp3'
         quality = '320'
         ydl_opts.update({
             'format': 'bestaudio/best',
@@ -263,24 +296,61 @@ def download_media(url, format_id, output_path, start_time=None, end_time=None):
             }]
         })
     else:
-        # If specific format is chosen, download that video and combine with best audio
-        if format_id != 'best':
-            ydl_opts['format'] = f"{format_id}+bestaudio/best"
+        # Determine target resolution height if format_id contains digits (e.g. 'loader-1080', '1080p', '720')
+        res_match = re.search(r'(\d{3,4})', format_id_str)
+        if res_match and int(res_match.group(1)) in [2160, 1440, 1080, 720, 480, 360, 240, 144]:
+            h = int(res_match.group(1))
+            format_selector = (
+                f"bestvideo[height<={h}][vcodec^=avc1]+bestaudio[ext=m4a]/"
+                f"bestvideo[height<={h}][vcodec^=avc]+bestaudio[ext=m4a]/"
+                f"bestvideo[height<={h}][vcodec^=avc1]+bestaudio/"
+                f"bestvideo[height<={h}]+bestaudio[ext=m4a]/"
+                f"bestvideo[height<={h}]+bestaudio/"
+                f"best[height<={h}]/best"
+            )
+        elif format_id_str.isdigit():
+            # Specific numeric yt-dlp format id
+            format_selector = f"{format_id_str}+bestaudio[ext=m4a]/{format_id_str}+bestaudio/best"
+        elif format_id_str == 'best':
+            format_selector = (
+                "bestvideo[vcodec^=avc1]+bestaudio[ext=m4a]/"
+                "bestvideo[vcodec^=avc]+bestaudio[ext=m4a]/"
+                "bestvideo+bestaudio[ext=m4a]/"
+                "bestvideo+bestaudio/best"
+            )
         else:
-            ydl_opts['format'] = 'bestvideo+bestaudio/best'
+            format_selector = "bestvideo[vcodec^=avc1]+bestaudio/bestvideo+bestaudio/best"
             
-        # Merge into mp4 container
+        ydl_opts['format'] = format_selector
         ydl_opts['merge_output_format'] = 'mp4'
+        # Crucial for zero-jitter and 100% playable MP4 in Windows Media Player & Android:
+        # 1. Transcode audio to AAC (eliminates Opus-in-MP4 decode failures and desync jitter)
+        # 2. Add +faststart (moves moov atom to beginning for instant, jitter-free playback)
+        ydl_opts['postprocessor_args'] = {
+            'merger': [
+                '-c:v', 'copy',
+                '-c:a', 'aac',
+                '-b:a', '192k',
+                '-movflags', '+faststart'
+            ],
+            'ffmpeg': [
+                '-movflags', '+faststart'
+            ]
+        }
 
     try:
         print(f"[STATUS] Initializing stream download payload...", flush=True)
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
             
-        # Find the downloaded file
-        base_name_no_ext = file_name_no_ext.split('.')[0]
-        
+        # Check if file was saved directly to output_path
+        if os.path.exists(output_path):
+            ensure_mp4_compatibility(output_path)
+            print(f"[SUCCESS] Download completed. Saved to {output_path}", flush=True)
+            return
+
         # Scan folder for files starting with base_name_no_ext
+        base_name_no_ext = file_name_no_ext.split('.')[0]
         for file in os.listdir(base_dir):
             if file.startswith(base_name_no_ext):
                 actual_path = os.path.join(base_dir, file)
@@ -288,6 +358,9 @@ def download_media(url, format_id, output_path, start_time=None, end_time=None):
                     if os.path.exists(output_path):
                         os.remove(output_path)
                     os.rename(actual_path, output_path)
+                
+                # Extra compatibility safeguard
+                ensure_mp4_compatibility(output_path)
                 print(f"[SUCCESS] Download completed. Saved to {output_path}", flush=True)
                 return
                 
@@ -307,14 +380,12 @@ if __name__ == "__main__":
         extract_info(url)
     elif cmd == "download":
         if len(sys.argv) < 5:
-            print("Usage: python downloader.py download [url] [format_id] [output_path] [start_time] [end_time]")
+            print("Usage: python downloader.py download [url] [format_id] [output_path]")
             sys.exit(1)
         url = sys.argv[2]
         format_id = sys.argv[3]
         output_path = sys.argv[4]
-        start_time = sys.argv[5] if len(sys.argv) > 5 and sys.argv[5] != "none" else None
-        end_time = sys.argv[6] if len(sys.argv) > 6 and sys.argv[6] != "none" else None
-        download_media(url, format_id, output_path, start_time, end_time)
+        download_media(url, format_id, output_path)
     else:
         print(f"Unknown command: {cmd}")
         sys.exit(1)

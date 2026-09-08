@@ -176,7 +176,7 @@ export default function SettingsView({
       version: '8.1.2.2',
       latestVersion: '8.1.2.2',
       path: 'C:/Users/Suvesh/AppData/Local/VortexDownloader/FFmpeg/ffmpeg.exe',
-      desc: 'High-speed stream demuxing, video/audio transcoding & clip trimmer binary'
+      desc: 'High-speed stream demuxing and video/audio transcoding binary'
     },
     {
       id: 'ytdlp',

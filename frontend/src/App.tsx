@@ -8,9 +8,6 @@ import { useIsMobile } from './hooks/useIsMobile';
 import AddTaskModal from './components/AddTaskModal';
 import SettingsModal from './components/SettingsModal';
 
-import MediaViewerModal from './components/MediaViewerModal';
-import FileManagerModal from './components/FileManagerModal';
-import MediaTrimmerModal from './components/MediaTrimmerModal';
 import SecretVaultModal from './components/SecretVaultModal';
 import WebBrowserModal from './components/WebBrowserModal';
 import Aria2RpcModal from './components/Aria2RpcModal';
@@ -39,10 +36,7 @@ export default function App() {
   const [logs, setLogs] = useState<DownloadLog[]>([]);
 
   // Active Modals
-  const [viewingItem, setViewingItem] = useState<DownloadHistoryItem | null>(null);
-  const [trimmingItem, setTrimmingItem] = useState<DownloadHistoryItem | null>(null);
   const [showBrowser, setShowBrowser] = useState(false);
-  const [showFileManager, setShowFileManager] = useState(false);
   const [showSecretVault, setShowSecretVault] = useState(false);
   const [showAria2Modal, setShowAria2Modal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -112,9 +106,8 @@ export default function App() {
     metadata?: MediaMetadata;
     selectedFormat?: MediaQuality;
     threads: number;
-    clipRange?: { startTime: number; endTime: number };
   }) => {
-    const { urls, metadata, selectedFormat, threads, clipRange } = params;
+    const { urls, metadata, selectedFormat, threads } = params;
     if (!urls || urls.length === 0) return;
 
     for (const url of urls) {
@@ -309,13 +302,12 @@ export default function App() {
               targetExtension: targetExt
             });
           },
-          (type, msg) => addLog(type, msg),
-          clipRange
+          (type, msg) => addLog(type, msg)
         );
 
         const entry: DownloadHistoryItem = {
           id: Math.random().toString(36).substring(2, 9),
-          title: meta.title + (clipRange ? ` [Clip ${clipRange.startTime}s-${clipRange.endTime}s]` : ''),
+          title: meta.title,
           originalUrl: url,
           thumbnail: meta.thumbnail,
           size: format.size,
@@ -369,11 +361,6 @@ export default function App() {
     },
     onOpenNewTask: () => setShowAddTaskModal(true),
     onOpenBrowser: () => setShowBrowser(true),
-    onOpenFileManager: () => setShowFileManager(true),
-    onOpenTrimmer: () => {
-      if (history.length > 0) setTrimmingItem(history[0]);
-      else alert('Download a file first to launch Trimmer Studio!');
-    },
     onOpenSettings: () => setShowSettingsModal(true),
     onOpenAria2Modal: () => setShowAria2Modal(true),
     onOpenSecretVault: () => setShowSecretVault(true),
@@ -383,8 +370,6 @@ export default function App() {
     settings,
     onUpdateSettings: handleUpdateSettings,
     onRemoveHistoryItem: handleRemoveHistoryItem,
-    onPlayItem: (item: DownloadHistoryItem) => setViewingItem(item),
-    onTrimItem: (item: DownloadHistoryItem) => setTrimmingItem(item),
     onDownloadUrl: (url: string) => {
       setAddTaskInitialUrl(url);
       setShowAddTaskModal(true);
@@ -420,47 +405,11 @@ export default function App() {
         rpcUrl={`${settings.backendUrl || 'http://localhost:5001'}/jsonrpc`}
       />
 
-      <MediaViewerModal
-        item={viewingItem}
-        isOpen={!!viewingItem}
-        onClose={() => setViewingItem(null)}
-      />
-
-      <FileManagerModal
-        isOpen={showFileManager}
-        onClose={() => setShowFileManager(false)}
-        items={history}
-        onDeleteItems={async (ids) => {
-          for (const id of ids) await handleRemoveHistoryItem(id);
-        }}
-        onPlayItem={(item) => {
-          setShowFileManager(false);
-          setViewingItem(item);
-        }}
-      />
-
-      <MediaTrimmerModal
-        isOpen={!!trimmingItem}
-        onClose={() => setTrimmingItem(null)}
-        item={trimmingItem}
-        allItems={history}
-        onSaveTrimmed={(trimmed) => {
-          const updated = [trimmed, ...history];
-          setHistory(updated);
-          localStorage.setItem('vortex_download_history', JSON.stringify(updated));
-          addLog('success', `Exported: ${trimmed.title}`);
-        }}
-      />
-
       <SecretVaultModal
         isOpen={showSecretVault}
         onClose={() => setShowSecretVault(false)}
         allHistoryItems={history}
         onHideFromPublicHistory={(id) => handleRemoveHistoryItem(id)}
-        onPlayItem={(item) => {
-          setShowSecretVault(false);
-          setViewingItem(item);
-        }}
       />
 
       <WebBrowserModal
