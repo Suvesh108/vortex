@@ -3,7 +3,8 @@ import { motion } from 'motion/react';
 import { 
   Plus, 
   Settings, 
-  Shield
+  Shield,
+  Globe
 } from 'lucide-react';
 import { NavView } from './SidebarNav';
 
@@ -11,6 +12,7 @@ interface MobileBottomNavProps {
   activeView: NavView;
   onSelectView: (view: NavView) => void;
   onOpenNewTask: () => void;
+  onOpenBrowser: () => void;
   onOpenSettings: () => void;
   isSettingsOpen?: boolean;
 }
@@ -19,13 +21,14 @@ export default function MobileBottomNav({
   activeView,
   onSelectView,
   onOpenNewTask,
+  onOpenBrowser,
   onOpenSettings,
   isSettingsOpen = false
 }: MobileBottomNavProps) {
   const springTransition = { type: 'spring' as const, stiffness: 400, damping: 22 };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#18181b]/95 backdrop-blur-xl border-t border-white/[0.08] grid grid-cols-4 items-center px-2 py-1 h-15 select-none shadow-2xl pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#18181b]/95 backdrop-blur-xl border-t border-white/[0.08] grid grid-cols-5 items-center px-2 py-1 h-15 select-none shadow-2xl pb-[max(0.25rem,env(safe-area-inset-bottom))]">
       {/* 1. Mobile Tasks */}
       <motion.button
         whileTap={{ scale: 0.90 }}
@@ -68,22 +71,33 @@ export default function MobileBottomNav({
         <span className="text-[10px] font-medium mt-0.5">Vault</span>
       </motion.button>
 
-      {/* 3. Mobile New Task Action Button */}
-      <div className="flex flex-col items-center justify-center -mt-2">
+      {/* 3. Mobile Add Task Button (Center Elevated Hero) */}
+      <div className="flex flex-col items-center justify-center -mt-3">
         <motion.button
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.88 }}
           transition={springTransition}
           onClick={onOpenNewTask}
-          className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#3ea6ff] to-sky-400 text-black shadow-lg shadow-[#3ea6ff]/40 flex items-center justify-center border-2 border-[#18181b] cursor-pointer"
+          className="w-11 h-11 rounded-full bg-gradient-to-tr from-[#3ea6ff] to-sky-400 text-black shadow-lg shadow-[#3ea6ff]/40 flex items-center justify-center border-2 border-[#18181b] cursor-pointer"
           title="New Download Task"
         >
           <Plus className="w-5 h-5 stroke-[2.8]" />
         </motion.button>
-        <span className="text-[10px] font-medium mt-0.5 text-gray-400">New</span>
+        <span className="text-[10px] font-medium mt-0.5 text-[#3ea6ff]">New</span>
       </div>
 
-      {/* 4. Mobile Settings */}
+      {/* 4. Mobile Browser (Next to Add Task button!) */}
+      <motion.button
+        whileTap={{ scale: 0.90 }}
+        onClick={onOpenBrowser}
+        className="flex flex-col items-center justify-center py-1 relative cursor-pointer text-gray-400 hover:text-emerald-400"
+        title="Inbuilt Private Web Browser & Sniffer"
+      >
+        <Globe className="w-5 h-5" />
+        <span className="text-[10px] font-medium mt-0.5">Browser</span>
+      </motion.button>
+
+      {/* 5. Mobile Settings */}
       <motion.button
         whileTap={{ scale: 0.90 }}
         onClick={onOpenSettings}

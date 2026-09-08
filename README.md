@@ -21,16 +21,17 @@
 
 <hr />
 
-## 📱 Android App (v0.6.4)
+## 📱 Android App (v0.6.5)
 
-VortexDownloader is available as a standalone Android application with a **Native Sandboxed Inbuilt Browser** (isolated private browsing like Brave/Chrome, no personal Google/Gmail account leakage), 1-tap direct stream sniffer & download interceptor, browser logo button directly on the right side of the search bar, dedicated Mobile Layout, frosted bottom navigation bar, Turbo Speed Engine, recursive iframe aggregator crawler (e.g. `rou.video`), and 16-host universal media engine!
+VortexDownloader is available as a standalone Android application with a **Native Sandboxed Inbuilt Browser** (isolated private browsing like Brave/Chrome, no personal Google/Gmail account leakage), 1-tap direct stream sniffer & download interceptor, dedicated Mobile Layout with frosted bottom navigation bar, Turbo Speed Engine, recursive iframe aggregator crawler (e.g. `rou.video`), and 16-host universal media engine!
 
-- **Download APK (v0.6.4)**: [**VortexDownloader-v0.6.4.apk**](release/VortexDownloader-v0.6.4.apk)
-- **Version**: `0.6.4` (Release v0.6.4)
+- **Download APK (v0.6.5)**: [**VortexDownloader-v0.6.5.apk**](release/VortexDownloader-v0.6.5.apk)
+- **Version**: `0.6.5` (Release v0.6.5)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.6.4**:
-  - 🌐 **Upper Navbar Browser Integration**: Browser entry point is placed directly on the right side of the top search bar, featuring instant web launch, DuckDuckGo default search, direct URL browsing, and Enter-key trigger.
-  - 🧼 **Clean Bottom Navigation**: Completely removed the redundant browser button from the bottom navigation bar. Balanced 4-item layout across Tasks, Vault, New Task, and Settings with safe-area spacing and active indicator pills.
+- **What's New in v0.6.5**:
+  - 🌐 **Browser Moved to Bottom Navbar Next to Add Task**: Moved the browser entry point from the top header into the bottom navigation bar right next to the elevated center `+ Add Task` button.
+  - 🎨 **Symmetrical 5-Item Navigation Grid**: Clean, balanced bottom navigation (`Tasks`, `Vault`, `New Task`, `Browser`, `Settings`) with the elevated center hero button positioned at exactly 50% and direct access to the built-in browser right beside it.
+  - 🔍 **Maximized Mobile Header**: Cleaned up the top header with the full-width search input for a streamlined mobile experience.
   - 🎯 **100% Mathematically Accurate Progress Bar**: Completely eliminated the 95% progress jump bug caused by indeterminate CDN content-length headers. Added automated HTTP `Range: bytes=0-1` byte-probe size discovery, fallback format size estimation, and real downloaded payload tracking with exact percentage & ETA.
   - 🐍 **Pure Python Backend Architecture**: Full migration of the backend engine to high-concurrency FastAPI/Uvicorn, removing all TypeScript backend bottlenecks.
   - 🎬 **Zero-Jitter Universal Media Engine**: 100% compliant H.264 video + standard 192k AAC audio with `+faststart` metadata for stutter-free playback across Windows Media Player, Movies & TV, and default Android gallery players.

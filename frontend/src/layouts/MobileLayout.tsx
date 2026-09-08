@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Capacitor } from '@capacitor/core';
+import { InbuiltBrowser } from '../plugins/InbuiltBrowser';
 import MobileTopBar from '../components/MobileTopBar';
 import MobileBottomNav from '../components/MobileBottomNav';
 import TaskListDashboard from '../components/TaskListDashboard';
@@ -11,7 +13,7 @@ import { LayoutProps } from './DesktopLayout';
  * Features:
  * - Clean mobile header with compact logo & responsive search
  * - Full-width scrollable viewport with bottom safe-area padding (pb-24)
- * - Fixed bottom navigation bar with elevated center "+ New Task" button
+ * - Fixed bottom navigation bar with elevated center "+ New Task" button & browser next to it
  * - Mobile-optimized dashboard with touch-friendly controls
  */
 export default function MobileLayout({
@@ -32,15 +34,29 @@ export default function MobileLayout({
   onRemoveHistoryItem,
   onDownloadUrl
 }: LayoutProps) {
+  const handleLaunchBrowser = async () => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const queryOrUrl = searchQuery.trim() || 'https://duckduckgo.com';
+        const res = await InbuiltBrowser.open({ url: queryOrUrl });
+        if (res && res.downloadUrl && onDownloadUrl) {
+          onDownloadUrl(res.downloadUrl);
+        }
+      } catch (err) {
+        onOpenBrowser?.();
+      }
+    } else {
+      onOpenBrowser?.();
+    }
+  };
+
   return (
     <div className="h-screen w-screen bg-[#1c1c1f] text-[#f0edf1] font-sans flex flex-col overflow-hidden select-none">
-      {/* 1. Dedicated Mobile Top Header with Inbuilt Browser Logo */}
+      {/* 1. Dedicated Mobile Top Header */}
       <MobileTopBar
         searchQuery={searchQuery}
         onSearchChange={onSearchChange}
         activeView={activeView}
-        onOpenBrowser={onOpenBrowser}
-        onDownloadUrl={onDownloadUrl}
       />
 
       {/* 2. Full-Width Scrollable Content Area */}
@@ -120,6 +136,7 @@ export default function MobileLayout({
         activeView={activeView}
         onSelectView={onSelectView}
         onOpenNewTask={onOpenNewTask}
+        onOpenBrowser={handleLaunchBrowser}
         onOpenSettings={onOpenSettings}
         isSettingsOpen={isSettingsOpen}
       />
