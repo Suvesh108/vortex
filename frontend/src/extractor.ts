@@ -4,6 +4,7 @@ import { extractHostingMedia, identifyHost } from './hosts';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
 import { sendDownloadProgressNotification, sendDownloadCompleteNotification } from './permissions';
+import { VortexNative } from './plugins/VortexNative';
 
 // Multi-provider universal stream gateways
 const LOADER_INSTANCES = [
@@ -408,58 +409,60 @@ export async function downloadMediaDirect(
 
   const backend = customBackendUrl || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '');
 
-  const apiDownload = backend ? `${backend}/api/download` : '/api/download';
-  const apiProgress = backend ? `${backend}/api/download/progress` : '/api/download/progress';
-  const apiFile = backend ? `${backend}/api/download/file` : '/api/download/file';
+  // 1. Try Vortex Super-Engine Download (if backend is explicitly configured)
+  if (backend) {
+    const apiDownload = `${backend}/api/download`;
+    const apiProgress = `${backend}/api/download/progress`;
+    const apiFile = `${backend}/api/download/file`;
 
-  // 1. Try Vortex Super-Engine Download
-  try {
-    log('info', `Dispatching download task to Vortex Engine: [${selectedFormat.format} - ${selectedFormat.resolution}]`);
-    const payload: any = {
-      url: metadata.originalUrl,
-      formatId: selectedFormat.id,
-      title: metadata.title,
-      format: selectedFormat.format
-    };
+    try {
+      log('info', `Dispatching download task to Vortex Engine: [${selectedFormat.format} - ${selectedFormat.resolution}]`);
+      const payload: any = {
+        url: metadata.originalUrl,
+        formatId: selectedFormat.id,
+        title: metadata.title,
+        format: selectedFormat.format
+      };
 
-    const res = await fetch(apiDownload, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+      const res = await fetch(apiDownload, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-    if (res.ok) {
-      const { jobId } = await res.json();
-      log('info', `Server job allocated: ${jobId}. Polling stream worker...`);
+      if (res.ok) {
+        const { jobId } = await res.json();
+        log('info', `Server job allocated: ${jobId}. Polling stream worker...`);
 
-      return new Promise((resolve, reject) => {
-        const poll = setInterval(async () => {
-          try {
-            const pRes = await fetch(`${apiProgress}?jobId=${jobId}`);
-            const pData = await pRes.json();
-            if (pData.progress !== undefined) {
-              progressCb(pData.progress, pData.speed || '0.0 MB/s', pData.eta || '--');
-            }
-            if (pData.status === 'completed') {
+        return new Promise((resolve, reject) => {
+          const poll = setInterval(async () => {
+            try {
+              const pRes = await fetch(`${apiProgress}?jobId=${jobId}`);
+              const pData = await pRes.json();
+              if (pData.progress !== undefined) {
+                progressCb(pData.progress, pData.speed || '0.0 MB/s', pData.eta || '--');
+              }
+              if (pData.status === 'completed') {
+                clearInterval(poll);
+                log('success', `Download completed on server!`);
+                const downloadUrl = `${apiFile}?jobId=${jobId}`;
+                triggerBrowserDownload(downloadUrl, `${metadata.title}.${selectedFormat.targetExtension || 'mp4'}`);
+                resolve({ success: true, blobUrl: downloadUrl });
+              } else if (pData.status === 'error') {
+                clearInterval(poll);
+                log('error', `Server reported: ${pData.error}`);
+                executeDirectBinaryDownload(metadata, selectedFormat, progressCb, log).then(resolve).catch(reject);
+              }
+            } catch (err) {
               clearInterval(poll);
-              log('success', `Download completed on server!`);
-              const downloadUrl = `${apiFile}?jobId=${jobId}`;
-              triggerBrowserDownload(downloadUrl, `${metadata.title}.${selectedFormat.targetExtension || 'mp4'}`);
-              resolve({ success: true, blobUrl: downloadUrl });
-            } else if (pData.status === 'error') {
-              clearInterval(poll);
-              log('error', `Server reported: ${pData.error}`);
               executeDirectBinaryDownload(metadata, selectedFormat, progressCb, log).then(resolve).catch(reject);
             }
-          } catch (err) {
-            clearInterval(poll);
-            executeDirectBinaryDownload(metadata, selectedFormat, progressCb, log).then(resolve).catch(reject);
-          }
-        }, 400);
-      });
+          }, 400);
+        });
+      }
+    } catch (e: any) {
+      log('warning', `Vortex Engine download notice (${e.message}). Switching to native direct stream downloading...`);
     }
-  } catch (e: any) {
-    log('warning', `Vortex Engine download notice (${e.message}). Switching to native direct stream downloading...`);
   }
 
   // 2. Direct In-App Binary Download
@@ -634,6 +637,50 @@ async function executeDirectBinaryDownload(
                      targetExt === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' :
                      targetExt === 'pptx' ? 'application/vnd.openxmlformats-officedocument.presentationml.presentation' :
                      targetExt === 'epub' ? 'application/epub+zip' : 'text/plain';
+
+    // On Android Native platform, delegate to VortexNative (direct-to-disk streaming, zero Base64 / heap memory spikes)
+    if (Capacitor.isNativePlatform()) {
+      log('info', `⚡ Streaming directly to device disk via Vortex Native Engine: [${filename}]`);
+      try {
+        let lastNotifProg = 0;
+        const sub = await VortexNative.addListener('nativeProgress', (p) => {
+          const etaMB = p.totalBytes > p.downloadedBytes 
+            ? `${Math.max(1, Math.round((p.totalBytes - p.downloadedBytes) / (1024 * 1024)))} MB left` 
+            : '--';
+          progressCb(p.percent, p.speed, etaMB);
+          if (p.percent - lastNotifProg >= 10) {
+            lastNotifProg = p.percent;
+            sendDownloadProgressNotification(metadata.title, p.percent, p.speed);
+          }
+        });
+
+        const nativeRes = await VortexNative.downloadDirectStream({
+          url: streamUrl,
+          filename,
+          title: metadata.title,
+          mimeType
+        });
+
+        try { sub.remove(); } catch (_) {}
+
+        log('success', `📁 Saved natively to: Public Storage > Download > VortexDownloader > ${nativeRes.filename}`);
+        progressCb(100, '0.0 MB/s', '0s');
+        sendDownloadCompleteNotification(metadata.title, `.${targetExt}`, nativeRes.filePath);
+        return { success: true, blobUrl: nativeRes.filePath };
+      } catch (nativeErr: any) {
+        log('warning', `Direct stream notice (${nativeErr.message}). Scheduling via Android DownloadManager...`);
+        const dmRes = await VortexNative.downloadWithManager({
+          url: streamUrl,
+          filename,
+          title: metadata.title,
+          mimeType
+        });
+        log('success', `📁 Queued in Android DownloadManager: ${filename}`);
+        progressCb(100, '0.0 MB/s', '0s');
+        sendDownloadCompleteNotification(metadata.title, `.${targetExt}`, dmRes.filePath);
+        return { success: true, blobUrl: dmRes.filePath };
+      }
+    }
 
     try {
       // 1. Pre-flight probe to detect Range support and exact file size
@@ -896,15 +943,18 @@ export async function probeUrl(
     return { type: 'torrent', supportsRanges: false, contentLength: 0, isDirectFile: false };
   }
 
-  try {
-    const backend = backendUrl || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '');
-    const res = await fetch(`${backend}/api/probe?url=${encodeURIComponent(url)}`);
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (_) {}
+  const backend = backendUrl || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '');
+  if (backend) {
+    try {
+      const res = await fetch(`${backend}/api/probe?url=${encodeURIComponent(url)}`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (_) {}
+  }
 
-  return { type: 'stream', supportsRanges: false, contentLength: 0, isDirectFile: false };
+  const isDirect = !!url.match(/\.(mp4|mp3|mkv|webm|m4a|zip|pdf|apk|iso|tar|gz|mov|avi|flac|wav|png|jpg|jpeg|xlsx|pptx|epub|txt)(\?.*)?$/i);
+  return { type: isDirect ? 'direct' : 'stream', supportsRanges: false, contentLength: 0, isDirectFile: isDirect };
 }
 
 /**

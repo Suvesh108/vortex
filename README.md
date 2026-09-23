@@ -21,23 +21,22 @@
 
 <hr />
 
-## 📱 Android & Desktop (v0.6.6)
+## 📱 Android & Desktop (v0.6.7)
 
-VortexDownloader is an ultra-fast, universal downloading engine powered by a **Hybrid Architecture (Go Core + Python Media Extractor)** with dynamic multi-pipe streaming, real-time IDM/FDM progress telemetry, 4-tier bot-guard evasion, and a streamlined 7-section Settings control center!
+VortexDownloader is an ultra-fast, universal downloading engine powered by a **Hybrid Architecture (Go Core + Python Media Extractor)** with dynamic multi-pipe streaming, native Android direct-to-disk storage, real-time IDM/FDM progress telemetry, 4-tier bot-guard evasion, and a streamlined 7-section Settings control center!
 
-- **Download APK (v0.6.6)**: [**VortexDownloader-v0.6.6.apk**](release/VortexDownloader-v0.6.6.apk)
-- **Version**: `0.6.6` (Release v0.6.6)
+- **Download APK (v0.6.7)**: [**VortexDownloader-v0.6.7.apk**](release/VortexDownloader-v0.6.7.apk)
+- **Version**: `0.6.7` (Release v0.6.7)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.6.6**:
-  - ⚙️ **Hybrid Go Core + Python Extractor**: Ultra-fast Go networking engine on port 5001 paired with a zero-overhead Python sidecar on port 5002 for rock-solid stability and throughput.
-  - 🎛️ **Streamlined 7-Section Settings Architecture**: Reorganized settings from 12 fragmented sections down to 7 cohesive, powerhouse categories (Engine & Multi-Thread Core, Downloads & File Routing, Concurrency & Performance, Browser Extension & Aria2 Bridge, Appearance & Interface, System Hooks & Storage, and About & Updates).
-  - 🛡️ **4-Tier Bot-Guard Bypass**: Automatic browser cookie inheritance (Edge, Chrome, Firefox, Brave), client identity rotation (Desktop/Mobile/TV), and desktop client hints to bypass Cloudflare and bot checks.
-  - 📊 **Real-Time IDM/FDM Progress Telemetry**: Zero-jump live progress tracking with accurate throughput, ETA, and per-chunk visual progress.
-  - 🎥 **Full Resolution Detection (720p, 1080p, 2K, 4K)**: Enabled Node.js JS runtime and removed player skip flags to ensure all supported resolutions are detected and selectable.
-  - 🔔 **System Integration & Chimes**: Added real-time clipboard monitoring, desktop OS notifications, Web Audio completion chime, and post-download webhooks.
-  - 🌐 **Browser Moved to Bottom Navbar Next to Add Task**: Moved the browser entry point from the top header into the bottom navigation bar right next to the elevated center `+ Add Task` button.
-  - 🎨 **Symmetrical 5-Item Navigation Grid**: Clean, balanced bottom navigation (`Tasks`, `Vault`, `New Task`, `Browser`, `Settings`) with the elevated center hero button positioned at exactly 50% and direct access to the built-in browser right beside it.
-  - 🔍 **Maximized Mobile Header**: Cleaned up the top header with the full-width search input for a streamlined mobile experience.
+- **What's New in v0.6.7**:
+  - 🚀 **Zero-RAM Native Downloader (`VortexNativePlugin`)**: Slices out JavaScript Base64 buffering and streams downloads directly to disk, completely eliminating Out-Of-Memory crashes on 100MB–1GB+ files.
+  - 📁 **Public Storage & MediaStore Auto-Indexing**: Saves directly to `Download/VortexDownloader` so downloaded videos, songs, and files immediately appear in the user's Gallery, VLC, and File Manager.
+  - 🎬 **One-Tap Play / Open & Share**: Added direct "Play / Open" and "Share" buttons to completed tasks in the dashboard.
+  - 🌐 **Inbuilt Private Browser Enhancements**: Browser no longer abruptly closes upon queueing a download; added full-screen HTML5 video playback and mixed-content support.
+  - 🔙 **Android Hardware Back-Button Support**: Intelligently closes active modals (`AddTaskModal`, `SettingsModal`, `Vault`) on back press before minimizing the app.
+  - 📲 **Android "Share to Vortex" Target**: Send video links directly from YouTube, Chrome, TikTok, and Twitter via the Android Share sheet.
+  - 🌐 **Cleartext HTTP Support**: Added `usesCleartextTraffic="true"` and network state permissions for local Wi-Fi backend streaming and HTTP CDN mirrors.
+  - 🧹 **UI Path Sanitization**: Removed desktop-hardcoded Windows paths and added a dedicated Backend URL setting in Engine settings for mobile LAN connectivity.
   - 🎯 **100% Mathematically Accurate Progress Bar**: Completely eliminated the 95% progress jump bug caused by indeterminate CDN content-length headers. Added automated HTTP `Range: bytes=0-1` byte-probe size discovery, fallback format size estimation, and real downloaded payload tracking with exact percentage & ETA.
   - 🐍 **Pure Python Backend Architecture**: Full migration of the backend engine to high-concurrency FastAPI/Uvicorn, removing all TypeScript backend bottlenecks.
   - 🎬 **Zero-Jitter Universal Media Engine**: 100% compliant H.264 video + standard 192k AAC audio with `+faststart` metadata for stutter-free playback across Windows Media Player, Movies & TV, and default Android gallery players.

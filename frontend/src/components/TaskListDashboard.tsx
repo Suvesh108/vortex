@@ -19,9 +19,12 @@ import {
   Tag, 
   ChevronDown,
   HardDrive,
-  Sparkles
+  Sparkles,
+  Share2
 } from 'lucide-react';
 import { DownloadHistoryItem } from '../types';
+import { Capacitor } from '@capacitor/core';
+import { VortexNative } from '../plugins/VortexNative';
 
 export type TaskFilter = 'all' | 'downloading' | 'completed';
 
@@ -56,6 +59,32 @@ export default function TaskListDashboard({
   const [viewMode, setViewMode] = useState<'list' | 'card'>('list');
 
   const springQuick = { type: 'spring' as const, stiffness: 450, damping: 25 };
+
+  const handleOpenFile = async (item: DownloadHistoryItem) => {
+    const pathOrUrl = item.localPath || item.directStreamUrl || '';
+    if (Capacitor.isNativePlatform() && pathOrUrl) {
+      try {
+        await VortexNative.openFile({ filePath: pathOrUrl });
+      } catch (err: any) {
+        console.warn('Native open error:', err);
+      }
+    } else if (pathOrUrl) {
+      window.open(pathOrUrl, '_blank');
+    }
+  };
+
+  const handleShareFile = async (item: DownloadHistoryItem) => {
+    const pathOrUrl = item.localPath || item.directStreamUrl || '';
+    if (Capacitor.isNativePlatform() && pathOrUrl) {
+      try {
+        await VortexNative.shareFile({ filePath: pathOrUrl, title: item.title });
+      } catch (err: any) {
+        console.warn('Native share error:', err);
+      }
+    } else if (typeof navigator !== 'undefined' && (navigator as any).share) {
+      (navigator as any).share({ title: item.title, url: item.originalUrl }).catch(() => {});
+    }
+  };
 
   // Filter items by tab and search
   const filteredItems = items.filter(item => {
@@ -417,6 +446,30 @@ export default function TaskListDashboard({
 
                 {/* Right Action Icons with Bouncy Hover */}
                 <div className="flex items-center space-x-1 sm:space-x-1.5 shrink-0">
+
+                  {/* Play / Open Downloaded File Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.18, rotate: -4 }}
+                    whileTap={{ scale: 0.85 }}
+                    transition={springQuick}
+                    onClick={() => handleOpenFile(item)}
+                    className="p-1.5 sm:p-2 rounded-lg bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-black transition-colors cursor-pointer shadow-sm border border-emerald-500/30"
+                    title="Play / Open Downloaded File"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                  </motion.button>
+
+                  {/* Share File Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.18 }}
+                    whileTap={{ scale: 0.85 }}
+                    transition={springQuick}
+                    onClick={() => handleShareFile(item)}
+                    className="p-1.5 sm:p-2 rounded-lg bg-sky-500/20 hover:bg-sky-500 text-sky-400 hover:text-black transition-colors cursor-pointer shadow-sm border border-sky-500/30"
+                    title="Share File"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                  </motion.button>
 
                   {/* Open URL Button - hidden on small mobile, visible on sm+ */}
                   <motion.a

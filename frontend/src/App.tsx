@@ -15,6 +15,8 @@ import Aria2RpcModal from './components/Aria2RpcModal';
 import { DownloadStatus, MediaMetadata, MediaQuality, DownloadLog, DownloadHistoryItem, UserSettings, ChunkDownloadProgress } from './types';
 import { extractMediaInfo, downloadMediaDirect, deleteLocalFile, startSegmentedChunkDownload, probeUrl, startFtpDownload, inspectEd2kLink } from './extractor';
 import { requestAppPermissions } from './permissions';
+import { VortexNative } from './plugins/VortexNative';
+import { Capacitor } from '@capacitor/core';
 
 export default function App() {
   const [activeView, setActiveView] = useState<NavView>('tasks');
@@ -159,7 +161,56 @@ export default function App() {
         });
       }).catch(() => {});
     } catch (_) {}
+
+    // Initial shared URL check from Android Intent
+    if (Capacitor.isNativePlatform()) {
+      VortexNative.getInitialSharedUrl().then((res) => {
+        if (res && res.url) {
+          setAddTaskInitialUrl(res.url);
+          setShowAddTaskModal(true);
+          addLog('info', `Received shared link: ${res.url.substring(0, 45)}...`);
+        }
+      }).catch(() => {});
+
+      const handleSharedUrl = (e: any) => {
+        const url = e.detail?.url;
+        if (url) {
+          setAddTaskInitialUrl(url);
+          setShowAddTaskModal(true);
+          addLog('info', `Received shared link: ${url.substring(0, 45)}...`);
+        }
+      };
+
+      window.addEventListener('onVortexSharedUrl', handleSharedUrl);
+      return () => window.removeEventListener('onVortexSharedUrl', handleSharedUrl);
+    }
   }, []);
+
+  // Android Hardware Back Button navigation listener
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const handleBackButton = () => {
+      if (showAddTaskModal) {
+        setShowAddTaskModal(false);
+      } else if (showSettingsModal) {
+        setShowSettingsModal(false);
+      } else if (showAria2Modal) {
+        setShowAria2Modal(false);
+      } else if (showSecretVault) {
+        setShowSecretVault(false);
+      } else if (showBrowser) {
+        setShowBrowser(false);
+      } else if (activeView !== 'tasks') {
+        setActiveView('tasks');
+      } else {
+        VortexNative.exitApp().catch(() => {});
+      }
+    };
+
+    window.addEventListener('onVortexBackButton', handleBackButton);
+    return () => window.removeEventListener('onVortexBackButton', handleBackButton);
+  }, [showAddTaskModal, showSettingsModal, showAria2Modal, showSecretVault, showBrowser, activeView]);
 
   const handleUpdateSettings = (newSettings: UserSettings) => {
     setSettings(newSettings);

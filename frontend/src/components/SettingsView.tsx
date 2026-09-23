@@ -306,7 +306,7 @@ export default function SettingsView({
       name: 'FFmpeg',
       version: '8.1.2.2',
       latestVersion: '8.1.2.2',
-      path: 'C:/Users/Suvesh/AppData/Local/VortexDownloader/FFmpeg/ffmpeg.exe',
+      path: 'vortex/bin/ffmpeg',
       desc: 'High-speed stream demuxing and video/audio transcoding binary'
     },
     {
@@ -314,7 +314,7 @@ export default function SettingsView({
       name: 'YouTube (yt-dlp)',
       version: '2026.03.01',
       latestVersion: '2026.03.01',
-      path: 'C:/Users/Suvesh/AppData/Local/VortexDownloader/bin/yt-dlp.exe',
+      path: 'vortex/bin/yt-dlp',
       desc: 'Universal media extraction core for 4K/8K, HDR, chapters, subtitles & audio'
     },
     {
@@ -322,7 +322,7 @@ export default function SettingsView({
       name: 'HttpPack',
       version: '1.0.1',
       latestVersion: '1.0.1',
-      path: 'C:/Users/Suvesh/AppData/Local/VortexDownloader/engines/chunkDownloader.ts',
+      path: 'vortex/engines/chunkDownloader.ts',
       desc: '16-pipe dynamic work-stealing parallel chunker with async memory cache'
     },
     {
@@ -330,7 +330,7 @@ export default function SettingsView({
       name: 'BitTorrentPack',
       version: '3.0.21',
       latestVersion: '3.0.21',
-      path: 'C:/Users/Suvesh/AppData/Local/VortexDownloader/engines/torrentManager.ts',
+      path: 'vortex/engines/torrentManager.ts',
       desc: 'WebTorrent decentralized swarm engine, DHT crawler & magnet stream resolver'
     },
     {
@@ -338,7 +338,7 @@ export default function SettingsView({
       name: 'ED2kPack',
       version: '1.2.1',
       latestVersion: '1.2.1',
-      path: 'C:/Users/Suvesh/AppData/Local/VortexDownloader/featurePacks/ed2kPack.ts',
+      path: 'vortex/featurePacks/ed2kPack.ts',
       desc: 'eDonkey2000 URI parser with MD4 multi-chunk verification and peer hash integrity'
     },
     {
@@ -346,7 +346,7 @@ export default function SettingsView({
       name: 'FtpPack',
       version: '6.2.1',
       latestVersion: '6.2.1',
-      path: 'C:/Users/Suvesh/AppData/Local/VortexDownloader/featurePacks/ftpPack.ts',
+      path: 'vortex/featurePacks/ftpPack.ts',
       desc: 'FTP & FTPS remote file streaming client with live throughput telemetry'
     },
     {
@@ -354,7 +354,7 @@ export default function SettingsView({
       name: 'GitHubPack',
       version: '1.0.0',
       latestVersion: '1.0.0',
-      path: 'C:/Users/Suvesh/AppData/Local/VortexDownloader/featurePacks/githubPack.ts',
+      path: 'vortex/featurePacks/githubPack.ts',
       desc: 'GitHub release asset inspector, tag resolver, and repository source archiver'
     },
     {
@@ -362,7 +362,7 @@ export default function SettingsView({
       name: 'HuggingFacePack',
       version: '1.0.1',
       latestVersion: '1.0.1',
-      path: 'C:/Users/Suvesh/AppData/Local/VortexDownloader/featurePacks/huggingfacePack.ts',
+      path: 'vortex/featurePacks/huggingfacePack.ts',
       desc: 'AI model weights (.safetensors, .gguf, .onnx) inspector & CDN stream router'
     },
     {
@@ -370,7 +370,7 @@ export default function SettingsView({
       name: 'M3U8Pack',
       version: '1.0.2',
       latestVersion: '1.0.2',
-      path: 'C:/Users/Suvesh/AppData/Local/VortexDownloader/engines/m3u8Engine.ts',
+      path: 'vortex/engines/m3u8Engine.ts',
       desc: 'HLS adaptive bitrate playlist parser and fast TS/AAC segment multiplexer'
     }
   ];
@@ -575,6 +575,27 @@ export default function SettingsView({
                         placeholder="Paste Netscape format cookies or raw session cookie"
                         value={settings.youtubeCookie || ''}
                         onChange={(e) => onUpdateSettings({ ...settings, youtubeCookie: e.target.value })}
+                        className="w-full bg-[#141416] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#3ea6ff]"
+                      />
+                    </div>
+
+                    {/* Vortex Backend Super-Engine Connection URL */}
+                    <div className="p-3.5 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Server className="w-4 h-4 text-[#3ea6ff]" />
+                          <span className="text-white text-xs font-medium">Vortex Super-Engine Server URL</span>
+                        </div>
+                        <span className="text-[10px] text-gray-500 font-mono">Hybrid Core</span>
+                      </div>
+                      <span className="text-[11px] text-gray-400 block">
+                        Connect mobile client to your PC backend over local Wi-Fi (e.g. http://192.168.1.15:5001). Leave blank for standalone mobile mode.
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="e.g. http://192.168.1.15:5001 (leave empty for standalone mode)"
+                        value={settings.backendUrl || ''}
+                        onChange={(e) => onUpdateSettings({ ...settings, backendUrl: e.target.value.trim() })}
                         className="w-full bg-[#141416] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#3ea6ff]"
                       />
                     </div>

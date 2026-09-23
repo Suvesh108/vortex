@@ -64,7 +64,7 @@ async def lifespan(app: FastAPI):
     yield
     task.cancel()
 
-app = FastAPI(title="VortexDownloader Universal Engine", version="0.6.6", lifespan=lifespan)
+app = FastAPI(title="VortexDownloader Universal Engine", version="0.6.7", lifespan=lifespan)
 
 # CORS Middleware
 app.add_middleware(

@@ -109,6 +109,13 @@ public class AppUpdaterPlugin extends Plugin {
                         settingsIntent.setData(Uri.parse("package:" + getContext().getPackageName()));
                         settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         getContext().startActivity(settingsIntent);
+
+                        JSObject res = new JSObject();
+                        res.put("success", true);
+                        res.put("needsPermission", true);
+                        res.put("filePath", outputFile.getAbsolutePath());
+                        call.resolve(res);
+                        return;
                     }
                 }
 
@@ -166,6 +173,13 @@ public class AppUpdaterPlugin extends Plugin {
                     settingsIntent.setData(Uri.parse("package:" + getContext().getPackageName()));
                     settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     getContext().startActivity(settingsIntent);
+
+                    JSObject ret = new JSObject();
+                    ret.put("success", false);
+                    ret.put("needsPermission", true);
+                    ret.put("message", "Unknown sources permission required. Please allow and retry.");
+                    call.resolve(ret);
+                    return;
                 }
             }
 

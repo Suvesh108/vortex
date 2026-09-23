@@ -2,7 +2,6 @@ package io.vortexdownloader.app;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -14,9 +13,9 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.webkit.CookieManager;
-import android.webkit.DownloadListener;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -29,7 +28,6 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 public class InbuiltBrowserActivity extends Activity {
@@ -38,6 +36,11 @@ public class InbuiltBrowserActivity extends Activity {
     private EditText urlInput;
     private ProgressBar progressBar;
     private Button downloadFab;
+    private LinearLayout mainLayout;
+    private FrameLayout customViewContainer;
+    private View customView;
+    private WebChromeClient.CustomViewCallback customViewCallback;
+
     private String detectedMediaUrl = null;
     private String currentLoadedUrl = "";
 
@@ -50,14 +53,14 @@ public class InbuiltBrowserActivity extends Activity {
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.parseColor("#121214"));
 
-        LinearLayout mainLayout = new LinearLayout(this);
+        mainLayout = new LinearLayout(this);
         mainLayout.setOrientation(LinearLayout.VERTICAL);
         mainLayout.setLayoutParams(new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         ));
 
-        // 1. Top Navigation Bar (Height 54dp, Background #18181b)
+        // 1. Top Navigation Bar (Height 52dp, Background #18181b)
         LinearLayout topBar = new LinearLayout(this);
         topBar.setOrientation(LinearLayout.HORIZONTAL);
         topBar.setBackgroundColor(Color.parseColor("#18181b"));
@@ -82,7 +85,7 @@ public class InbuiltBrowserActivity extends Activity {
         // Forward Button
         Button fwdBtn = createNavButton("▶", Color.parseColor("#a1a1aa"));
         fwdBtn.setOnClickListener(v -> {
-            if (webView != null && webView.canGoBack()) {
+            if (webView != null && webView.canGoForward()) {
                 webView.goForward();
             }
         });
@@ -132,7 +135,7 @@ public class InbuiltBrowserActivity extends Activity {
             return false;
         });
 
-        // Dedicated "⚡ Add" Button in top bar to immediately queue current URL / media
+        // Dedicated "⚡ Add" Button in top bar
         Button addBtn = new Button(this);
         addBtn.setText("⚡ Add");
         addBtn.setTextColor(Color.WHITE);
@@ -166,7 +169,7 @@ public class InbuiltBrowserActivity extends Activity {
         );
         mainLayout.addView(progressBar, progressParams);
 
-        // 3. Isolated WebView (Standalone private profile - NO Gmail auto-sync)
+        // 3. Isolated WebView
         webView = new WebView(this);
         webView.setBackgroundColor(Color.parseColor("#121214"));
         LinearLayout.LayoutParams webParams = new LinearLayout.LayoutParams(
@@ -176,7 +179,16 @@ public class InbuiltBrowserActivity extends Activity {
         mainLayout.addView(webView, webParams);
         root.addView(mainLayout);
 
-        // 4. Floating Action Button: "⚡ Add to Vortex"
+        // 4. Custom View Container for Fullscreen Video Playback
+        customViewContainer = new FrameLayout(this);
+        customViewContainer.setBackgroundColor(Color.BLACK);
+        customViewContainer.setVisibility(View.GONE);
+        root.addView(customViewContainer, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+
+        // 5. Floating Action Button: "⚡ Add to Vortex"
         downloadFab = new Button(this);
         downloadFab.setText("⚡ Add to Vortex");
         downloadFab.setTextColor(Color.BLACK);
@@ -230,17 +242,19 @@ public class InbuiltBrowserActivity extends Activity {
         s.setLoadWithOverviewMode(true);
         s.setMediaPlaybackRequiresUserGesture(false);
 
-        // Clean Modern Mobile User Agent (Independent from Chrome account / Gmail sync)
+        // Allow mixed HTTP/HTTPS content so streaming CDN chunks load without blockage
+        s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+
+        // Clean Modern Mobile User Agent
         s.setUserAgentString("Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36");
 
-        // Isolated session cookies (allow browsing and logins without sharing device's personal Gmail profile)
+        // Isolated session cookies
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
 
-        // Intercept any download link clicked in browser and send to Vortex
+        // Intercept download link clicked in browser and queue in Vortex WITHOUT closing the browser!
         webView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
-            Toast.makeText(InbuiltBrowserActivity.this, "Transferring download to Vortex...", Toast.LENGTH_SHORT).show();
-            returnDownloadToVortex(url);
+            sendDownloadToVortexNonClosing(url);
         });
 
         webView.setWebChromeClient(new WebChromeClient() {
@@ -252,6 +266,36 @@ public class InbuiltBrowserActivity extends Activity {
                 } else {
                     progressBar.setVisibility(View.VISIBLE);
                 }
+            }
+
+            @Override
+            public void onShowCustomView(View view, CustomViewCallback callback) {
+                if (customView != null) {
+                    onHideCustomView();
+                    return;
+                }
+                customView = view;
+                customViewCallback = callback;
+                mainLayout.setVisibility(View.GONE);
+                downloadFab.setVisibility(View.GONE);
+                customViewContainer.addView(view);
+                customViewContainer.setVisibility(View.VISIBLE);
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+            }
+
+            @Override
+            public void onHideCustomView() {
+                if (customView == null) return;
+                mainLayout.setVisibility(View.VISIBLE);
+                downloadFab.setVisibility(View.VISIBLE);
+                customViewContainer.removeView(customView);
+                customViewContainer.setVisibility(View.GONE);
+                customView = null;
+                if (customViewCallback != null) {
+                    customViewCallback.onCustomViewHidden();
+                    customViewCallback = null;
+                }
+                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
             }
         });
 
@@ -265,8 +309,7 @@ public class InbuiltBrowserActivity extends Activity {
                     type == WebView.HitTestResult.IMAGE_TYPE) {
                     String extra = result.getExtra();
                     if (!TextUtils.isEmpty(extra) && (extra.startsWith("http://") || extra.startsWith("https://") || extra.startsWith("magnet:?"))) {
-                        Toast.makeText(InbuiltBrowserActivity.this, "Adding link to Vortex...", Toast.LENGTH_SHORT).show();
-                        returnDownloadToVortex(extra);
+                        sendDownloadToVortexNonClosing(extra);
                         return true;
                     }
                 }
@@ -280,16 +323,12 @@ public class InbuiltBrowserActivity extends Activity {
                 String u = request.getUrl().toString();
                 String lower = u.toLowerCase();
                 if (lower.startsWith("magnet:?") || lower.startsWith("ftp://") || lower.startsWith("ed2k://")) {
-                    returnDownloadToVortex(u);
+                    sendDownloadToVortexNonClosing(u);
                     return true;
                 }
                 if (isDownloadableFile(lower)) {
-                    Toast.makeText(InbuiltBrowserActivity.this, "Adding download to Vortex...", Toast.LENGTH_SHORT).show();
-                    returnDownloadToVortex(u);
+                    sendDownloadToVortexNonClosing(u);
                     return true;
-                }
-                if (u.startsWith("http://") || u.startsWith("https://")) {
-                    return false; // let webview load it internally
                 }
                 return false;
             }
@@ -297,15 +336,18 @@ public class InbuiltBrowserActivity extends Activity {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 String u = request.getUrl().toString().toLowerCase();
-                // Real-time media sniffer
-                if (u.contains(".m3u8") || u.contains(".mp4") || u.contains(".webm") ||
-                    u.contains(".ts") || u.contains("/master.m3u8") || u.contains("/playlist.m3u8") ||
-                    u.contains(".m4s") || u.contains(".mp3") || u.contains(".m4a")) {
-                    detectedMediaUrl = request.getUrl().toString();
-                    runOnUiThread(() -> {
-                        downloadFab.setText("🎥 Download Video (" + getExt(detectedMediaUrl) + ")");
-                        downloadFab.setBackgroundColor(Color.parseColor("#22c55e"));
-                    });
+                // Filter out tiny 2-second video fragments (.ts, .m4s) from overriding master playlists
+                if (u.contains(".m3u8") || u.contains("/master.") || u.contains("/playlist.") ||
+                    u.contains(".mp4") || u.contains(".webm") || u.contains(".mkv") ||
+                    u.contains(".mp3") || u.contains(".m4a")) {
+                    
+                    if (!u.contains(".ts") && !u.contains(".m4s")) {
+                        detectedMediaUrl = request.getUrl().toString();
+                        runOnUiThread(() -> {
+                            downloadFab.setText("🎥 Download Video (" + getExt(detectedMediaUrl) + ")");
+                            downloadFab.setBackgroundColor(Color.parseColor("#22c55e"));
+                        });
+                    }
                 }
                 return super.shouldInterceptRequest(view, request);
             }
@@ -315,13 +357,10 @@ public class InbuiltBrowserActivity extends Activity {
                 super.onPageFinished(view, url);
                 currentLoadedUrl = url;
                 urlInput.setText(url);
-
-                // Inject client-side media scraper for HTML5 video/audio elements
                 injectMediaSnifferScript();
             }
         });
 
-        // Add JavaScript bridge for media detection
         webView.addJavascriptInterface(new Object() {
             @JavascriptInterface
             public void onMediaDetected(String src) {
@@ -329,6 +368,7 @@ public class InbuiltBrowserActivity extends Activity {
                     detectedMediaUrl = src;
                     runOnUiThread(() -> {
                         downloadFab.setText("🎥 Download Media Stream");
+                        downloadFab.setBackgroundColor(Color.parseColor("#22c55e"));
                     });
                 }
             }
@@ -341,7 +381,7 @@ public class InbuiltBrowserActivity extends Activity {
                 "    var tags = document.querySelectorAll('video, audio, source');" +
                 "    for (var i = 0; i < tags.length; i++) {" +
                 "      var s = tags[i].src || tags[i].getAttribute('src');" +
-                "      if (s && s.startsWith('http')) {" +
+                "      if (s && s.startsWith('http') && !s.includes('.ts') && !s.includes('.m4s')) {" +
                 "        window.VortexSniffer && window.VortexSniffer.onMediaDetected(s);" +
                 "      }" +
                 "    }" +
@@ -362,7 +402,6 @@ public class InbuiltBrowserActivity extends Activity {
         } else if (trimmed.contains(".") && !trimmed.contains(" ")) {
             targetUrl = "https://" + trimmed;
         } else {
-            // Private search via DuckDuckGo (No Google tracking / Gmail login)
             targetUrl = "https://duckduckgo.com/?q=" + Uri.encode(trimmed);
         }
 
@@ -387,7 +426,7 @@ public class InbuiltBrowserActivity extends Activity {
             Toast.makeText(this, "No active link or media found to add", Toast.LENGTH_SHORT).show();
             return;
         }
-        returnDownloadToVortex(urlToDownload);
+        sendDownloadToVortexNonClosing(urlToDownload);
     }
 
     private boolean isDownloadableFile(String url) {
@@ -400,11 +439,12 @@ public class InbuiltBrowserActivity extends Activity {
                clean.endsWith(".wav") || clean.endsWith(".m3u8") || clean.endsWith(".pdf");
     }
 
-    private void returnDownloadToVortex(String url) {
-        Intent resultIntent = new Intent();
-        resultIntent.putExtra("downloadUrl", url);
-        setResult(Activity.RESULT_OK, resultIntent);
-        finish();
+    /**
+     * Send download URL to Vortex queue while keeping the browser open!
+     */
+    private void sendDownloadToVortexNonClosing(String url) {
+        InbuiltBrowserPlugin.emitDownloadRequested(url);
+        Toast.makeText(this, "⚡ Added to Vortex Download Queue!", Toast.LENGTH_SHORT).show();
     }
 
     private Button createNavButton(String label, int textColor) {
@@ -443,6 +483,12 @@ public class InbuiltBrowserActivity extends Activity {
 
     @Override
     public void onBackPressed() {
+        if (customView != null) {
+            if (webView != null && webView.getWebChromeClient() != null) {
+                webView.getWebChromeClient().onHideCustomView();
+            }
+            return;
+        }
         if (webView != null && webView.canGoBack()) {
             webView.goBack();
         } else {

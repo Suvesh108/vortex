@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { MediaMetadata, MediaQuality } from '../types';
 import { extractMediaInfo } from '../extractor';
+import { Capacitor } from '@capacitor/core';
 
 interface AddTaskModalProps {
   isOpen: boolean;
@@ -79,7 +80,9 @@ export default function AddTaskModal({
   const [linksText, setLinksText] = useState(initialUrl || '');
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [threads, setThreads] = useState(defaultThreads);
-  const [downloadLocation, setDownloadLocation] = useState('C:/Users/Suvesh/Downloads');
+  const [downloadLocation, setDownloadLocation] = useState(
+    Capacitor.isNativePlatform() ? 'Download/VortexDownloader' : 'Downloads/Vortex'
+  );
   
   // Single link parsing state
   const [isParsing, setIsParsing] = useState(false);
