@@ -57,7 +57,7 @@ export default function SettingsModal({
                 Settings & Preferences
               </h3>
               <span className="px-2 py-0.5 rounded-full bg-white/[0.06] text-gray-400 text-xs font-mono">
-                12 categories
+                7 sections
               </span>
             </div>
 

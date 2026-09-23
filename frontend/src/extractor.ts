@@ -146,26 +146,25 @@ export async function extractMediaInfo(
     }
   }
 
-  // 4. Try custom backend if configured
+  // 4. Connect to Vortex Super-Engine (Hybrid Go Core + Python Extractor)
   const backend = customBackendUrl || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '');
-  if (backend) {
-    try {
-      log('info', `Connecting to Vortex Backend Server at ${backend}...`);
-      const res = await fetch(`${backend}/api/info?url=${encodeURIComponent(url)}`, {
-        signal: AbortSignal.timeout(6000)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        log('success', `Vortex Python Core (yt-dlp) extracted ${data.formats.length} targets.`);
-        return {
-          ...data,
-          category: detected.category,
-          targetExtension: detected.targetExtension
-        };
-      }
-    } catch (e: any) {
-      log('warning', `Backend server unreachable (${e.message}). Switching to native bundled stream engine...`);
+  try {
+    const apiTarget = backend ? `${backend}/api/info` : '/api/info';
+    log('info', `Connecting to Vortex Super-Engine at ${apiTarget}...`);
+    const res = await fetch(`${apiTarget}?url=${encodeURIComponent(url)}`, {
+      signal: AbortSignal.timeout(10000)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      log('success', `Vortex Super-Engine extracted ${data.formats?.length || 0} stream targets: "${data.title}"`);
+      return {
+        ...data,
+        category: detected.category,
+        targetExtension: data.targetExtension || detected.targetExtension
+      };
     }
+  } catch (e: any) {
+    log('warning', `Vortex Engine unreachable (${e.message}). Falling back to multi-engine manifest...`);
   }
 
   log('info', `Initializing Vortex Bundled Multi-Engine Suite...`);
@@ -409,56 +408,58 @@ export async function downloadMediaDirect(
 
   const backend = customBackendUrl || (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : '');
 
-  // 1. Try Backend Job if backend is configured
-  if (backend) {
-    try {
-      log('info', `Dispatching download task to Vortex Backend: [${selectedFormat.format} - ${selectedFormat.resolution}]`);
-      const payload: any = {
-        url: metadata.originalUrl,
-        formatId: selectedFormat.id,
-        title: metadata.title,
-        format: selectedFormat.format
-      };
+  const apiDownload = backend ? `${backend}/api/download` : '/api/download';
+  const apiProgress = backend ? `${backend}/api/download/progress` : '/api/download/progress';
+  const apiFile = backend ? `${backend}/api/download/file` : '/api/download/file';
 
-      const res = await fetch(`${backend}/api/download`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+  // 1. Try Vortex Super-Engine Download
+  try {
+    log('info', `Dispatching download task to Vortex Engine: [${selectedFormat.format} - ${selectedFormat.resolution}]`);
+    const payload: any = {
+      url: metadata.originalUrl,
+      formatId: selectedFormat.id,
+      title: metadata.title,
+      format: selectedFormat.format
+    };
 
-      if (res.ok) {
-        const { jobId } = await res.json();
-        log('info', `Server job allocated: ${jobId}. Polling stream worker...`);
+    const res = await fetch(apiDownload, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-        return new Promise((resolve, reject) => {
-          const poll = setInterval(async () => {
-            try {
-              const pRes = await fetch(`${backend}/api/download/progress?jobId=${jobId}`);
-              const pData = await pRes.json();
-              if (pData.progress !== undefined) {
-                progressCb(pData.progress, pData.speed || '12.4 MB/s', pData.eta || '10s');
-              }
-              if (pData.status === 'completed') {
-                clearInterval(poll);
-                log('success', `Multiplex container completed on server!`);
-                const downloadUrl = `${backend}/api/download/file?jobId=${jobId}`;
-                triggerBrowserDownload(downloadUrl, `${metadata.title}.${selectedFormat.targetExtension || 'mp4'}`);
-                resolve({ success: true, blobUrl: downloadUrl });
-              } else if (pData.status === 'error') {
-                clearInterval(poll);
-                log('error', `Server extraction reported: ${pData.error}`);
-                executeDirectBinaryDownload(metadata, selectedFormat, progressCb, log).then(resolve).catch(reject);
-              }
-            } catch (err) {
+    if (res.ok) {
+      const { jobId } = await res.json();
+      log('info', `Server job allocated: ${jobId}. Polling stream worker...`);
+
+      return new Promise((resolve, reject) => {
+        const poll = setInterval(async () => {
+          try {
+            const pRes = await fetch(`${apiProgress}?jobId=${jobId}`);
+            const pData = await pRes.json();
+            if (pData.progress !== undefined) {
+              progressCb(pData.progress, pData.speed || '0.0 MB/s', pData.eta || '--');
+            }
+            if (pData.status === 'completed') {
               clearInterval(poll);
+              log('success', `Download completed on server!`);
+              const downloadUrl = `${apiFile}?jobId=${jobId}`;
+              triggerBrowserDownload(downloadUrl, `${metadata.title}.${selectedFormat.targetExtension || 'mp4'}`);
+              resolve({ success: true, blobUrl: downloadUrl });
+            } else if (pData.status === 'error') {
+              clearInterval(poll);
+              log('error', `Server reported: ${pData.error}`);
               executeDirectBinaryDownload(metadata, selectedFormat, progressCb, log).then(resolve).catch(reject);
             }
-          }, 1000);
-        });
-      }
-    } catch (e: any) {
-      log('warning', `Backend download unreachable (${e.message}). Switching to native direct stream downloading...`);
+          } catch (err) {
+            clearInterval(poll);
+            executeDirectBinaryDownload(metadata, selectedFormat, progressCb, log).then(resolve).catch(reject);
+          }
+        }, 400);
+      });
     }
+  } catch (e: any) {
+    log('warning', `Vortex Engine download notice (${e.message}). Switching to native direct stream downloading...`);
   }
 
   // 2. Direct In-App Binary Download

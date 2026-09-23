@@ -21,14 +21,20 @@
 
 <hr />
 
-## 📱 Android App (v0.6.5)
+## 📱 Android & Desktop (v0.6.6)
 
-VortexDownloader is available as a standalone Android application with a **Native Sandboxed Inbuilt Browser** (isolated private browsing like Brave/Chrome, no personal Google/Gmail account leakage), 1-tap direct stream sniffer & download interceptor, dedicated Mobile Layout with frosted bottom navigation bar, Turbo Speed Engine, recursive iframe aggregator crawler (e.g. `rou.video`), and 16-host universal media engine!
+VortexDownloader is an ultra-fast, universal downloading engine powered by a **Hybrid Architecture (Go Core + Python Media Extractor)** with dynamic multi-pipe streaming, real-time IDM/FDM progress telemetry, 4-tier bot-guard evasion, and a streamlined 7-section Settings control center!
 
-- **Download APK (v0.6.5)**: [**VortexDownloader-v0.6.5.apk**](release/VortexDownloader-v0.6.5.apk)
-- **Version**: `0.6.5` (Release v0.6.5)
+- **Download APK (v0.6.6)**: [**VortexDownloader-v0.6.6.apk**](release/VortexDownloader-v0.6.6.apk)
+- **Version**: `0.6.6` (Release v0.6.6)
 - **Package ID**: `io.vortexdownloader.app`
-- **What's New in v0.6.5**:
+- **What's New in v0.6.6**:
+  - ⚙️ **Hybrid Go Core + Python Extractor**: Ultra-fast Go networking engine on port 5001 paired with a zero-overhead Python sidecar on port 5002 for rock-solid stability and throughput.
+  - 🎛️ **Streamlined 7-Section Settings Architecture**: Reorganized settings from 12 fragmented sections down to 7 cohesive, powerhouse categories (Engine & Multi-Thread Core, Downloads & File Routing, Concurrency & Performance, Browser Extension & Aria2 Bridge, Appearance & Interface, System Hooks & Storage, and About & Updates).
+  - 🛡️ **4-Tier Bot-Guard Bypass**: Automatic browser cookie inheritance (Edge, Chrome, Firefox, Brave), client identity rotation (Desktop/Mobile/TV), and desktop client hints to bypass Cloudflare and bot checks.
+  - 📊 **Real-Time IDM/FDM Progress Telemetry**: Zero-jump live progress tracking with accurate throughput, ETA, and per-chunk visual progress.
+  - 🎥 **Full Resolution Detection (720p, 1080p, 2K, 4K)**: Enabled Node.js JS runtime and removed player skip flags to ensure all supported resolutions are detected and selectable.
+  - 🔔 **System Integration & Chimes**: Added real-time clipboard monitoring, desktop OS notifications, Web Audio completion chime, and post-download webhooks.
   - 🌐 **Browser Moved to Bottom Navbar Next to Add Task**: Moved the browser entry point from the top header into the bottom navigation bar right next to the elevated center `+ Add Task` button.
   - 🎨 **Symmetrical 5-Item Navigation Grid**: Clean, balanced bottom navigation (`Tasks`, `Vault`, `New Task`, `Browser`, `Settings`) with the elevated center hero button positioned at exactly 50% and direct access to the built-in browser right beside it.
   - 🔍 **Maximized Mobile Header**: Cleaned up the top header with the full-width search input for a streamlined mobile experience.

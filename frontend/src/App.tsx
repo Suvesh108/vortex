@@ -47,7 +47,28 @@ export default function App() {
     sampleRatekHz: 48,
     autoDownload: true,
     saveHistory: true,
-    backendUrl: ''
+    backendUrl: '',
+    autoOrganizeFolders: true,
+    customDownloadDir: 'Downloads/Vortex',
+    clipboardMonitoring: true,
+    desktopNotifications: true,
+    soundNotification: true,
+    autoStartDaemon: true,
+    browserInterceptMode: 'size_threshold',
+    browserInterceptMinSizeMB: 25,
+    aria2Secret: 'vortex-rpc-token-2026',
+    autoInjectBrowserCookies: true,
+    themeVariant: 'oled',
+    accentColor: '#3ea6ff',
+    compactView: false,
+    showSpeedGraph: true,
+    enableAnimations: true,
+    maxConcurrentDownloads: 3,
+    speedLimitEnabled: false,
+    maxSpeedMBps: 25,
+    historyRetention: 'keep_all',
+    hardwareAcceleration: true,
+    preallocateDisk: true
   });
 
   const addLog = (type: DownloadLog['type'], message: string) => {
@@ -59,6 +80,52 @@ export default function App() {
     };
     setLogs(prev => [...prev.slice(-100), newLog]);
   };
+
+  // Synchronize Accent Color and Theme to Document
+  useEffect(() => {
+    if (settings.accentColor) {
+      document.documentElement.style.setProperty('--vortex-accent', settings.accentColor);
+    }
+    if (settings.themeVariant) {
+      document.documentElement.setAttribute('data-theme', settings.themeVariant);
+      if (settings.themeVariant === 'oled') {
+        document.body.style.backgroundColor = '#09090b';
+      } else if (settings.themeVariant === 'slate') {
+        document.body.style.backgroundColor = '#0f172a';
+      } else if (settings.themeVariant === 'cyber') {
+        document.body.style.backgroundColor = '#0e0c1f';
+      } else if (settings.themeVariant === 'titanium') {
+        document.body.style.backgroundColor = '#18181b';
+      }
+    }
+  }, [settings.accentColor, settings.themeVariant]);
+
+  // Real-Time Clipboard URL Auto-Monitoring
+  useEffect(() => {
+    if (settings.clipboardMonitoring === false) return;
+
+    let lastClipboard = '';
+    const handleWindowFocus = async () => {
+      try {
+        if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.readText) {
+          const text = (await navigator.clipboard.readText()).trim();
+          if (
+            text &&
+            text !== lastClipboard &&
+            (text.startsWith('http://') || text.startsWith('https://') || text.startsWith('magnet:?')) &&
+            !showAddTaskModal
+          ) {
+            lastClipboard = text;
+            addLog('info', `Clipboard URL detected: ${text.substring(0, 45)}...`);
+            setAddTaskInitialUrl(text);
+          }
+        }
+      } catch (_) {}
+    };
+
+    window.addEventListener('focus', handleWindowFocus);
+    return () => window.removeEventListener('focus', handleWindowFocus);
+  }, [settings.clipboardMonitoring, showAddTaskModal]);
 
   useEffect(() => {
     addLog('system', 'Vortex Downloader UI loaded.');

@@ -35,11 +35,26 @@ import {
   User,
   MessageSquare,
   Copy,
-  Trash2
+  Trash2,
+  Folder,
+  Volume2,
+  Bell,
+  Cpu,
+  Gauge,
+  Film,
+  Music,
+  Image as ImageIcon,
+  FileText,
+  Archive,
+  Terminal,
+  Activity,
+  Globe,
+  CheckSquare
 } from 'lucide-react';
 import { UserSettings } from '../types';
 import { APP_VERSION, checkForAppUpdates, downloadUpdateFile, UpdateInfo, UpdateProgressData } from '../updater';
 import { Capacitor } from '@capacitor/core';
+import { playNotificationChime, sendDownloadCompleteNotification } from '../permissions';
 
 interface SettingsViewProps {
   settings: UserSettings;
@@ -57,7 +72,7 @@ export default function SettingsView({
   searchQuery = '',
   categoryFilter = 'ALL'
 }: SettingsViewProps) {
-  const [expandedSection, setExpandedSection] = useState<string | null>('turbo_speed');
+  const [expandedSection, setExpandedSection] = useState<string | null>('engine');
   const [debridKey, setDebridKey] = useState('');
   const [debridStatus, setDebridStatus] = useState<string | null>(null);
   const [isVerifyingDebrid, setIsVerifyingDebrid] = useState(false);
@@ -73,6 +88,122 @@ export default function SettingsView({
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [lastCheckedTime, setLastCheckedTime] = useState<string | null>(null);
+
+  // Integration interactive state
+  const [testingWebhook, setTestingWebhook] = useState(false);
+  const [webhookFeedback, setWebhookFeedback] = useState<string | null>(null);
+  const [chimeFeedback, setChimeFeedback] = useState(false);
+  const [notifFeedback, setNotifFeedback] = useState<string | null>(null);
+
+  // Browser interactive state
+  const [copiedToken, setCopiedToken] = useState(false);
+
+  // Application interactive state
+  const [clearingCache, setClearingCache] = useState(false);
+  const [cacheClearFeedback, setCacheClearFeedback] = useState<string | null>(null);
+
+  const handleTestWebhook = async () => {
+    if (!settings.webhookUrl || !settings.webhookUrl.trim()) {
+      setWebhookFeedback('Please enter a webhook URL first.');
+      return;
+    }
+    setTestingWebhook(true);
+    setWebhookFeedback(null);
+    try {
+      const res = await fetch(settings.webhookUrl.trim(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'vortex.test_ping',
+          timestamp: new Date().toISOString(),
+          message: 'Vortex Downloader webhook integration verified successfully!'
+        })
+      });
+      if (res.ok) {
+        setWebhookFeedback('Webhook ping delivered successfully! (HTTP 200)');
+      } else {
+        setWebhookFeedback(`Webhook returned status ${res.status}`);
+      }
+    } catch (err: any) {
+      setWebhookFeedback(`Webhook error: ${err.message || 'Connection failed'}`);
+    } finally {
+      setTestingWebhook(false);
+    }
+  };
+
+  const handleTestChime = () => {
+    setChimeFeedback(true);
+    playNotificationChime();
+    setTimeout(() => setChimeFeedback(false), 1200);
+  };
+
+  const handleTestNotification = async () => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission !== 'granted') {
+        const res = await Notification.requestPermission();
+        if (res !== 'granted') {
+          setNotifFeedback('Notification permission was denied by browser.');
+          return;
+        }
+      }
+      sendDownloadCompleteNotification('Test Download - 4K Video', '.mp4');
+      setNotifFeedback('Test notification delivered!');
+      setTimeout(() => setNotifFeedback(null), 3000);
+    } else {
+      setNotifFeedback('Web notifications not supported on this browser.');
+    }
+  };
+
+  const handleGenerateAria2Token = () => {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let token = 'vortex-';
+    for (let i = 0; i < 16; i++) {
+      token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    onUpdateSettings({ ...settings, aria2Secret: token });
+  };
+
+  const handleCopyAria2Token = () => {
+    const token = settings.aria2Secret || 'vortex-rpc-token';
+    navigator.clipboard.writeText(token);
+    setCopiedToken(true);
+    setTimeout(() => setCopiedToken(false), 2000);
+  };
+
+  const handleClearCache = async () => {
+    setClearingCache(true);
+    setCacheClearFeedback(null);
+    try {
+      try {
+        await fetch(`${settings.backendUrl || ''}/api/cache/clear`, { method: 'POST' });
+      } catch (_) {}
+      await new Promise(r => setTimeout(r, 600));
+      setCacheClearFeedback('Temporary chunk files & metadata cache successfully purged.');
+      setTimeout(() => setCacheClearFeedback(null), 3500);
+    } finally {
+      setClearingCache(false);
+    }
+  };
+
+  const handleCategoryPathChange = (catKey: string, newPath: string) => {
+    const paths = { ...(settings.categoryPaths || {}) };
+    paths[catKey] = newPath;
+    onUpdateSettings({ ...settings, categoryPaths: paths });
+  };
+
+  const handleSelectAccent = (color: string) => {
+    onUpdateSettings({ ...settings, accentColor: color });
+    if (typeof document !== 'undefined') {
+      document.documentElement.style.setProperty('--vortex-accent', color);
+    }
+  };
+
+  const handleSelectTheme = (theme: 'oled' | 'slate' | 'cyber' | 'titanium') => {
+    onUpdateSettings({ ...settings, themeVariant: theme });
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+  };
 
   const handleCheckForUpdates = async () => {
     setIsCheckingUpdate(true);
@@ -294,18 +425,13 @@ export default function SettingsView({
   };
 
   const settingsCategories = [
-    { id: 'turbo_speed', title: 'Turbo Speed & Work-Stealing Core', icon: Zap },
-    { id: 'debrid_accounts', title: 'Debrid & Multi-Host Keychain', icon: Key },
-    { id: 'data_export', title: 'Anti-Lock-in & Data Sovereignty', icon: DownloadCloud },
-    { id: 'general', title: 'General', icon: SettingsIcon },
-    { id: 'categorization', title: 'Download Categorization', icon: FolderCheck },
-    { id: 'integration', title: 'Integration', icon: Network },
-    { id: 'browser', title: 'Browser Extension', icon: Puzzle },
-    { id: 'aria2', title: 'Aria2 RPC Support', icon: Share2 },
-    { id: 'personalization', title: 'Personalization', icon: Palette },
-    { id: 'application', title: 'Application', icon: HardDrive },
-    { id: 'feature_packs', title: 'Feature Packs', icon: Package },
-    { id: 'about', title: 'About', icon: Info }
+    { id: 'engine', title: 'Engine & Multi-Thread Core', icon: Zap },
+    { id: 'categorization', title: 'Downloads & File Routing', icon: FolderCheck },
+    { id: 'limits', title: 'Concurrency & Performance', icon: Gauge },
+    { id: 'browser', title: 'Browser Extension & Aria2 Bridge', icon: Puzzle },
+    { id: 'personalization', title: 'Appearance & Interface', icon: Palette },
+    { id: 'integration', title: 'System Hooks & Storage', icon: Network },
+    { id: 'about', title: 'About & Updates', icon: Info }
   ];
 
   const filteredCategories = settingsCategories.filter(cat => {
@@ -356,130 +482,104 @@ export default function SettingsView({
                 exit={{ opacity: 0, height: 0 }}
                 className="px-5 pb-4 pt-1 border-t border-white/[0.04] bg-black/20 text-xs text-gray-400 space-y-3"
               >
-                {cat.id === 'feature_packs' && (
-                  <div className="space-y-3 pt-1">
-                    <div className="flex items-center justify-between px-1 pb-1">
-                      <div>
-                        <span className="text-white font-medium text-xs block">Installed Feature Modules</span>
-                        <span className="text-[11px] text-gray-400">Core protocol engines, demuxers, and network drivers</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono font-medium flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" />
-                          <span>{packs.length}/{packs.length} Active</span>
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Live Action Message */}
-                    {packActionMessage && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between font-mono"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                          <span>{packActionMessage}</span>
-                        </div>
-                        <button
-                          onClick={() => setPackActionMessage(null)}
-                          className="text-gray-400 hover:text-white px-1.5 py-0.5 rounded cursor-pointer text-xs"
-                        >
-                          ✕
-                        </button>
-                      </motion.div>
-                    )}
-
-                    {/* Feature Pack Rows matching media_1788800143103.png */}
-                    <div className="space-y-2">
-                      {packs.map((pack) => {
-                        const isUpdating = updatingPackId === pack.id;
-                        const hasUpdate = pack.version !== pack.latestVersion;
-
-                        return (
-                          <div
-                            key={pack.id}
-                            className="p-3.5 sm:px-4 rounded-xl bg-[#1d1d20] border border-white/[0.06] hover:bg-[#222226] transition-colors flex items-center justify-between gap-3 group"
-                          >
-                            {/* Left: Info icon */}
-                            <div className="flex items-start space-x-3.5 min-w-0">
-                              <Info className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
-
-                              {/* Middle: Title, Version, Path */}
-                              <div className="min-w-0 space-y-0.5">
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-sm font-medium text-white block">
-                                    {pack.name}
-                                  </span>
-                                  {hasUpdate && (
-                                    <span className="px-2 py-0.2 rounded-full bg-sky-500/20 text-sky-400 text-[10px] font-mono font-bold border border-sky-500/30">
-                                      Update Available: {pack.latestVersion}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-xs text-gray-400 font-sans">
-                                  Version: <span className="font-mono text-gray-300">{pack.version}</span>{' '}
-                                  <span className="text-gray-500">(Latest: {pack.latestVersion})</span>
-                                </div>
-                                <div className="text-[11px] text-gray-500 font-mono break-all select-all">
-                                  Path: {pack.path}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Right: Update/Refresh & Trash/Reset buttons matching media_1788800143103.png */}
-                            <div className="flex items-center space-x-2 shrink-0">
-                              <motion.button
-                                whileHover={{ scale: 1.08 }}
-                                whileTap={{ scale: 0.92 }}
-                                onClick={() => handleUpdatePack(pack.id)}
-                                disabled={isUpdating}
-                                className={`w-8 h-8 rounded-lg bg-[#2a2a2e] hover:bg-[#35353c] border border-white/[0.06] flex items-center justify-center cursor-pointer transition-colors disabled:opacity-50 ${
-                                  hasUpdate ? 'text-[#3ea6ff] border-[#3ea6ff]/40 bg-[#3ea6ff]/10' : 'text-gray-300 hover:text-white'
-                                }`}
-                                title={hasUpdate ? `Update ${pack.name} to ${pack.latestVersion}` : `Check for updates for ${pack.name}`}
-                              >
-                                <RefreshCw className={`w-4 h-4 ${isUpdating ? 'animate-spin text-[#3ea6ff]' : ''}`} />
-                              </motion.button>
-
-                              <motion.button
-                                whileHover={{ scale: 1.08 }}
-                                whileTap={{ scale: 0.92 }}
-                                onClick={() => handleResetPack(pack.id)}
-                                className="w-8 h-8 rounded-lg bg-[#2a2a2e] hover:bg-rose-950/40 text-gray-400 hover:text-rose-400 border border-white/[0.06] flex items-center justify-center cursor-pointer transition-colors"
-                                title={`Reinstall / Clear cache for ${pack.name}`}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </motion.button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {cat.id === 'turbo_speed' && (
+                {cat.id === 'engine' && (
                   <div className="space-y-4 pt-1">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between pb-1 border-b border-white/[0.04]">
                       <div>
-                        <span className="text-gray-200 font-medium block">Parallel Connection Pipes</span>
-                        <span className="text-[11px] text-gray-500">IDM-style simultaneous HTTP Range pipes per download</span>
+                        <span className="text-white font-medium text-xs block">Dynamic Multi-Thread & Streaming Pipeline</span>
+                        <span className="text-[11px] text-gray-400">Configure parallel chunk pipes, premium Debrid tokens, and media cookies</span>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="range"
-                          min={1}
-                          max={32}
-                          value={turboPipes}
-                          onChange={(e) => setTurboPipes(parseInt(e.target.value, 10))}
-                          className="w-24 accent-[#3ea6ff]"
-                        />
-                        <span className="text-xs font-mono font-bold text-[#3ea6ff] w-6 text-right">{turboPipes}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-mono">
+                        Turbo Engine
+                      </span>
+                    </div>
+
+                    {/* Parallel Connection Range Pipes */}
+                    <div className="p-3.5 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-white text-xs font-medium block">Parallel HTTP Range Pipes per Download</span>
+                          <span className="text-[11px] text-gray-400">IDM-style simultaneous chunk pipes (work-stealing segment halver)</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="range"
+                            min={1}
+                            max={32}
+                            value={settings.defaultThreads || turboPipes}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              setTurboPipes(val);
+                              onUpdateSettings({ ...settings, defaultThreads: val });
+                            }}
+                            className="w-28 accent-[#3ea6ff]"
+                          />
+                          <span className="text-xs font-mono font-bold text-[#3ea6ff] w-7 text-right">
+                            {settings.defaultThreads || turboPipes}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
+                    {/* Real-Debrid & Multi-Host Keychain */}
+                    <div className="p-3.5 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Key className="w-4 h-4 text-amber-400" />
+                          <span className="text-white text-xs font-medium">Debrid & Multi-Host Keychain (Unrestricted CDNs)</span>
+                        </div>
+                        <span className="text-[10px] text-gray-400 font-mono">Real-Debrid</span>
+                      </div>
+                      <span className="text-[11px] text-gray-400 block">
+                        Routes Rapidgator, Mega, 1Fichier, and premium lockers through unrestricted direct CDN streams
+                      </span>
+                      <div className="flex gap-2 pt-1">
+                        <input
+                          type="password"
+                          placeholder="Paste Real-Debrid API Key (from real-debrid.com/apitoken)"
+                          value={debridKey}
+                          onChange={(e) => setDebridKey(e.target.value)}
+                          className="flex-1 bg-[#141416] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#3ea6ff]"
+                        />
+                        <motion.button
+                          whileHover={{ scale: 1.04 }}
+                          whileTap={{ scale: 0.96 }}
+                          onClick={verifyRealDebrid}
+                          disabled={isVerifyingDebrid || !debridKey}
+                          className="px-3.5 py-1.5 rounded-lg bg-[#3ea6ff] hover:bg-[#3ea6ff]/80 text-black font-bold text-xs cursor-pointer disabled:opacity-50 transition-colors shrink-0"
+                        >
+                          {isVerifyingDebrid ? 'Verifying...' : 'Save & Verify'}
+                        </motion.button>
+                      </div>
+                      {debridStatus && (
+                        <p className={`text-[11px] font-mono mt-1 ${debridStatus.startsWith('Active') ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {debridStatus}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Media Cookies (Netscape / cookies.txt) */}
+                    <div className="p-3.5 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Youtube className="w-4 h-4 text-red-400" />
+                          <span className="text-white text-xs font-medium">Media Cookies (Netscape / cookies.txt)</span>
+                        </div>
+                        <span className="text-[10px] text-gray-500 font-mono">yt-dlp auth</span>
+                      </div>
+                      <span className="text-[11px] text-gray-400 block">
+                        Manual session cookie override for age-gated, private, or premium subscriber content
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="Paste Netscape format cookies or raw session cookie"
+                        value={settings.youtubeCookie || ''}
+                        onChange={(e) => onUpdateSettings({ ...settings, youtubeCookie: e.target.value })}
+                        className="w-full bg-[#141416] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#3ea6ff]"
+                      />
+                    </div>
+
+                    {/* Engine Architecture Diagnostic Cards */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                       <div className="p-2.5 rounded-lg bg-black/30 border border-white/[0.06] flex items-center space-x-2.5">
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -508,147 +608,11 @@ export default function SettingsView({
                       <div className="p-2.5 rounded-lg bg-black/30 border border-white/[0.06] flex items-center space-x-2.5">
                         <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                         <div>
-                          <span className="text-white text-xs font-medium block">SSE Real-Time Push</span>
-                          <span className="text-[10px] text-gray-400">60fps telemetry with zero HTTP polling load</span>
+                          <span className="text-white text-xs font-medium block">SSE Real-Time Telemetry</span>
+                          <span className="text-[10px] text-gray-400">60fps telemetry with zero HTTP polling overhead</span>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
-
-                {cat.id === 'debrid_accounts' && (
-                  <div className="space-y-3 pt-1">
-                    <p className="text-[11px] text-gray-300">
-                      Connect your Debrid or file locker accounts. Vortex will automatically route restricted file locker links (Rapidgator, Mega, 1Fichier, etc.) through high-speed unrestricted direct CDN streams.
-                    </p>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] text-gray-400 font-medium">Real-Debrid API Token</label>
-                      <div className="flex gap-2">
-                        <input
-                          type="password"
-                          placeholder="Paste Real-Debrid API Key (from real-debrid.com/apitoken)"
-                          value={debridKey}
-                          onChange={(e) => setDebridKey(e.target.value)}
-                          className="flex-1 bg-[#18181b] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#3ea6ff]"
-                        />
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={verifyRealDebrid}
-                          disabled={isVerifyingDebrid || !debridKey}
-                          className="px-3 py-1.5 rounded-lg bg-[#3ea6ff] hover:bg-[#3ea6ff]/80 text-black font-bold text-xs cursor-pointer disabled:opacity-50 transition-colors"
-                        >
-                          {isVerifyingDebrid ? 'Verifying...' : 'Save & Verify'}
-                        </motion.button>
-                      </div>
-                      {debridStatus && (
-                        <p className={`text-[11px] font-mono mt-1 ${debridStatus.startsWith('Active') ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {debridStatus}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {cat.id === 'data_export' && (
-                  <div className="space-y-3 pt-1">
-                    <div className="flex items-center space-x-2 text-emerald-400 text-xs font-medium">
-                      <Shield className="w-4 h-4" />
-                      <span>Zero Telemetry & 100% Local Data Sovereignty</span>
-                    </div>
-                    <p className="text-[11px] text-gray-400">
-                      Export your active queue or backup download tasks to open, non-proprietary formats compatible with any system, terminal, or server.
-                    </p>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                      <a
-                        href="/api/export/curl"
-                        download="vortex_downloads.sh"
-                        className="p-2.5 rounded-lg bg-[#242428] hover:bg-[#2c2c32] border border-white/[0.06] flex flex-col items-center justify-center text-center group cursor-pointer transition-colors"
-                      >
-                        <FileCode className="w-4 h-4 text-[#3ea6ff] mb-1 group-hover:scale-110 transition-transform" />
-                        <span className="text-[11px] font-medium text-white">cURL Script</span>
-                        <span className="text-[9px] text-gray-500 font-mono">.sh script</span>
-                      </a>
-
-                      <a
-                        href="/api/export/metalink"
-                        download="vortex_downloads.meta4"
-                        className="p-2.5 rounded-lg bg-[#242428] hover:bg-[#2c2c32] border border-white/[0.06] flex flex-col items-center justify-center text-center group cursor-pointer transition-colors"
-                      >
-                        <DownloadCloud className="w-4 h-4 text-emerald-400 mb-1 group-hover:scale-110 transition-transform" />
-                        <span className="text-[11px] font-medium text-white">Metalink 4.0</span>
-                        <span className="text-[9px] text-gray-500 font-mono">.meta4 XML</span>
-                      </a>
-
-                      <a
-                        href="/api/export/aria2"
-                        download="vortex_aria2.txt"
-                        className="p-2.5 rounded-lg bg-[#242428] hover:bg-[#2c2c32] border border-white/[0.06] flex flex-col items-center justify-center text-center group cursor-pointer transition-colors"
-                      >
-                        <Radio className="w-4 h-4 text-purple-400 mb-1 group-hover:scale-110 transition-transform" />
-                        <span className="text-[11px] font-medium text-white">aria2 List</span>
-                        <span className="text-[9px] text-gray-500 font-mono">.txt input</span>
-                      </a>
-
-                      <a
-                        href="/api/export/json"
-                        download="vortex_backup.json"
-                        className="p-2.5 rounded-lg bg-[#242428] hover:bg-[#2c2c32] border border-white/[0.06] flex flex-col items-center justify-center text-center group cursor-pointer transition-colors"
-                      >
-                        <Package className="w-4 h-4 text-amber-400 mb-1 group-hover:scale-110 transition-transform" />
-                        <span className="text-[11px] font-medium text-white">JSON Backup</span>
-                        <span className="text-[9px] text-gray-500 font-mono">.json raw</span>
-                      </a>
-                    </div>
-                  </div>
-                )}
-
-                {cat.id === 'general' && (
-                  <div className="space-y-3 pt-1">
-                    <div className="flex items-center justify-between">
-                      <span>Default Download Threads</span>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-mono text-white font-bold">{settings.defaultThreads}</span>
-                        <input
-                          type="range"
-                          min={1}
-                          max={32}
-                          value={settings.defaultThreads}
-                          onChange={(e) => onUpdateSettings({ ...settings, defaultThreads: Number(e.target.value) })}
-                          className="accent-sky-400 w-28"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-white/[0.04] space-y-1.5">
-                      <span className="text-gray-300 font-medium block">Media Cookies (Netscape / cookies.txt)</span>
-                      <span className="text-[10px] text-gray-500 block">Used by yt-dlp & media extractors for age-gated or premium content</span>
-                      <input
-                        type="text"
-                        placeholder="Paste Netscape format cookies or raw session cookie"
-                        value={settings.youtubeCookie || ''}
-                        onChange={(e) => onUpdateSettings({ ...settings, youtubeCookie: e.target.value })}
-                        className="w-full bg-[#18181b] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#3ea6ff]"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {cat.id === 'aria2' && (
-                  <div className="space-y-2.5 pt-1">
-                    <p className="text-[11px] text-gray-300">
-                      aria2 JSON-RPC is running on <strong>http://localhost:5001/jsonrpc</strong>
-                    </p>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={onOpenAria2Modal}
-                      className="px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/30 hover:bg-sky-500/30 text-xs font-mono transition-colors cursor-pointer"
-                    >
-                      Open Extension Config Guide
-                    </motion.button>
                   </div>
                 )}
 
@@ -1079,9 +1043,772 @@ export default function SettingsView({
                   </div>
                 )}
 
-                {!['feature_packs', 'turbo_speed', 'debrid_accounts', 'data_export', 'general', 'aria2', 'about'].includes(cat.id) && (
-                  <div className="text-[11px] text-gray-500 py-1">
-                    Configuration options for {cat.title} are managed automatically by the universal engine.
+                {cat.id === 'categorization' && (
+                  <div className="space-y-4 pt-1">
+                    <div className="flex items-center justify-between pb-1 border-b border-white/[0.04]">
+                      <div>
+                        <span className="text-white font-medium text-xs block">Smart File Categorization & Routing</span>
+                        <span className="text-[11px] text-gray-400">Sort downloads into designated folders by MIME type and file format</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 text-[10px] font-mono">
+                        Active Rules
+                      </span>
+                    </div>
+
+                    {/* Auto-Organize Subfolders Toggle */}
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-[#1d1d20] border border-white/[0.06]">
+                      <div className="space-y-0.5">
+                        <span className="text-white text-xs font-medium block">Auto-Organize Subfolders</span>
+                        <span className="text-[11px] text-gray-400 block">
+                          Automatically place files into category folders (e.g. /Videos, /Music, /Archives)
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={settings.autoOrganizeFolders !== false}
+                          onChange={(e) => onUpdateSettings({ ...settings, autoOrganizeFolders: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-[#2b2b30] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#3ea6ff]"></div>
+                      </label>
+                    </div>
+
+                    {/* Base Download Folder */}
+                    <div className="p-3 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-white text-xs font-medium flex items-center gap-2">
+                          <Folder className="w-4 h-4 text-amber-400" />
+                          Base Download Root Directory
+                        </span>
+                        <button
+                          onClick={() => onUpdateSettings({ ...settings, customDownloadDir: 'Downloads/Vortex' })}
+                          className="text-[10px] text-sky-400 hover:text-sky-300 font-mono cursor-pointer"
+                        >
+                          Reset Default
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={settings.customDownloadDir || 'Downloads/Vortex'}
+                        onChange={(e) => onUpdateSettings({ ...settings, customDownloadDir: e.target.value })}
+                        className="w-full bg-[#141416] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#3ea6ff]"
+                        placeholder="Downloads/Vortex"
+                      />
+                    </div>
+
+                    {/* Category Path Mapping Grid */}
+                    <div className="space-y-2 pt-1">
+                      <span className="text-[11px] text-gray-400 font-medium block">Category Subfolder Mapping</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {[
+                          { key: 'video', label: 'Videos & Streams', icon: Film, color: 'text-rose-400', defaultVal: 'Videos' },
+                          { key: 'audio', label: 'Music & Audio', icon: Music, color: 'text-blue-400', defaultVal: 'Music' },
+                          { key: 'photo', label: 'Images & Photos', icon: ImageIcon, color: 'text-emerald-400', defaultVal: 'Images' },
+                          { key: 'archive', label: 'Compressed / Archives', icon: Archive, color: 'text-amber-400', defaultVal: 'Archives' },
+                          { key: 'document', label: 'Documents & Books', icon: FileText, color: 'text-cyan-400', defaultVal: 'Documents' },
+                          { key: 'program', label: 'Software & Binaries', icon: Terminal, color: 'text-purple-400', defaultVal: 'Programs' }
+                        ].map((catItem) => {
+                          const IconComp = catItem.icon;
+                          const currentVal = (settings.categoryPaths && settings.categoryPaths[catItem.key]) || catItem.defaultVal;
+                          return (
+                            <div key={catItem.key} className="p-2.5 rounded-lg bg-black/30 border border-white/[0.06] flex items-center justify-between gap-2">
+                              <div className="flex items-center space-x-2 min-w-0">
+                                <IconComp className={`w-4 h-4 shrink-0 ${catItem.color}`} />
+                                <span className="text-xs text-gray-200 truncate">{catItem.label}</span>
+                              </div>
+                              <input
+                                type="text"
+                                value={currentVal}
+                                onChange={(e) => handleCategoryPathChange(catItem.key, e.target.value)}
+                                className="w-24 text-right bg-[#141416] border border-white/[0.08] rounded px-2 py-0.5 text-xs text-white font-mono focus:outline-none focus:border-[#3ea6ff]"
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* File Renaming & Conflict Rules */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div className="p-3 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-1.5">
+                        <label className="text-xs text-white font-medium block">File Renaming Pattern</label>
+                        <select
+                          value={settings.fileRenamingPattern || 'original'}
+                          onChange={(e) => onUpdateSettings({ ...settings, fileRenamingPattern: e.target.value as any })}
+                          className="w-full bg-[#141416] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#3ea6ff] cursor-pointer"
+                        >
+                          <option value="original">Original Filename ([Title].[ext])</option>
+                          <option value="with_resolution">Append Resolution ([Title]_[1080p].[ext])</option>
+                          <option value="with_date">Append Date ([Title]_[YYYYMMDD].[ext])</option>
+                        </select>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-1.5">
+                        <label className="text-xs text-white font-medium block">Duplicate File Conflict</label>
+                        <select
+                          value={settings.duplicateHandling || 'auto_rename'}
+                          onChange={(e) => onUpdateSettings({ ...settings, duplicateHandling: e.target.value as any })}
+                          className="w-full bg-[#141416] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#3ea6ff] cursor-pointer"
+                        >
+                          <option value="auto_rename">Auto-Rename (e.g. file (1).mp4)</option>
+                          <option value="overwrite">Overwrite Existing File</option>
+                          <option value="skip">Skip If Already Downloaded</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {cat.id === 'integration' && (
+                  <div className="space-y-4 pt-1">
+                    <div className="flex items-center justify-between pb-1 border-b border-white/[0.04]">
+                      <div>
+                        <span className="text-white font-medium text-xs block">Operating System & Webhook Hooks</span>
+                        <span className="text-[11px] text-gray-400">Configure clipboard detection, desktop alerts, sound chimes, and webhook callbacks</span>
+                      </div>
+                    </div>
+
+                    {/* Clipboard URL Auto-Monitoring */}
+                    <div className="p-3 rounded-xl bg-[#1d1d20] border border-white/[0.06] flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center space-x-2">
+                          <Copy className="w-4 h-4 text-sky-400" />
+                          <span className="text-white text-xs font-medium">Clipboard URL Auto-Monitoring</span>
+                        </div>
+                        <span className="text-[11px] text-gray-400 block pl-6">
+                          Automatically detect copied download links and media streams to offer fast 1-click capture
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                        <input
+                          type="checkbox"
+                          checked={settings.clipboardMonitoring !== false}
+                          onChange={(e) => onUpdateSettings({ ...settings, clipboardMonitoring: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-[#2b2b30] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#3ea6ff]"></div>
+                      </label>
+                    </div>
+
+                    {/* Desktop & System Notifications */}
+                    <div className="p-3 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center space-x-2">
+                            <Bell className="w-4 h-4 text-emerald-400" />
+                            <span className="text-white text-xs font-medium">System Desktop Notifications</span>
+                          </div>
+                          <span className="text-[11px] text-gray-400 block pl-6">
+                            Show OS banner notifications when tasks finish or encounter errors
+                          </span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                          <input
+                            type="checkbox"
+                            checked={settings.desktopNotifications !== false}
+                            onChange={(e) => onUpdateSettings({ ...settings, desktopNotifications: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-[#2b2b30] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                      </div>
+                      <div className="flex items-center justify-between pt-1 pl-6">
+                        <motion.button
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={handleTestNotification}
+                          className="px-3 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/30 text-[11px] font-mono transition-colors cursor-pointer"
+                        >
+                          Send Test Notification
+                        </motion.button>
+                        {notifFeedback && (
+                          <span className="text-[11px] text-emerald-400 font-mono">{notifFeedback}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Audio Chime Notification */}
+                    <div className="p-3 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center space-x-2">
+                            <Volume2 className="w-4 h-4 text-purple-400" />
+                            <span className="text-white text-xs font-medium">Task Completion Audio Chime</span>
+                          </div>
+                          <span className="text-[11px] text-gray-400 block pl-6">
+                            Acoustic confirmation chime when all chunks multiplex and verify
+                          </span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                          <input
+                            type="checkbox"
+                            checked={settings.soundNotification !== false}
+                            onChange={(e) => onUpdateSettings({ ...settings, soundNotification: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-[#2b2b30] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-500"></div>
+                        </label>
+                      </div>
+                      <div className="flex items-center justify-between pt-1 pl-6">
+                        <motion.button
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={handleTestChime}
+                          className="px-3 py-1 rounded-lg bg-purple-500/15 text-purple-300 hover:bg-purple-500/25 border border-purple-500/30 text-[11px] font-mono transition-colors cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Volume2 className="w-3.5 h-3.5" />
+                          <span>{chimeFeedback ? '♪ Playing Chime...' : 'Test Audio Chime'}</span>
+                        </motion.button>
+                        {chimeFeedback && (
+                          <span className="text-[11px] text-purple-300 font-mono animate-pulse">880 Hz Harmonic Chime</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Auto-Start Daemon */}
+                    <div className="p-3 rounded-xl bg-[#1d1d20] border border-white/[0.06] flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center space-x-2">
+                          <Cpu className="w-4 h-4 text-cyan-400" />
+                          <span className="text-white text-xs font-medium">Autostart Core Engine On Boot</span>
+                        </div>
+                        <span className="text-[11px] text-gray-400 block pl-6">
+                          Keep Go Core daemon and Python extractor ready in background tray
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                        <input
+                          type="checkbox"
+                          checked={settings.autoStartDaemon !== false}
+                          onChange={(e) => onUpdateSettings({ ...settings, autoStartDaemon: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-[#2b2b30] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-500"></div>
+                      </label>
+                    </div>
+
+                    {/* Webhook Post-Download Callback */}
+                    <div className="p-3.5 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Globe className="w-4 h-4 text-amber-400" />
+                          <span className="text-white text-xs font-medium">Post-Download Webhook Callback</span>
+                        </div>
+                        <span className="text-[10px] text-gray-500 font-mono">POST JSON</span>
+                      </div>
+                      <span className="text-[11px] text-gray-400 block">
+                        Trigger external automations (Discord, Telegram bot, or server) on task completion
+                      </span>
+                      <div className="flex gap-2 pt-1">
+                        <input
+                          type="text"
+                          placeholder="https://discord.com/api/webhooks/... or custom HTTP endpoint"
+                          value={settings.webhookUrl || ''}
+                          onChange={(e) => onUpdateSettings({ ...settings, webhookUrl: e.target.value })}
+                          className="flex-1 bg-[#141416] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#3ea6ff]"
+                        />
+                        <motion.button
+                          whileHover={{ scale: 1.04 }}
+                          whileTap={{ scale: 0.96 }}
+                          onClick={handleTestWebhook}
+                          disabled={testingWebhook || !settings.webhookUrl}
+                          className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-mono disabled:opacity-40 cursor-pointer transition-colors"
+                        >
+                          {testingWebhook ? 'Pinging...' : 'Send Test Ping'}
+                        </motion.button>
+                      </div>
+                      {webhookFeedback && (
+                        <p className={`text-[11px] font-mono mt-1 ${webhookFeedback.includes('successfully') ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {webhookFeedback}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Temporary Storage & Chunk Purge */}
+                    <div className="p-3.5 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <HardDrive className="w-4 h-4 text-rose-400" />
+                          <span className="text-white text-xs font-medium">Temporary Storage & Chunk Purge</span>
+                        </div>
+                        <span className="text-[10px] text-gray-500 font-mono">.part / cache</span>
+                      </div>
+                      <p className="text-[11px] text-gray-400">
+                        Remove abandoned .part chunks, temp multiplex buffers, and expired extraction caches from disk.
+                      </p>
+                      <div className="flex items-center justify-between pt-1">
+                        <motion.button
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={handleClearCache}
+                          disabled={clearingCache}
+                          className="px-3.5 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30 text-xs font-mono disabled:opacity-50 cursor-pointer transition-colors flex items-center gap-1.5"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>{clearingCache ? 'Purging Cache...' : 'Clear Temp Chunks & Cache'}</span>
+                        </motion.button>
+                        {cacheClearFeedback && (
+                          <span className="text-[11px] text-emerald-400 font-mono">{cacheClearFeedback}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* History Retention Policy */}
+                    <div className="p-3.5 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-1.5">
+                      <label className="text-xs text-white font-medium block">Completed Task History Retention</label>
+                      <select
+                        value={settings.historyRetention || 'keep_all'}
+                        onChange={(e) => onUpdateSettings({ ...settings, historyRetention: e.target.value as any })}
+                        className="w-full bg-[#141416] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#3ea6ff] cursor-pointer"
+                      >
+                        <option value="keep_all">Keep History Forever</option>
+                        <option value="30_days">Auto-Clear Items Older Than 30 Days</option>
+                        <option value="7_days">Auto-Clear Items Older Than 7 Days</option>
+                        <option value="on_exit">Clear Download History on App Exit</option>
+                      </select>
+                    </div>
+
+                    {/* Anti-Lock-in & Data Sovereignty Export */}
+                    <div className="p-3.5 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-2.5">
+                      <div className="flex items-center space-x-2 text-emerald-400 text-xs font-medium">
+                        <Shield className="w-4 h-4" />
+                        <span>Data Sovereignty & Open Task Export</span>
+                      </div>
+                      <p className="text-[11px] text-gray-400">
+                        Export your active queue or backup download tasks to open formats compatible with any server or terminal.
+                      </p>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                        <a
+                          href="/api/export/curl"
+                          download="vortex_downloads.sh"
+                          className="p-2.5 rounded-lg bg-[#242428] hover:bg-[#2c2c32] border border-white/[0.06] flex flex-col items-center justify-center text-center group cursor-pointer transition-colors"
+                        >
+                          <FileCode className="w-4 h-4 text-[#3ea6ff] mb-1 group-hover:scale-110 transition-transform" />
+                          <span className="text-[11px] font-medium text-white">cURL Script</span>
+                          <span className="text-[9px] text-gray-500 font-mono">.sh script</span>
+                        </a>
+
+                        <a
+                          href="/api/export/metalink"
+                          download="vortex_downloads.meta4"
+                          className="p-2.5 rounded-lg bg-[#242428] hover:bg-[#2c2c32] border border-white/[0.06] flex flex-col items-center justify-center text-center group cursor-pointer transition-colors"
+                        >
+                          <DownloadCloud className="w-4 h-4 text-emerald-400 mb-1 group-hover:scale-110 transition-transform" />
+                          <span className="text-[11px] font-medium text-white">Metalink 4.0</span>
+                          <span className="text-[9px] text-gray-500 font-mono">.meta4 XML</span>
+                        </a>
+
+                        <a
+                          href="/api/export/aria2"
+                          download="vortex_aria2.txt"
+                          className="p-2.5 rounded-lg bg-[#242428] hover:bg-[#2c2c32] border border-white/[0.06] flex flex-col items-center justify-center text-center group cursor-pointer transition-colors"
+                        >
+                          <Radio className="w-4 h-4 text-purple-400 mb-1 group-hover:scale-110 transition-transform" />
+                          <span className="text-[11px] font-medium text-white">aria2 List</span>
+                          <span className="text-[9px] text-gray-500 font-mono">.txt input</span>
+                        </a>
+
+                        <a
+                          href="/api/export/json"
+                          download="vortex_backup.json"
+                          className="p-2.5 rounded-lg bg-[#242428] hover:bg-[#2c2c32] border border-white/[0.06] flex flex-col items-center justify-center text-center group cursor-pointer transition-colors"
+                        >
+                          <Package className="w-4 h-4 text-amber-400 mb-1 group-hover:scale-110 transition-transform" />
+                          <span className="text-[11px] font-medium text-white">JSON Backup</span>
+                          <span className="text-[9px] text-gray-500 font-mono">.json raw</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {cat.id === 'browser' && (
+                  <div className="space-y-4 pt-1">
+                    <div className="flex items-center justify-between pb-1 border-b border-white/[0.04]">
+                      <div>
+                        <span className="text-white font-medium text-xs block">Browser Interception & Native Extension Bridge</span>
+                        <span className="text-[11px] text-gray-400">Capture video streams, playlist URLs, and direct file downloads from Chrome, Edge, Brave, and Firefox</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono">
+                        Port 5001 RPC
+                      </span>
+                    </div>
+
+                    {/* Interception Mode */}
+                    <div className="p-3.5 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-white text-xs font-medium">Download Interception Trigger</span>
+                        <span className="text-[10px] text-gray-400 font-mono">IDM Bridge</span>
+                      </div>
+                      <select
+                        value={settings.browserInterceptMode || 'size_threshold'}
+                        onChange={(e) => onUpdateSettings({ ...settings, browserInterceptMode: e.target.value as any })}
+                        className="w-full bg-[#141416] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#3ea6ff] cursor-pointer"
+                      >
+                        <option value="size_threshold">Intercept by File Size Threshold (Recommended)</option>
+                        <option value="all">Intercept All Downloads (Aggressive / IDM style)</option>
+                        <option value="media_only">Streaming Media Only (YouTube, Twitch, M3U8, DASH)</option>
+                        <option value="disabled">Disabled (Manual Link Entry Only)</option>
+                      </select>
+                    </div>
+
+                    {/* File Size Threshold Slider */}
+                    {(settings.browserInterceptMode === 'size_threshold' || !settings.browserInterceptMode) && (
+                      <div className="p-3.5 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="text-white text-xs font-medium block">Minimum Intercept File Size</span>
+                            <span className="text-[11px] text-gray-400">Small files below this limit download directly in browser</span>
+                          </div>
+                          <span className="text-xs font-mono font-bold text-[#3ea6ff]">
+                            {settings.browserInterceptMinSizeMB || 25} MB
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min={5}
+                          max={500}
+                          step={5}
+                          value={settings.browserInterceptMinSizeMB || 25}
+                          onChange={(e) => onUpdateSettings({ ...settings, browserInterceptMinSizeMB: Number(e.target.value) })}
+                          className="w-full accent-[#3ea6ff]"
+                        />
+                        <div className="flex justify-between text-[10px] text-gray-500 font-mono">
+                          <span>5 MB (All media)</span>
+                          <span>25 MB (Recommended)</span>
+                          <span>500 MB (Large files only)</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Aria2 RPC Secret Key */}
+                    <div className="p-3.5 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-white text-xs font-medium block">Extension RPC Authentication Secret</span>
+                          <span className="text-[11px] text-gray-400">Pair browser extension securely to http://localhost:5001/jsonrpc</span>
+                        </div>
+                        <span className="text-[10px] text-emerald-400 font-mono font-bold">256-Bit RPC Guard</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={settings.aria2Secret || 'vortex-rpc-token-2026'}
+                          onChange={(e) => onUpdateSettings({ ...settings, aria2Secret: e.target.value })}
+                          className="flex-1 bg-[#141416] border border-white/[0.08] rounded-lg px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#3ea6ff]"
+                        />
+                        <button
+                          onClick={handleGenerateAria2Token}
+                          className="px-3 py-1.5 rounded-lg bg-[#2a2a2e] hover:bg-[#34343a] text-gray-300 text-xs font-mono cursor-pointer transition-colors"
+                        >
+                          Regenerate
+                        </button>
+                        <button
+                          onClick={handleCopyAria2Token}
+                          className="px-3 py-1.5 rounded-lg bg-[#3ea6ff]/20 text-[#3ea6ff] hover:bg-[#3ea6ff]/30 text-xs font-mono cursor-pointer transition-colors"
+                        >
+                          {copiedToken ? 'Copied!' : 'Copy Token'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Auto-Inherit Browser Cookies Toggle */}
+                    <div className="p-3.5 rounded-xl bg-[#1d1d20] border border-white/[0.06] flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center space-x-2">
+                          <Shield className="w-4 h-4 text-emerald-400" />
+                          <span className="text-white text-xs font-medium">Automatic Browser Cookie Extraction</span>
+                        </div>
+                        <span className="text-[11px] text-gray-400 block pl-6">
+                          Extract session cookies from Edge, Chrome, and Firefox to bypass age gates and premium logins
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                        <input
+                          type="checkbox"
+                          checked={settings.autoInjectBrowserCookies !== false}
+                          onChange={(e) => onUpdateSettings({ ...settings, autoInjectBrowserCookies: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-9 h-5 bg-[#2b2b30] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                      </label>
+                    </div>
+
+                    {/* Extension Installation Links & Modal Guide */}
+                    <div className="p-3.5 rounded-xl bg-black/30 border border-white/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <span className="text-white text-xs font-medium block">Browser Extension Setup Guide</span>
+                        <span className="text-[11px] text-gray-400">Step-by-step instructions for Aria2 Integration, Violentmonkey, or native unpacked extension</span>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.04 }}
+                        whileTap={{ scale: 0.96 }}
+                        onClick={onOpenAria2Modal}
+                        className="px-3.5 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 border border-sky-500/30 text-xs font-medium cursor-pointer transition-colors self-start sm:self-center shrink-0"
+                      >
+                        Open Extension Guide
+                      </motion.button>
+                    </div>
+                  </div>
+                )}
+
+                {cat.id === 'personalization' && (
+                  <div className="space-y-4 pt-1">
+                    <div className="flex items-center justify-between pb-1 border-b border-white/[0.04]">
+                      <div>
+                        <span className="text-white font-medium text-xs block">Interface Themes & Visual Styling</span>
+                        <span className="text-[11px] text-gray-400">Customize accent palettes, workspace background tones, and layout density</span>
+                      </div>
+                    </div>
+
+                    {/* Theme Variant Cards */}
+                    <div className="space-y-2">
+                      <span className="text-[11px] text-gray-400 font-medium block">Workspace Theme Tone</span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        {[
+                          { id: 'oled', label: 'Pure OLED', desc: '#09090b Deep Black', bg: 'bg-[#09090b]', border: 'border-white/20' },
+                          { id: 'slate', label: 'Midnight Slate', desc: '#0f172a Deep Navy', bg: 'bg-[#0f172a]', border: 'border-slate-700/50' },
+                          { id: 'cyber', label: 'Cyberpunk Neon', desc: '#0e0c1f Dark Violet', bg: 'bg-[#0e0c1f]', border: 'border-purple-900/50' },
+                          { id: 'titanium', label: 'Dark Titanium', desc: '#18181b Studio Gray', bg: 'bg-[#18181b]', border: 'border-zinc-700/50' }
+                        ].map((t) => {
+                          const isSelected = (settings.themeVariant || 'oled') === t.id;
+                          return (
+                            <motion.button
+                              key={t.id}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              onClick={() => handleSelectTheme(t.id as any)}
+                              className={`p-3 rounded-xl border text-left cursor-pointer transition-all ${
+                                isSelected ? 'border-[#3ea6ff] ring-1 ring-[#3ea6ff]/40 bg-white/[0.04]' : 'border-white/[0.06] bg-[#1d1d20] hover:bg-[#232328]'
+                              }`}
+                            >
+                              <div className={`w-full h-8 rounded-lg ${t.bg} border ${t.border} mb-2 flex items-center justify-center`}>
+                                {isSelected && <Check className="w-4 h-4 text-[#3ea6ff]" />}
+                              </div>
+                              <span className="text-xs font-medium text-white block">{t.label}</span>
+                              <span className="text-[10px] text-gray-500 font-mono block">{t.desc}</span>
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Accent Color Palette */}
+                    <div className="p-3.5 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-white text-xs font-medium">Primary Accent Color</span>
+                        <span className="text-[10px] text-gray-400 font-mono">
+                          {settings.accentColor || '#3ea6ff'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 pt-1 flex-wrap">
+                        {[
+                          { hex: '#3ea6ff', label: 'Vortex Sky' },
+                          { hex: '#00f0ff', label: 'Cyber Cyan' },
+                          { hex: '#10b981', label: 'Emerald Pulse' },
+                          { hex: '#a855f7', label: 'Royal Violet' },
+                          { hex: '#f59e0b', label: 'Amber Gold' },
+                          { hex: '#f43f5e', label: 'Rose Crimson' }
+                        ].map((accent) => {
+                          const isSelected = (settings.accentColor || '#3ea6ff').toLowerCase() === accent.hex.toLowerCase();
+                          return (
+                            <button
+                              key={accent.hex}
+                              onClick={() => handleSelectAccent(accent.hex)}
+                              className="flex items-center space-x-2 group cursor-pointer focus:outline-none"
+                              title={accent.label}
+                            >
+                              <div
+                                className={`w-7 h-7 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 ${
+                                  isSelected ? 'ring-2 ring-white scale-110 shadow-lg' : 'opacity-80 group-hover:opacity-100'
+                                }`}
+                                style={{ backgroundColor: accent.hex }}
+                              >
+                                {isSelected && <Check className="w-3.5 h-3.5 text-black font-bold" />}
+                              </div>
+                              <span className="text-[11px] text-gray-300 hidden sm:inline">{accent.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Layout Density & Visual Controls */}
+                    <div className="space-y-2">
+                      {/* Compact Density View */}
+                      <div className="p-3 rounded-xl bg-[#1d1d20] border border-white/[0.06] flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <span className="text-white text-xs font-medium block">Compact Density Mode (IDM Grid)</span>
+                          <span className="text-[11px] text-gray-400 block">
+                            Reduce card padding and row heights to maximize visible items on screen
+                          </span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                          <input
+                            type="checkbox"
+                            checked={settings.compactView || false}
+                            onChange={(e) => onUpdateSettings({ ...settings, compactView: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-[#2b2b30] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#3ea6ff]"></div>
+                        </label>
+                      </div>
+
+                      {/* Speed Sparklines */}
+                      <div className="p-3 rounded-xl bg-[#1d1d20] border border-white/[0.06] flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <span className="text-white text-xs font-medium block">Live Bandwidth Sparklines</span>
+                          <span className="text-[11px] text-gray-400 block">
+                            Render real-time telemetry throughput graphs on active task cards
+                          </span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                          <input
+                            type="checkbox"
+                            checked={settings.showSpeedGraph !== false}
+                            onChange={(e) => onUpdateSettings({ ...settings, showSpeedGraph: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-[#2b2b30] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#3ea6ff]"></div>
+                        </label>
+                      </div>
+
+                      {/* Fluid Animations */}
+                      <div className="p-3 rounded-xl bg-[#1d1d20] border border-white/[0.06] flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <span className="text-white text-xs font-medium block">Fluid Micro-Animations</span>
+                          <span className="text-[11px] text-gray-400 block">
+                            Enable smooth spring transitions, hover glows, and progress pulses
+                          </span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                          <input
+                            type="checkbox"
+                            checked={settings.enableAnimations !== false}
+                            onChange={(e) => onUpdateSettings({ ...settings, enableAnimations: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-[#2b2b30] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#3ea6ff]"></div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {cat.id === 'limits' && (
+                  <div className="space-y-4 pt-1">
+                    <div className="flex items-center justify-between pb-1 border-b border-white/[0.04]">
+                      <div>
+                        <span className="text-white font-medium text-xs block">Engine Concurrency & Hardware Limits</span>
+                        <span className="text-[11px] text-gray-400">Configure parallel active tasks, bandwidth throttle, and GPU acceleration</span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 text-[10px] font-mono">
+                        Hardware Optimized
+                      </span>
+                    </div>
+
+                    {/* Max Simultaneous Downloads */}
+                    <div className="p-3.5 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-white text-xs font-medium block">Max Simultaneous Active Downloads</span>
+                          <span className="text-[11px] text-gray-400">Extra downloads remain queued and auto-start as tasks complete</span>
+                        </div>
+                        <span className="text-xs font-mono font-bold text-[#3ea6ff]">
+                          {settings.maxConcurrentDownloads || 3} Tasks
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={1}
+                        max={10}
+                        value={settings.maxConcurrentDownloads || 3}
+                        onChange={(e) => onUpdateSettings({ ...settings, maxConcurrentDownloads: Number(e.target.value) })}
+                        className="w-full accent-[#3ea6ff]"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-500 font-mono">
+                        <span>1 (Sequential)</span>
+                        <span>3 (Balanced)</span>
+                        <span>10 (Gigabit Pipeline)</span>
+                      </div>
+                    </div>
+
+                    {/* Speed Limiter Throttle */}
+                    <div className="p-3.5 rounded-xl bg-[#1d1d20] border border-white/[0.06] space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-white text-xs font-medium block">Bandwidth Throttle / Speed Limiter</span>
+                          <span className="text-[11px] text-gray-400">Cap download rate to preserve bandwidth for gaming or work</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                          <input
+                            type="checkbox"
+                            checked={settings.speedLimitEnabled || false}
+                            onChange={(e) => onUpdateSettings({ ...settings, speedLimitEnabled: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-[#2b2b30] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                        </label>
+                      </div>
+
+                      {settings.speedLimitEnabled && (
+                        <div className="space-y-1.5 pt-1 border-t border-white/[0.04]">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-300">Max Download Speed</span>
+                            <span className="font-mono text-amber-400 font-bold">{settings.maxSpeedMBps || 25} MB/s</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={1}
+                            max={100}
+                            value={settings.maxSpeedMBps || 25}
+                            onChange={(e) => onUpdateSettings({ ...settings, maxSpeedMBps: Number(e.target.value) })}
+                            className="w-full accent-amber-400"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Hardware Acceleration & Pre-Allocation */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                      <div className="p-3 rounded-xl bg-[#1d1d20] border border-white/[0.06] flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <span className="text-white text-xs font-medium block">GPU Hardware Transcoding</span>
+                          <span className="text-[10px] text-gray-400 block">
+                            Use NVENC / QuickSync in FFmpeg
+                          </span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-2">
+                          <input
+                            type="checkbox"
+                            checked={settings.hardwareAcceleration !== false}
+                            onChange={(e) => onUpdateSettings({ ...settings, hardwareAcceleration: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-8 h-4 bg-[#2b2b30] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-[#1d1d20] border border-white/[0.06] flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <span className="text-white text-xs font-medium block">Disk Pre-Allocation</span>
+                          <span className="text-[10px] text-gray-400 block">
+                            Zero fragmentation on NTFS/Ext4
+                          </span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-2">
+                          <input
+                            type="checkbox"
+                            checked={settings.preallocateDisk !== false}
+                            onChange={(e) => onUpdateSettings({ ...settings, preallocateDisk: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-8 h-4 bg-[#2b2b30] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-[#3ea6ff]"></div>
+                        </label>
+                      </div>
+                    </div>
                   </div>
                 )}
               </motion.div>

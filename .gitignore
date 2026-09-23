@@ -8,4 +8,5 @@ coverage/
 !.env.example
 __pycache__/
 *.pyc
-
+backend/temp_downloads/
+*.exe

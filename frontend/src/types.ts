@@ -55,6 +55,41 @@ export interface UserSettings {
   saveHistory: boolean;
   backendUrl?: string;
   youtubeCookie?: string;
+
+  // Categorization
+  autoOrganizeFolders?: boolean;
+  categoryPaths?: Record<string, string>;
+  fileRenamingPattern?: 'original' | 'with_resolution' | 'with_date';
+  duplicateHandling?: 'auto_rename' | 'overwrite' | 'skip';
+  customDownloadDir?: string;
+
+  // Integration
+  clipboardMonitoring?: boolean;
+  desktopNotifications?: boolean;
+  soundNotification?: boolean;
+  autoStartDaemon?: boolean;
+  webhookUrl?: string;
+
+  // Browser Extension
+  browserInterceptMode?: 'all' | 'size_threshold' | 'media_only' | 'disabled';
+  browserInterceptMinSizeMB?: number;
+  aria2Secret?: string;
+  autoInjectBrowserCookies?: boolean;
+
+  // Personalization
+  themeVariant?: 'oled' | 'slate' | 'cyber' | 'titanium';
+  accentColor?: string;
+  compactView?: boolean;
+  showSpeedGraph?: boolean;
+  enableAnimations?: boolean;
+
+  // Application
+  maxConcurrentDownloads?: number;
+  speedLimitEnabled?: boolean;
+  maxSpeedMBps?: number;
+  historyRetention?: 'keep_all' | '30_days' | '7_days' | 'on_exit';
+  hardwareAcceleration?: boolean;
+  preallocateDisk?: boolean;
 }
 
 export interface ChunkInfo {
