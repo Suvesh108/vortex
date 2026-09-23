@@ -41,16 +41,18 @@ async function run() {
     headers
   });
 
-  const releaseBody = `## 📱 VortexDownloader ${tag} - Android APK & Web Release
+  const releaseBody = `## 📱 VortexDownloader ${tag} - Android APK & Desktop Release
 
 - **Android APK (Direct Install)**: \`VortexDownloader-${tag}.apk\`
 
-✨ **What's New in ${tag}**
-- 🔄 **In-App Update Checker**: Directly check GitHub for new versions and download updates within settings.
-- 🔒 **Focused Permissions**: Scoped only to Local Device Storage (saving media files) and Push Notifications (completion alerts).
-- ⚡ **Standalone Stream Engine**: Built-in universal extraction engine with no server requirement for mobile devices.
-- 🎥 **Universal Media Extraction**: YouTube, TikTok, Twitter/X, Instagram, Vimeo, Soundcloud and more.
-- 🎵 **High-Bitrate 4K / 1080p Video and 320kbps MP3 Audio conversions**.
+✨ **What's New in ${tag}**:
+- ⚙️ **Hybrid Go Core + Python Extractor**: Ultra-fast Go networking engine on port 5001 paired with zero-overhead Python sidecar on port 5002 for high-concurrency downloads.
+- 🎛️ **Streamlined 7-Section Settings Architecture**: Reorganized settings from 12 fragmented sections down to 7 clean, powerhouse categories (Engine & Multi-Thread Core, Downloads & File Routing, Concurrency & Performance, Browser Extension & Aria2 Bridge, Appearance & Interface, System Hooks & Storage, and About & Updates).
+- 🛡️ **4-Tier Bot-Guard Bypass**: Automatic browser cookie inheritance (Edge, Chrome, Firefox, Brave), client identity rotation (Desktop/Mobile/TV), and desktop client hints to bypass Cloudflare and bot checks.
+- 📊 **Real-Time IDM/FDM Progress Telemetry**: Zero-jump live progress tracking with accurate throughput, ETA, and per-chunk visual progress.
+- 🎥 **Full Resolution Detection (720p, 1080p, 2K, 4K)**: Enabled Node.js JS runtime and removed player skip flags to ensure all supported resolutions are detected and selectable.
+- 🔔 **System Integration & Chimes**: Added real-time clipboard monitoring, desktop OS notifications, Web Audio completion chime, and post-download webhooks.
+- 📱 **Signed Android Release APK**: Built with optimized assets, sandboxed in-app browser, and integrated updater.
 `;
 
   if (getRes.status === 200) {
