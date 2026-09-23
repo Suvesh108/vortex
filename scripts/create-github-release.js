@@ -46,13 +46,15 @@ async function run() {
 - **Android APK (Direct Install)**: \`VortexDownloader-${tag}.apk\`
 
 ✨ **What's New in ${tag}**:
+- 🚀 **Zero-RAM Native Downloader (\`VortexNativePlugin\`)**: Slices out JavaScript Base64 buffering and streams downloads directly to disk, completely eliminating Out-Of-Memory crashes on 100MB–1GB+ files.
+- 📁 **Public Storage & MediaStore Auto-Indexing**: Saves directly to \`Download/VortexDownloader\` so downloaded videos, songs, and files immediately appear in the user's Gallery, VLC, and File Manager.
+- 🎬 **One-Tap Play / Open & Share**: Added direct "Play / Open" and "Share" buttons to completed tasks in the dashboard.
+- 🌐 **Inbuilt Private Browser Enhancements**: Browser no longer abruptly closes upon queueing a download; added full-screen HTML5 video playback and mixed-content support.
+- 🔙 **Android Hardware Back-Button Support**: Intelligently closes active modals (\`AddTaskModal\`, \`SettingsModal\`, \`Vault\`) on back press before minimizing the app.
+- 📲 **Android "Share to Vortex" Target**: Send video links directly from YouTube, Chrome, TikTok, and Twitter via the Android Share sheet.
+- 🌐 **Cleartext HTTP Support**: Added \`usesCleartextTraffic="true"\` and network state permissions for local Wi-Fi backend streaming and HTTP CDN mirrors.
+- 🧹 **UI Path Sanitization**: Removed desktop-hardcoded Windows paths and added a dedicated Backend URL setting in Engine settings for mobile LAN connectivity.
 - ⚙️ **Hybrid Go Core + Python Extractor**: Ultra-fast Go networking engine on port 5001 paired with zero-overhead Python sidecar on port 5002 for high-concurrency downloads.
-- 🎛️ **Streamlined 7-Section Settings Architecture**: Reorganized settings from 12 fragmented sections down to 7 clean, powerhouse categories (Engine & Multi-Thread Core, Downloads & File Routing, Concurrency & Performance, Browser Extension & Aria2 Bridge, Appearance & Interface, System Hooks & Storage, and About & Updates).
-- 🛡️ **4-Tier Bot-Guard Bypass**: Automatic browser cookie inheritance (Edge, Chrome, Firefox, Brave), client identity rotation (Desktop/Mobile/TV), and desktop client hints to bypass Cloudflare and bot checks.
-- 📊 **Real-Time IDM/FDM Progress Telemetry**: Zero-jump live progress tracking with accurate throughput, ETA, and per-chunk visual progress.
-- 🎥 **Full Resolution Detection (720p, 1080p, 2K, 4K)**: Enabled Node.js JS runtime and removed player skip flags to ensure all supported resolutions are detected and selectable.
-- 🔔 **System Integration & Chimes**: Added real-time clipboard monitoring, desktop OS notifications, Web Audio completion chime, and post-download webhooks.
-- 📱 **Signed Android Release APK**: Built with optimized assets, sandboxed in-app browser, and integrated updater.
 `;
 
   if (getRes.status === 200) {
